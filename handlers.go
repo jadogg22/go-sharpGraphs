@@ -1,8 +1,10 @@
 package main
 
 import (
-	"github.com/gin-gonic/gin"
+	"fmt"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
 )
 
 // Handler function for	root route for debuging
@@ -17,14 +19,94 @@ func Trans_year_by_year(c *gin.Context) {
 	// get date from system
 	// conncet to database
 	// pull all year by year data and and compair data
+	db, err := Make_connection()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"Message": "Error connecting to the database",
+		})
+		return
+	}
+
+	//For now we're going to just get all data from the database
+	//This data only includes finished weeks.
+	data, err := GetYearByYearData(db)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"Message": "Error getting data from the database",
+		})
+		return
+	}
+
+	fmt.Println("finished getting the first data")
+	// Because its not very likly that we are at the end of the week
+	// and we want to show the most recent data we need to check the
+	// Transportation table and get the most recent data
+
+	newData, err := GetNewestYearByYearData(db, data)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"Message": "Error getting newest data from the database",
+			"Error":   err,
+		})
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"Data": newData,
+	})
+}
+
+// This function returns the weeks/months/quarters
+// REVENUE miles. So that we can make sure that we are
+// Staying under the 10% empty miles.
+func Trans_stacked_miles(c *gin.Context) {
+
+	// query db, and get the stacked miles
+
 	c.JSON(200, gin.H{
 		"Message": "Woring on it",
 	})
 }
 
-func Trans_stacked_miles(c *gin.Context) {
+func Trans_coded_revenue(c *gin.Context) {
+	when := c.Param("when")
+	fmt.Println("Getting coded revenue for ", when)
+
+	conn, err := Make_connection()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"Message": "Error connecting to the database",
+		})
+		return
+	}
+
+	// parts := strings.Split(when, "-")
+
+	// if len(parts) == 1 {
+	// 	fmt.Println("TODO, write funtion for coded revnue for one peram")
+	// }
+
+	// if len(parts) == 2 {
+	// 	fmt.Println("TODO, write function for coded revenue from one date to another.")
+	// }
+
+	// if len(parts) < 1 && len(parts) > 2 {
+	// 	fmt.Println("Sorry but, WTF")
+	// }
+
+	data, revenue, count, err2 := GetCodedRevenueData(conn, when)
+	if err2 != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"Message": "Error getting data from the database",
+			"error":   err2,
+		})
+		return
+	}
+
 	c.JSON(200, gin.H{
-		"Message": "Woring on it",
+		"CodedRevenue": data,
+		"TotalRevenue": revenue,
+		"TotalCount":   count,
 	})
 }
 
@@ -44,34 +126,42 @@ func Log_stacked_miles(c *gin.Context) {
 // ---------- Dispatch Handlers ----------
 
 func Dispach_week_to_date(c *gin.Context) {
-	data := []DriverData{
-		{
-			Driver:               "felicia mcmichael",
-			Day:                  []string{"2/26/24", "2/26/24", "2/26/24", "2/26/24", "2/26/24"},
-			TotalTrucks:          []int{13, 22, 22, 23, 24},
-			TotalMiles:           []int{16585, 29004, 34796, 47331, 54425},
-			LoadedMiles:          []int{16022, 27841, 32806, 44972, 50546},
-			RevenueWithoutFuel:   []float64{37767.65, 73531.66, 87396.90, 117991.35, 132408.13},
-			MilesPerTruck:        []int{1276, 1318, 1582, 1893, 2268},
-			RevenuePerTruck:      []float64{2905.20, 3342.35, 3972.59, 4719.65, 5517.01},
-			Deadhead:             []float64{3.40, 4.0, 5.7, 5.0, 7.10},
-			RevenuePerLoadedMile: []float64{2.36, 2.64, 2.66, 2.62, 2.62},
-			OnTimeService:        []float64{100.00, 94.59, 95.45, 96.49, 97.57},
-		},
-		{
-			Driver:               "trina sepulveda",
-			Day:                  []string{"2/26/24", "2/26/24", "2/26/24", "2/26/24", "2/26/24"},
-			TotalTrucks:          []int{14, 20, 22, 24, 26},
-			TotalMiles:           []int{8177, 13890, 23318, 33791, 46455},
-			LoadedMiles:          []int{7661, 12584, 21002, 31197, 42534},
-			RevenueWithoutFuel:   []float64{2165.60, 40452.71, 66177.25, 90165.51, 114853.02},
-			MilesPerTruck:        []int{584, 695, 1014, 1408, 1936},
-			RevenuePerTruck:      []float64{154.69, 2022.64, 2877.27, 3756.90, 4785.54},
-			Deadhead:             []float64{6.30, 9.3, 9.9, 7.7, 6.40},
-			RevenuePerLoadedMile: []float64{0.28, 3.21, 3.15, 2.89, 2.70},
-			OnTimeService:        []float64{100.00, 93.33, 97.83, 98.27, 98.57},
-		},
+
+	conn, _ := Make_connection()
+	data, err := GetDispacherDataFromDB(conn)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"Message": "i borke this",
+		})
+	}
+	//Finally update the Response with the json data
+	c.JSON(200, data)
+}
+
+func Dispatch_post(c *gin.Context) {
+	// receive data from the client
+	var data []DailyDriverData
+	if err := c.ShouldBindJSON(&data); err != nil {
+		// if there is an error return a 400 status code
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
 	}
 
-	c.JSON(http.StatusOK, data)
+	// driver add the data to the database
+	conn, err := Make_connection()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	for _, driver := range data {
+		err = Add_DailyDriverData(conn, driver)
+		if err != nil {
+
+			fmt.Printf("error %v \n", err)
+		}
+
+	}
+
+	c.JSON(200, gin.H{"Message": "Data received"})
 }
