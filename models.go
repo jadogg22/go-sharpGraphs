@@ -4,6 +4,39 @@ import (
 	"time"
 )
 
+type LoadData struct {
+	RevenueCode      string  `json:"revenue_code"`
+	Order            string  `json:"order"`
+	OrderType        string  `json:"order_type"`
+	Freight          int     `json:"freight"`
+	FuelSurcharge    float64 `json:"fuel_surcharge"`
+	RemainingCharges float64 `json:"remaining_charges"`
+	TotalRevenue     float64 `json:"total_revenue"`
+	BillMiles        int     `json:"bill_miles"`
+	LoadedMiles      int     `json:"loaded_miles"`
+	EmptyMiles       int     `json:"empty_miles"`
+	TotalMiles       int     `json:"total_miles"`
+	EmptyPct         float64 `json:"empty_pct"`
+	RevPerLoadedMile float64 `json:"rev_per_loaded_mile"`
+	RevPerTotalMile  float64 `json:"rev_per_total_mile"`
+	DeliveryDate     string  `json:"delivery_date"`
+	Origin           string  `json:"origin"`
+	Destination      string  `json:"destination"`
+	Customer         string  `json:"customer"`
+	CustomerCategory string  `json:"customer_category"`
+	OperationsUser   string  `json:"operations_user"`
+	Billed           string  `json:"billed"`
+	ControllingParty string  `json:"controlling_party"`
+	Commodity        string  `json:"commodity"`
+	TrailerType      string  `json:"trailer_type"`
+	OriginState      string  `json:"origin_state"`
+	DestinationState string  `json:"destination_state"`
+	Week             string  `json:"week"`
+	Month            string  `json:"month"`
+	Quarter          string  `json:"quarter"`
+	Brokered         string  `json:"brokered"`
+}
+
 type DriverData struct {
 	Dispatcher                string      `json:"dispatcher"`
 	Deadhead_percent          []float64   `json:"Deadhead"`
@@ -44,4 +77,13 @@ type CodedRevenueData struct {
 	Code    []string    `json:"Code"`
 	Revenue []float64   `json:"Revenue"`
 	Date    []time.Time `json:"Date"`
+}
+
+type MilesData struct {
+	Name             string `json:"Name"`
+	NameStr          string `json:"NameStr"`
+	TotalLoadedMiles int64  `json:"Total_Loaded_Miles"`
+	TotalEmptyMiles  int64  `json:"Total_Empty_Miles"`
+	TotalMiles       int64  `json:"Total_Actual_Miles"`
+	PercentEmpty     int64  `json:"Percent_empty"`
 }

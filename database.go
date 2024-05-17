@@ -177,24 +177,40 @@ func GetDispacherDataFromDB(db *sql.DB) ([]DriverData, error) {
 	return result, nil
 }
 
-func GetYearByYearData(db *sql.DB) ([]map[string]interface{}, error) {
-	//check if the table exists
-	_, err := db.Exec(`
-    CREATE TABLE IF NOT EXISTS trans_year_rev (
+func GetYearByYearData(db *sql.DB, company string) ([]map[string]interface{}, error) {
+	var query string
+	var dbTable string
+
+	if company != "transportation" && company != "logistics" {
+		fmt.Println("this aint no company")
+		return nil, fmt.Errorf("invalid company")
+	}
+
+	if company == "transportation" {
+		dbTable = "trans_year_rev"
+	} else {
+		dbTable = "log_year_rev"
+		//check if the table exists
+	}
+
+	query1 := fmt.Sprintf("CREATE TABLE IF NOT EXISTS %s (", dbTable)
+	query = query1 + `
         ID INTEGER PRIMARY KEY AUTOINCREMENT,
         Year INTEGER NOT NULL,
         Week INTEGER NOT NULL,
         TotalRevenue REAL NOT NULL
-    )
-	`)
+		);`
+
+	_, err := db.Exec(query)
 	if err != nil {
 		// Handle error
 		fmt.Println("we;re ducked")
 		return nil, err
 	}
 
+	query = fmt.Sprintf("SELECT TotalRevenue FROM %s WHERE Year = ? AND Week = ?", dbTable)
 	// Prepare the SQL statement for querying revenue da
-	stmt, err := db.Prepare("SELECT TotalRevenue FROM trans_year_rev WHERE Year = ? AND Week = ?")
+	stmt, err := db.Prepare(query)
 	if err != nil {
 		return nil, fmt.Errorf("error preparing SQL statement: %v", err)
 	}
@@ -237,7 +253,7 @@ func GetYearByYearData(db *sql.DB) ([]map[string]interface{}, error) {
 // 3. If the newest week is not the current week, update the db
 // 4. return the newest data
 
-func GetNewestYearByYearData(db *sql.DB, data []map[string]interface{}) ([]map[string]interface{}, error) {
+func GetNewestYearByYearData(db *sql.DB, data []map[string]interface{}, company string) ([]map[string]interface{}, error) {
 
 	// now we can get the Week in the db that its format is 2024 W01
 	currenYear, currentWeek := getYearAndWeek()
@@ -391,4 +407,152 @@ func GetCodedRevenueData(conn *sql.DB, when string) ([]map[string]interface{}, f
 	}
 
 	return filteredRevenueArray, totalRevenue, totalCount, nil
+}
+
+func GetMilesData(conn *sql.DB, when, company string) ([]MilesData, error) {
+
+	var query string
+	if company != "transportation" && company != "logistics" {
+		return nil, fmt.Errorf("This company doesnt exist")
+	}
+
+	switch when {
+	case "week_to_data":
+		today := time.Now()
+		year, week := today.ISOWeek()
+
+		startOfWeek := fmt.Sprintf("%d W%02d", year, week-1)
+		endOfWeek := fmt.Sprintf("%d W%02d", year, week)
+
+		query = fmt.Sprintf(`
+			SELECT DeliveryDate,
+				DeliveryDate as Name,
+				strftime('%w', DeliveryDate) as NameStr,
+				SUM(LoadedMiles) AS TotalLoadedMiles,
+				SUM(EmptyMiles) AS TotalEmptyMiles,
+				SUM(TotalMiles) AS TotalMiles,
+				SUM(EmptyMiles) / SUM(TotalMiles) * 100 AS PercentEmpty
+			FROM %s
+			WHERE Week BETWEEN '%s' AND '%s'
+			GROUP BY DeliveryDate;`, company, startOfWeek, endOfWeek)
+
+	case "month_to_date":
+		today := time.Now()
+		year, month, _ := today.Date()
+
+		startOfMonth := fmt.Sprintf("%d M%02d", year, int(month)-1)
+		endOfMonth := fmt.Sprintf("%d M%02d", year, int(month))
+
+		query = fmt.Sprintf(`
+			SELECT DeliveryDate,
+				Week as Name,
+				strftime('%m', DeliveryDate) as NameStr,
+				SUM(LoadedMiles) AS TotalLoadedMiles,
+				SUM(EmptyMiles) AS TotalEmptyMiles,
+				SUM(TotalMiles) AS TotalMiles,
+				SUM(EmptyMiles) / SUM(TotalMiles) * 100 AS PercentEmpty
+			FROM %s
+			WHERE Month BETWEEN '%s' AND '%s'
+			GROUP BY Week;`, company, startOfMonth, endOfMonth)
+
+	default:
+		return nil, fmt.Errorf("unsupported time period")
+	}
+
+	// Execute the query
+	rows, err := conn.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var results []MilesData
+	for rows.Next() {
+		var md MilesData
+		err := rows.Scan(
+			&md.Name,
+			&md.NameStr,
+			&md.TotalLoadedMiles,
+			&md.TotalEmptyMiles,
+			&md.TotalMiles,
+			&md.PercentEmpty,
+		)
+		if err != nil {
+			return nil, err
+		}
+		results = append(results, md)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	if len(results) == 0 {
+		return nil, fmt.Errorf("no data found")
+	}
+	return results, nil
+}
+
+func AddOrderToDB(conn *sql.DB, loadData *[]LoadData, company string) error {
+	// Begin a transaction
+	tx, err := conn.Begin()
+	if err != nil {
+		return fmt.Errorf("Failed to start transaction")
+	}
+	if company != "transportation" && company != "logistics" {
+		return fmt.Errorf("Invalid company")
+	}
+
+	query := fmt.Sprintf("INSERT OR REPLACE INTO %s (RevenueCode, OrderNumber, OrderType, Freight, FuelSurcharge, RemainingCharges, TotalRevenue, BillMiles, LoadedMiles, EmptyMiles, TotalMiles, EmptyPercentage, RevLoadedMile, RevTotalMile, DeliveryDate, Origin, Destination, Customer, CustomerCategory, OperationsUser, Billed, ControllingParty, Commodity, TrailerType, OriginState, DestinationState, Week, Month, Quarter, Brokered) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", company)
+
+	// Prepare the INSERT OR REPLACE statement
+	stmt, err := tx.Prepare(query)
+	if err != nil {
+		return fmt.Errorf("Failed to prepare statment")
+	}
+	defer stmt.Close()
+
+	// Insert or replace each LoadData object into the database
+	for _, data := range *loadData {
+		_, err := stmt.Exec(
+			data.RevenueCode,
+			data.Order,
+			data.OrderType,
+			data.Freight,
+			data.FuelSurcharge,
+			data.RemainingCharges,
+			data.TotalRevenue,
+			data.BillMiles,
+			data.LoadedMiles,
+			data.EmptyMiles,
+			data.TotalMiles,
+			data.EmptyPct,
+			data.RevPerLoadedMile,
+			data.RevPerTotalMile,
+			data.DeliveryDate,
+			data.Origin,
+			data.Destination,
+			data.Customer,
+			data.CustomerCategory,
+			data.OperationsUser,
+			data.Billed,
+			data.ControllingParty,
+			data.Commodity,
+			data.TrailerType,
+			data.OriginState,
+			data.DestinationState,
+			data.Week,
+			data.Month,
+			data.Quarter,
+			data.Brokered,
+		)
+		if err != nil {
+			tx.Rollback()
+			return fmt.Errorf("Faild to do transaction")
+		}
+	}
+
+	// Commit the transaction
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("Faild to commit the transaction")
+	}
+	return nil
 }

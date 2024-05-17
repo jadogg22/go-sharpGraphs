@@ -29,7 +29,7 @@ func Trans_year_by_year(c *gin.Context) {
 
 	//For now we're going to just get all data from the database
 	//This data only includes finished weeks.
-	data, err := GetYearByYearData(db)
+	data, err := GetYearByYearData(db, "transportation")
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"Message": "Error getting data from the database",
@@ -42,7 +42,7 @@ func Trans_year_by_year(c *gin.Context) {
 	// and we want to show the most recent data we need to check the
 	// Transportation table and get the most recent data
 
-	newData, err := GetNewestYearByYearData(db, data)
+	newData, err := GetNewestYearByYearData(db, data, "transportation")
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"Message": "Error getting newest data from the database",
@@ -60,12 +60,26 @@ func Trans_year_by_year(c *gin.Context) {
 // REVENUE miles. So that we can make sure that we are
 // Staying under the 10% empty miles.
 func Trans_stacked_miles(c *gin.Context) {
+	timePeriod := c.Param("when")
 
-	// query db, and get the stacked miles
+	conn, err := Make_connection()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"Message": "Error connecting to the database",
+		})
+		return
+	}
 
-	c.JSON(200, gin.H{
-		"Message": "Woring on it",
-	})
+	data, err2 := GetMilesData(conn, timePeriod, "transportation")
+	if err2 != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"Message": "Error getting data from the database",
+			"error":   err2,
+		})
+		return
+	}
+
+	c.JSON(200, data) // We're gonna come up with something better here
 }
 
 func Trans_coded_revenue(c *gin.Context) {
@@ -110,6 +124,34 @@ func Trans_coded_revenue(c *gin.Context) {
 	})
 }
 
+func Transportation_post(c *gin.Context) {
+	// receive data from the client
+	var loadData []LoadData
+
+	// Bind the request body to the loadData slice
+	if err := c.BindJSON(&loadData); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// driver add the data to the database
+	conn, err := Make_connection()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	err2 := AddOrderToDB(conn, &loadData, "transportation")
+	if err2 != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err2.Error()})
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"Message": "Successfully added to DB",
+	})
+}
+
 // ---------- Logisitics Handlers ----------
 func Log_year_by_year(c *gin.Context) {
 	c.JSON(200, gin.H{
@@ -121,6 +163,26 @@ func Log_stacked_miles(c *gin.Context) {
 	c.JSON(200, gin.H{
 		"Message": "Woring on it",
 	})
+}
+
+func Logistics_post(c *gin.Context) {
+	var data []LoadData
+
+	if err := c.ShouldBindJSON(&data); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	conn, err := Make_connection()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	err = AddOrderToDB(conn, &data, "logistics")
+	if err != nil {
+		fmt.Printf("error %v \n", err)
+	}
 }
 
 // ---------- Dispatch Handlers ----------
