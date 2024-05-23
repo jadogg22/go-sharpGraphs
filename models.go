@@ -80,10 +80,11 @@ type CodedRevenueData struct {
 }
 
 type MilesData struct {
-	Name             string `json:"Name"`
-	NameStr          string `json:"NameStr"`
-	TotalLoadedMiles int64  `json:"Total_Loaded_Miles"`
-	TotalEmptyMiles  int64  `json:"Total_Empty_Miles"`
-	TotalMiles       int64  `json:"Total_Actual_Miles"`
-	PercentEmpty     int64  `json:"Percent_empty"`
+	DeliveryDate     string  `json:"DeliveryDate"`
+	Name             string  `json:"Name"`
+	NameStr          string  `json:"NameStr"`
+	TotalLoadedMiles float64 `json:"Total_Loaded_Miles"`
+	TotalEmptyMiles  float64 `json:"Total_Empty_Miles"`
+	TotalMiles       float64 `json:"Total_Actual_Miles"`
+	PercentEmpty     float64 `json:"Percent_empty"`
 }

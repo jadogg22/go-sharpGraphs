@@ -278,8 +278,11 @@ func GetNewestYearByYearData(db *sql.DB, data []map[string]interface{}, company 
 	fmt.Println("Getting data between: ", newestDataWeekStr, " and ", currentDataWeekStr)
 
 	// queary to get the total revenue between the two weeks
+	if company != "transportation" && company != "logistics" {
+		return nil, fmt.Errorf("company is not correct")
+	}
 
-	query := `SELECT Week, ROUND(SUM(TotalRevenue), 2) as TotalRevenue FROM transportation WHERE Week BETWEEN ? AND ? GROUP BY Week`
+	query := fmt.Sprintf(`SELECT Week, ROUND(SUM(TotalRevenue), 2) as TotalRevenue FROM %s WHERE Week BETWEEN ? AND ? GROUP BY Week`, company)
 
 	//get all the rows between the two weeks
 	rows, err := db.Query(query, newestDataWeekStr, currentDataWeekStr)
@@ -412,56 +415,65 @@ func GetCodedRevenueData(conn *sql.DB, when string) ([]map[string]interface{}, f
 func GetMilesData(conn *sql.DB, when, company string) ([]MilesData, error) {
 
 	var query string
+	var startDate string
+	var endDate string
+
 	if company != "transportation" && company != "logistics" {
-		return nil, fmt.Errorf("This company doesnt exist")
+		return nil, fmt.Errorf("this company doesnt exist")
 	}
 
 	switch when {
-	case "week_to_data":
+	case "week_to_date":
 		today := time.Now()
 		year, week := today.ISOWeek()
 
-		startOfWeek := fmt.Sprintf("%d W%02d", year, week-1)
-		endOfWeek := fmt.Sprintf("%d W%02d", year, week)
+		startDate = fmt.Sprintf("%d W%02d", year, week-1)
+		endDate = fmt.Sprintf("%d W%02d", year, week)
+
+		fmt.Println("Getting data between: ", startDate, " and ", endDate)
 
 		query = fmt.Sprintf(`
 			SELECT DeliveryDate,
 				DeliveryDate as Name,
-				strftime('%w', DeliveryDate) as NameStr,
+				strftime('%%w', DeliveryDate) as NameStr,
 				SUM(LoadedMiles) AS TotalLoadedMiles,
 				SUM(EmptyMiles) AS TotalEmptyMiles,
 				SUM(TotalMiles) AS TotalMiles,
 				SUM(EmptyMiles) / SUM(TotalMiles) * 100 AS PercentEmpty
 			FROM %s
-			WHERE Week BETWEEN '%s' AND '%s'
-			GROUP BY DeliveryDate;`, company, startOfWeek, endOfWeek)
+			WHERE Week BETWEEN ? AND ?
+			GROUP BY DeliveryDate;`, company)
 
 	case "month_to_date":
 		today := time.Now()
 		year, month, _ := today.Date()
 
-		startOfMonth := fmt.Sprintf("%d M%02d", year, int(month)-1)
-		endOfMonth := fmt.Sprintf("%d M%02d", year, int(month))
+		startDate = fmt.Sprintf("%d M%02d", year, int(month)-1)
+		endDate = fmt.Sprintf("%d M%02d", year, int(month))
 
 		query = fmt.Sprintf(`
-			SELECT DeliveryDate,
-				Week as Name,
-				strftime('%m', DeliveryDate) as NameStr,
-				SUM(LoadedMiles) AS TotalLoadedMiles,
-				SUM(EmptyMiles) AS TotalEmptyMiles,
-				SUM(TotalMiles) AS TotalMiles,
-				SUM(EmptyMiles) / SUM(TotalMiles) * 100 AS PercentEmpty
-			FROM %s
-			WHERE Month BETWEEN '%s' AND '%s'
-			GROUP BY Week;`, company, startOfMonth, endOfMonth)
+        SELECT DeliveryDate,
+            Week as Name,
+            strftime('%%m', DeliveryDate) as NameStr,
+            SUM(LoadedMiles) AS TotalLoadedMiles,
+            SUM(EmptyMiles) AS TotalEmptyMiles,
+            SUM(TotalMiles) AS TotalMiles,
+            SUM(EmptyMiles) / SUM(TotalMiles) * 100 AS PercentEmpty
+        FROM %s
+        WHERE Month BETWEEN ? AND ?
+        GROUP BY Name;`, company)
 
 	default:
 		return nil, fmt.Errorf("unsupported time period")
+
 	}
 
+	fmt.Println("Getting data between ", startDate, " and ", endDate)
+
 	// Execute the query
-	rows, err := conn.Query(query)
+	rows, err := conn.Query(query, startDate, endDate)
 	if err != nil {
+		println("Error making query: ", err)
 		return nil, err
 	}
 	defer rows.Close()
@@ -470,6 +482,7 @@ func GetMilesData(conn *sql.DB, when, company string) ([]MilesData, error) {
 	for rows.Next() {
 		var md MilesData
 		err := rows.Scan(
+			&md.DeliveryDate,
 			&md.Name,
 			&md.NameStr,
 			&md.TotalLoadedMiles,
@@ -495,10 +508,10 @@ func AddOrderToDB(conn *sql.DB, loadData *[]LoadData, company string) error {
 	// Begin a transaction
 	tx, err := conn.Begin()
 	if err != nil {
-		return fmt.Errorf("Failed to start transaction")
+		return fmt.Errorf("failed to start transaction")
 	}
 	if company != "transportation" && company != "logistics" {
-		return fmt.Errorf("Invalid company")
+		return fmt.Errorf("invalid company")
 	}
 
 	query := fmt.Sprintf("INSERT OR REPLACE INTO %s (RevenueCode, OrderNumber, OrderType, Freight, FuelSurcharge, RemainingCharges, TotalRevenue, BillMiles, LoadedMiles, EmptyMiles, TotalMiles, EmptyPercentage, RevLoadedMile, RevTotalMile, DeliveryDate, Origin, Destination, Customer, CustomerCategory, OperationsUser, Billed, ControllingParty, Commodity, TrailerType, OriginState, DestinationState, Week, Month, Quarter, Brokered) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", company)
@@ -506,7 +519,7 @@ func AddOrderToDB(conn *sql.DB, loadData *[]LoadData, company string) error {
 	// Prepare the INSERT OR REPLACE statement
 	stmt, err := tx.Prepare(query)
 	if err != nil {
-		return fmt.Errorf("Failed to prepare statment")
+		return fmt.Errorf("failed to prepare statment")
 	}
 	defer stmt.Close()
 
@@ -546,13 +559,13 @@ func AddOrderToDB(conn *sql.DB, loadData *[]LoadData, company string) error {
 		)
 		if err != nil {
 			tx.Rollback()
-			return fmt.Errorf("Faild to do transaction")
+			return fmt.Errorf("faild to do transaction")
 		}
 	}
 
 	// Commit the transaction
 	if err := tx.Commit(); err != nil {
-		return fmt.Errorf("Faild to commit the transaction")
+		return fmt.Errorf("faild to commit the transaction")
 	}
 	return nil
 }
