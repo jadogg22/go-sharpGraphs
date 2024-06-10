@@ -1,20 +1,20 @@
 package main
 
 import (
-	// import gin cors middleware
-
-	"net/http"
+	// my local packages
+	"github.com/jadogg22/go-sharpGraphs/pkg/handlers"
 
 	"github.com/gin-gonic/gin"
+	"net/http"
 )
 
 // main function to display different endpoints for ease of use.
-//
 //	Handlers.go is where the logic is stored for each endpoint
 //
 
 func main() {
 	r := gin.Default()
+
 	// setup cors middleware
 	r.Use(CORSMiddleware())
 
@@ -23,25 +23,25 @@ func main() {
 	})
 
 	// // ---------- Transportation Handlers ----------
-	r.GET("/Transportation/get_yearly_revenue/", Trans_year_by_year)
-	r.GET("/Transportation/Stacked_miles/:when", Trans_stacked_miles)
-	r.GET("/Transportation/get_coded_revenue/:when", Trans_coded_revenue)
+	r.GET("/Transportation/get_yearly_revenue/", handlers.Trans_year_by_year)
+	r.GET("/Transportation/Stacked_miles/:when", handlers.Trans_stacked_miles)
+	r.GET("/Transportation/get_coded_revenue/:when", handlers.Trans_coded_revenue)
 
-	r.POST("/Transportation/add/", Transportation_post)
+	r.POST("/Transportation/add/", handlers.Transportation_post)
 
 	// // ---------- Logisitics Handlers ----------
-	r.GET("/Logistics/get_yearly_revenue", Log_year_by_year)
+	r.GET("/Logistics/get_yearly_revenue", handlers.Log_year_by_year)
 
 	// r.GET("/Logistics/Stacked_miles/", Log_stacked_miles)
 
-	// r.POST("/Logisics/add/", Logistics_post)
+	r.POST("/Logistics/add/", handlers.Logistics_post)
 
 	// ---------- Dispatch Handlers ----------------
-	r.GET("/Dispatch/Week_to_date/", Dispach_week_to_date)
+	r.GET("/Dispatch/Week_to_date/", handlers.Dispach_week_to_date)
 
 	// ---------- receive data ----------
 	// Define a POST endpoint to receive DispatcherStats data
-	//r.POST("/Dispatch/add/", Dispatch_post)
+	r.POST("/Dispatch/add/", handlers.Dispatch_post)
 	// run the server on port 5000
 	r.Run(":5000")
 

@@ -35,3 +35,8 @@ Where I'm going with this is that I would like to add some drop downs for months
 So The Week to Date in the dispachers was really probably one of the main reasons I even started this project. Luke the first thing that he does in the morning when he gets to the office is download this excel file open it up in powerbi and then run some numbers and send off a report to the higherups. I wanted to automate this proccess for him! 
 
 Right now I have it pretty much working. Ive made it so the f:ile automatically gets downloaded to my computer when I receive it in my email from mclaud I also created a post endpoint to send the data to so I parse the data on my computer and send it to the server then once I do that it will automatically show up on the site. This way the report is automatically done and you can compair all the dispachers against one another.
+
+
+## View
+
+well well, The sites working and looking good enouth now its time to move onto some devops!! I wanna do some bash scripting along using github to start version controlling so I can deploy the site to the server. I think I'm going to use a raspberry pi for the server because I have one laying around and I think it would be a good idea to use it. I'm going to use a bash script to deploy the site to the server. Then use a simple bash script to bring down a docker container and bring it back up. I think that would be the best way to do it.

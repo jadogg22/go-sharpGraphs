@@ -1,2 +1,7 @@
 Production.db
 
+*.db
+.env
+
+tmp/
+
