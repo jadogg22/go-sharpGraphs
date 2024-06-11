@@ -14,7 +14,7 @@ import (
 )
 
 func Make_connection() (*sql.DB, error) {
-	db, err := sql.Open("sqlite3", "Production.db")
+	db, err := sql.Open("sqlite3", "Data/Production.db")
 	if err != nil {
 		log.Fatal(err)
 		return nil, err
