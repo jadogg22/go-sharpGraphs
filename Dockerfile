@@ -13,7 +13,7 @@ RUN npm install
 RUN npm run build
 
 # Stage 2: Build Go server
-FROM golang:1.20 AS go-builder
+FROM golang:1.21.6 AS go-builder
 
 WORKDIR /app
 
@@ -31,7 +31,7 @@ COPY --from=frontend-builder /app/frontend/dist ./frontend/dist
 RUN go build -o /app/server .
 
 # Stage 3: Final image
-FROM golang:1.20
+FROM golang:1.21.6
 
 WORKDIR /app
 
