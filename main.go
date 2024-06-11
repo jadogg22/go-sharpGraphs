@@ -2,10 +2,11 @@ package main
 
 import (
 	// my local packages
-	"github.com/jadogg22/go-sharpGraphs/pkg/handlers"
-
+	"github.com/gin-gonic/contrib/static"
 	"github.com/gin-gonic/gin"
+	"github.com/jadogg22/go-sharpGraphs/pkg/handlers"
 	"net/http"
+	"strings"
 )
 
 // main function to display different endpoints for ease of use.
@@ -17,10 +18,10 @@ func main() {
 
 	// setup cors middleware
 	r.Use(CORSMiddleware())
+	r.Use(staticFileMiddleware())
 
-	r.GET("/", func(c *gin.Context) {
-		c.JSON(200, gin.H{"Message": "server is running"})
-	})
+	// Serve static files from the embedded frontend/dist directory
+	r.Use(static.Serve("/", static.LocalFile("./frontend/dist", true)))
 
 	// // ---------- Transportation Handlers ----------
 	r.GET("/api/Transportation/get_yearly_revenue/", handlers.Trans_year_by_year)
@@ -64,6 +65,17 @@ func CORSMiddleware() gin.HandlerFunc {
 		}
 
 		// Continue processing request
+		c.Next()
+	}
+}
+
+func staticFileMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if strings.HasSuffix(c.Request.URL.Path, ".js") {
+			c.Writer.Header().Set("Content-Type", "application/javascript")
+		} else if strings.HasSuffix(c.Request.URL.Path, ".css") {
+			c.Writer.Header().Set("Content-Type", "text/css")
+		}
 		c.Next()
 	}
 }
