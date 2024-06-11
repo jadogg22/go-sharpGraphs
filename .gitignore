@@ -1,4 +1,5 @@
 Production.db
+node_modules/
 
 *.db
 .env

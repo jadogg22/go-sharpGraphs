@@ -122,6 +122,34 @@ func GetMonth(week, year int) string {
 	return yearStr + " M12"
 }
 
+// Function to count working days in the current month and return the current day's position
+func CountWorkingDays() (totalWorkingDays, currentDay int) {
+	// Get the current date
+	today := time.Now()
+
+	// Get the first and last day of the current month
+	firstDay := time.Date(today.Year(), today.Month(), 1, 0, 0, 0, 0, today.Location())
+	lastDay := firstDay.AddDate(0, 1, -1)
+
+	// Initialize count for working days
+	workingDays := 0
+
+	// Iterate through each day of the month
+	for d := firstDay; d.Before(lastDay.AddDate(0, 0, 1)); d = d.AddDate(0, 0, 1) {
+		// Check if the day is a weekday (Monday to Friday)
+		if d.Weekday() >= time.Monday && d.Weekday() <= time.Friday {
+			// Increment the count of working days
+			workingDays++
+			// Check if the current day is today
+			if d.Day() == today.Day() {
+				currentDay = workingDays
+			}
+		}
+	}
+
+	return workingDays, currentDay
+}
+
 func WeektoStr(week int) string {
 	weekStr := strconv.Itoa(week)
 	if len(weekStr) == 1 {
