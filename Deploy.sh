@@ -19,9 +19,20 @@ cd /home/jaden/goServe/go-sharpGraphs
 echo "Pulling latest changes from Git..."
 git pull
 
+# Check if the pull was successful
+if [ $? -ne 0 ]; then
+        echo "Git pull failed"
+        exit 1
+fi
+
 # Build the Docker image
 echo "Building Docker image..."
 docker build -t $IMAGE_NAME .
+
+if [ $? -ne 0 ]; then
+        echo "Image build failed"
+        exit 1
+fi
 
 # Run the Docker container with the specified volume mount
 echo "Running Docker container..."
@@ -32,5 +43,5 @@ docker run -d -p 5000:5000 --name $CONTAINER_NAME -v $HOST_DATA_DIR:$CONTAINER_D
 if [ $? -eq 0 ]; then
         echo "Deployment completed successfully"
 else
-        echo " Command faild with exit code $?"
+        echo " Command failed with exit code $?"
 fi
