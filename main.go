@@ -20,6 +20,12 @@ func main() {
 	r.Use(CORSMiddleware())
 	r.Use(staticFileMiddleware())
 
+	r.GET("/ping", func(c *gin.Context) {
+		c.JSON(200, gin.H{
+			"message": "pong",
+		})
+	})
+
 	// Serve static files from the embedded frontend/dist directory
 	r.Use(static.Serve("/", static.LocalFile("./frontend/dist", true)))
 
