@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, NavLink } from 'react-router-dom';
 import DailyOps from './DailyOps';
 import LogisticsWeekly from './LogisticsWeekly';
+import GraphYearlyRevenue from './GraphYearlyRevenue';
 
 const App = () => {
   return (
@@ -17,7 +18,7 @@ const App = () => {
                   activeClassName="p-4 bg-gray-700"
                   className="block py-2 px-4 hover:bg-gray-700"
                 >
-                  Home
+                  Transporation Weekly Revenue
                 </NavLink>
               </li>
               <li>
@@ -52,7 +53,7 @@ const App = () => {
         </div>
         <div className="flex-1 p-6 flex flex-col justify-center overflow-auto">
           <Routes>
-            <Route path="/" element={<Home />} />
+            <Route path="/" element={<GraphYearlyRevenue />} />
             <Route path="/dailyOps" element={<DailyOps />} />
             <Route path="/about" element={<About />} />
             <Route path="/logisticsWeekly" element={<LogisticsWeekly />} />
