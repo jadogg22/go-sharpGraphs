@@ -33,22 +33,23 @@ func main() {
 	r.GET("/api/Transportation/get_yearly_revenue/", handlers.Trans_year_by_year)
 	r.GET("/api/Transportation/Stacked_miles/:when", handlers.Trans_stacked_miles)
 	r.GET("/api/Transportation/get_coded_revenue/:when", handlers.Trans_coded_revenue)
+	r.GET("/api/Transportation/Daily_Ops/", handlers.Daily_Ops)
 
-	r.POST("/Transportation/add/", handlers.Transportation_post)
+	r.POST("/api/Transportation/add/", handlers.Transportation_post)
 
 	// // ---------- Logisitics Handlers ----------
 	r.GET("/api/Logistics/get_yearly_revenue", handlers.Log_year_by_year)
 
 	// r.GET("/Logistics/Stacked_miles/", Log_stacked_miles)
 
-	r.POST("/Logistics/add/", handlers.Logistics_post)
+	r.POST("/api/Logistics/add/", handlers.Logistics_post)
 
 	// ---------- Dispatch Handlers ----------------
 	r.GET("/api/Dispatch/Week_to_date/", handlers.Dispach_week_to_date)
 
 	// ---------- receive data ----------
 	// Define a POST endpoint to receive DispatcherStats data
-	r.POST("/Dispatch/add/", handlers.Dispatch_post)
+	r.POST("/api/Dispatch/add/", handlers.Dispatch_post)
 	// run the server on port 5000
 	r.Run(":5000")
 

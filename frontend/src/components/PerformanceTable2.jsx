@@ -72,6 +72,10 @@ Day 6/20 for month of June`;
     },
   ];
 
+  // This function returns a color class based on the value and goal
+  // These specific values are different for each person
+  // so I think we're going to take in the person the value and the goal as perams
+  // and then return the color class based on that
   const getColorClass = (value, goal) => {
     if (value >= goal) {
       return 'bg-green-200';

@@ -51,7 +51,7 @@ const App = () => {
             </ul>
           </nav>
         </div>
-        <div className="flex-1 p-6 flex flex-col justify-center overflow-auto">
+        <div className="flex-1 p-4 flex flex-col justify-center overflow-auto">
           <Routes>
             <Route path="/" element={<GraphYearlyRevenue />} />
             <Route path="/dailyOps" element={<DailyOps />} />

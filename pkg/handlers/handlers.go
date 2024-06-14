@@ -126,6 +126,24 @@ func Trans_coded_revenue(c *gin.Context) {
 	})
 }
 
+// This function returns the daily operations data
+// for the transportation department
+
+// Daily ops page includes two tables of data.
+// I'm not really super worried about bandwidth so for now I'm going to just send two arays of maps
+
+// first table is | Manager | # trucks | Miles | Deadhead | order | stop |
+// secound table is | manager | Average MPTPD | Average RPTPD | DH% | ORDER OTP |STOP OTP | AVG MPTPD Needed to Make Goal
+
+// I think for the second table we're just going to include the color of the data like item.AverageMPTPDCOlOR: "Green"
+
+// then on the front end we're going to be able to use the correct colors with a simple funtion.
+
+func Daily_Ops(c *gin.Context) {
+
+	c.JSON(200, gin.H{"Message": "Working on it"})
+}
+
 func Transportation_post(c *gin.Context) {
 	// receive data from the client
 	var loadData []models.LoadData
