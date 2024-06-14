@@ -43,6 +43,6 @@ COPY --from=go-builder /app/frontend/dist ./frontend/dist
 EXPOSE 8080
 
 # Command to run the executable
-CMD ["./app/server"]
+CMD ["./server"]
 
 
