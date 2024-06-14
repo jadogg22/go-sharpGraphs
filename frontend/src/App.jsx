@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Link, NavLink } from 'react-rou
 import DailyOps from './DailyOps';
 import LogisticsWeekly from './LogisticsWeekly';
 import GraphYearlyRevenue from './GraphYearlyRevenue';
+import LogYearlyRevenue from './LogYearlyRevenue.jsx';
 
 const App = () => {
   return (
@@ -19,6 +20,16 @@ const App = () => {
                   className="block py-2 px-4 hover:bg-gray-700"
                 >
                   Transporation Weekly Revenue
+                </NavLink>
+              </li>
+              <li>
+                <NavLink
+                  end
+                  to="/LogisticsYearly"
+                  activeClassName="p-4 bg-gray-700"
+                  className="block py-2 px-4 hover:bg-gray-700"
+                >
+                  Logistics Weekly Revenue
                 </NavLink>
               </li>
               <li>
@@ -54,6 +65,7 @@ const App = () => {
         <div className="flex-1 p-4 flex flex-col justify-center overflow-auto">
           <Routes>
             <Route path="/" element={<GraphYearlyRevenue />} />
+            <Route path="/LogisticsYearly" element={<LogYearlyRevenue />} />
             <Route path="/dailyOps" element={<DailyOps />} />
             <Route path="/about" element={<About />} />
             <Route path="/logisticsWeekly" element={<LogisticsWeekly />} />
