@@ -2,9 +2,10 @@ package handlers
 
 import (
 	"fmt"
+	"net/http"
+
 	"github.com/jadogg22/go-sharpGraphs/pkg/database"
 	"github.com/jadogg22/go-sharpGraphs/pkg/models"
-	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
@@ -245,12 +246,14 @@ func Logistics_post(c *gin.Context) {
 func Dispach_week_to_date(c *gin.Context) {
 
 	conn, _ := database.Make_connection()
+
 	data, err := database.GetDispacherDataFromDB(conn)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{
 			"Message": "i borke this",
 		})
 	}
+
 	//Finally update the Response with the json data
 	c.JSON(200, data)
 }
@@ -278,6 +281,52 @@ func Dispatch_post(c *gin.Context) {
 			fmt.Printf("error %v \n", err)
 		}
 
+	}
+
+	c.JSON(200, gin.H{"Message": "Data received"})
+}
+
+func Dispatch_post_WTDOT(c *gin.Context) {
+	// receive data from the client
+	var data []models.OTWTDStats
+	if err := c.ShouldBindJSON(&data); err != nil {
+		// if there is an error return a 400 status code
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// driver add the data to the database
+	conn, err := database.Make_connection()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// make sure the table exists
+	query := `CREATE TABLE IF NOT EXISTS WTDOTStats (
+		dispatcher TEXT,
+		date DATE,
+		startDate DATE,
+		endDate DATE,
+		TotalOrders INT,
+		TotalStops INT,
+		ServiceIncidents INT,
+		OrderOnTime float,
+		StopOnTime float,
+		PRIMARY KEY (dispatcher, date)
+);`
+
+	_, err = conn.Exec(query)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	for _, driver := range data {
+		err = database.Add_OTWTDStats(conn, driver)
+		if err != nil {
+			fmt.Printf("error %v \n", err)
+		}
 	}
 
 	c.JSON(200, gin.H{"Message": "Data received"})

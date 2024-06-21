@@ -20,30 +20,43 @@ func Make_connection() (*sql.DB, error) {
 		return nil, err
 	}
 
-	// Create table if it doesn't exist
-	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS daily_driver_data (
-        dispatcher TEXT,
-        deadhead_percent REAL,
-        freight REAL,
-        fuel_surcharge REAL,
-        remain_chgs REAL,
-        revenue REAL,
-        total_rev_per_rev_miles REAL,
-        total_rev_per_total_miles REAL,
-        average_weekly_rev REAL,
-        average_weekly_rev_miles REAL,
-        average_rev_miles REAL,
-        revenue_miles REAL,
-        total_miles REAL,
-		trucks INTEGER,
-        date TEXT
-    )`)
+	return db, nil
+}
+
+func test_make_connection(dbPath string) (*sql.DB, error) {
+	db, err := sql.Open("sqlite3", dbPath)
 	if err != nil {
 		log.Fatal(err)
 		return nil, err
 	}
-
 	return db, nil
+}
+
+func isThereData(db *sql.DB) bool {
+	// Query to check if there is data in the db
+	query := `SELECT COUNT(*) FROM transportation;`
+
+	// Execute the query
+	rows, err := db.Query(query)
+	if err != nil {
+		fmt.Println("Error: ", err)
+		return false
+	}
+	defer rows.Close()
+
+	// Iterate through the rows and check if there is data
+	for rows.Next() {
+		var count int
+		err := rows.Scan(&count)
+		if err != nil {
+			fmt.Println("Error: ", err)
+			return false
+		}
+		if count > 0 {
+			return true
+		}
+	}
+	return false
 }
 
 // Add_DailyDriverData adds a DailyDriverData to the database
@@ -58,43 +71,40 @@ func Add_DailyDriverData(db *sql.DB, dailyData models.DailyDriverData) error {
 	return nil
 }
 
+// Wea are going to show 2 graphs on the front end
+// first graph
+// Manager | # of trucks | Miles | Deadhead | Order | Stop
+// secound graph
+// Manager | Average MPTPD | Average RPTPD | DH% | Order OTP | Stop OTP | AVG MPTPD Needed to Make Goal
+// I would like to have the data color coded so that we can show the user if they are doing well or not.
+// Manager | Average MPTPD | Average RPTPD | DH% | Order OTP | Stop OTP | AVG MPTPD Needed to Make Goal
+// then for each of them we can have a color code like item.AverageMPTPDCOlOR: "Green"
+// Then on the front end we can have a function take the color and return the correct color.
+
 func GetDispacherDataFromDB(db *sql.DB) ([]models.DriverData, error) {
-	// Query to retrieve the 5 most recent entries for each dispatcher
+	// Query to retrieve this weeks data for each dispatcher
 
 	// TODO - combine Freight and Fueil_Surcharge into a single field called truckHire
 	// TODO - subtract revenue from truckhire to get net revenue
 	// TODO - add a field for net revenue called margin %
 
-	query := `
-        SELECT
-            Dispatcher,
-            Deadhead_percent,
-            Freight,
-            Fuel_Surcharge,
-            Remain_Chgs,
-            Revenue,
-            Total_Rev_per_rev_miles,
-            Total_Rev_per_Total_Miles,
-            Average_weekly_rev,
-            Average_weekly_Rev_Miles,
-            Average_rev_miles,
-            Revenue_Miles,
-            Total_Miles,
-		Trucks, 
-            Date
-        FROM (
-            SELECT
-                *,
-                ROW_NUMBER() OVER (PARTITION BY Dispatcher ORDER BY Date DESC) AS RowNum
-            FROM
-                daily_driver_data
-        ) AS RankedData
-        WHERE
-            RowNum <= 5
-        ORDER BY
-            Dispatcher,
-            Date DESC;
-    `
+	// Get the date of the start of the work week
+	startDay := time.Now().AddDate(0, 0, -int(time.Now().Weekday()))
+	startDayStr := startDay.Format("2006-01-02")
+
+	fmt.Println("Getting data from: ", startDayStr)
+
+	// for each dispatcher sum the data for the week # trucks miles deadead order and stop
+	query := fmt.Sprintf(`
+		SELECT dispatcher,
+			SUM(trucks) as trucks,
+			SUM(total_miles) as miles,
+			SUM(deadhead_percent) as deadhead,
+		FROM daily_driver_data
+		WHERE date >= ?
+		GROUP BY dispatcher
+		ORDER BY dispatcher;
+	`)
 
 	rows, err := db.Query(query)
 	if err != nil {
@@ -103,89 +113,109 @@ func GetDispacherDataFromDB(db *sql.DB) ([]models.DriverData, error) {
 	}
 	defer rows.Close()
 
-	dispatcherData := make(map[string]models.DriverData)
+	// Map to store the data
 
+	// Iterate through the rows and populate the dispatcherData map
 	for rows.Next() {
 		var dispatcher string
-		var dateStr string
-		var data models.DailyDriverData
+		var miles float64
+		var deadhead float64
+		var trucks int64
 		err := rows.Scan(
 			&dispatcher,
-			&data.Deadhead_percent,
-			&data.Freight,
-			&data.Fuel_Surcharge,
-			&data.Remain_Chgs,
-			&data.Revenue,
-			&data.Total_Rev_per_rev_miles,
-			&data.Total_Rev_per_Total_Miles,
-			&data.Average_weekly_rev,
-			&data.Average_weekly_Rev_Miles,
-			&data.Average_rev_miles,
-			&data.Revenue_Miles,
-			&data.Total_Miles,
-			&data.Trucks,
-			&dateStr,
+			&trucks,
+			&miles,
+			&deadhead,
 		)
 		if err != nil {
 			fmt.Println("Error: ", err)
 			return nil, err
 		}
-
-		date, err := time.Parse("2006-01-02 00:00:00+00:00", dateStr)
-		if err != nil {
-			fmt.Println("Error: ", err)
-			return nil, err
-		}
-
-		if existingData, ok := dispatcherData[dispatcher]; ok {
-			// Append data to existing entry
-			existingData.Deadhead_percent = append(existingData.Deadhead_percent, data.Deadhead_percent)
-			existingData.Freight = append(existingData.Freight, data.Freight)
-			existingData.Fuel_Surcharge = append(existingData.Fuel_Surcharge, data.Fuel_Surcharge)
-			existingData.Remain_Chgs = append(existingData.Remain_Chgs, data.Remain_Chgs)
-			existingData.Revenue = append(existingData.Revenue, data.Revenue)
-			existingData.Total_Rev_per_rev_miles = append(existingData.Total_Rev_per_rev_miles, data.Total_Rev_per_rev_miles)
-			existingData.Total_Rev_per_Total_Miles = append(existingData.Total_Rev_per_Total_Miles, data.Total_Rev_per_Total_Miles)
-			existingData.Average_weekly_rev = append(existingData.Average_weekly_rev, data.Average_weekly_rev)
-			existingData.Average_weekly_Rev_Miles = append(existingData.Average_weekly_Rev_Miles, data.Average_weekly_Rev_Miles)
-			existingData.Average_rev_miles = append(existingData.Average_rev_miles, data.Average_rev_miles)
-			existingData.Revenue_Miles = append(existingData.Revenue_Miles, data.Revenue_Miles)
-			existingData.Total_Miles = append(existingData.Total_Miles, data.Total_Miles)
-			existingData.Trucks = append(existingData.Trucks, data.Trucks)
-			existingData.Date = append(existingData.Date, date)
-			dispatcherData[dispatcher] = existingData
-		} else {
-			// Create new entry
-			dispatcherData[dispatcher] = models.DriverData{
-				Dispatcher:                dispatcher,
-				Deadhead_percent:          []float64{data.Deadhead_percent},
-				Freight:                   []float64{data.Freight},
-				Fuel_Surcharge:            []float64{data.Fuel_Surcharge},
-				Remain_Chgs:               []float64{data.Remain_Chgs},
-				Revenue:                   []float64{data.Revenue},
-				Total_Rev_per_rev_miles:   []float64{data.Total_Rev_per_rev_miles},
-				Total_Rev_per_Total_Miles: []float64{data.Total_Rev_per_Total_Miles},
-				Average_weekly_rev:        []float64{data.Average_weekly_rev},
-				Average_weekly_Rev_Miles:  []float64{data.Average_weekly_Rev_Miles},
-				Average_rev_miles:         []float64{data.Average_rev_miles},
-				Revenue_Miles:             []float64{data.Revenue_Miles},
-				Total_Miles:               []float64{data.Total_Miles},
-				Trucks:                    []int64{data.Trucks},
-				Date:                      []time.Time{date},
-			}
-		}
 	}
 
-	// Convert map to slice
-	var result []models.DriverData
-	for _, data := range dispatcherData {
-		// Remove KEVIN BOYDSTUN and add the rest to the result
-		if data.Dispatcher != "KEVIN BOYDSTUN" && data.Dispatcher != "ROCHELLE GENERA" && data.Dispatcher != "STEPHANIE BINGHAM" {
-			result = append(result, data)
-		}
-	}
+	// for rows.Next() {
+	// 	var dispatcher string
+	// 	var dateStr string
+	// 	var data models.DailyDriverData
+	// 	err := rows.Scan(
+	// 		&dispatcher,
+	// 		&data.Deadhead_percent,
+	// 		&data.Freight,
+	// 		&data.Fuel_Surcharge,
+	// 		&data.Remain_Chgs,
+	// 		&data.Revenue,
+	// 		&data.Total_Rev_per_rev_miles,
+	// 		&data.Total_Rev_per_Total_Miles,
+	// 		&data.Average_weekly_rev,
+	// 		&data.Average_weekly_Rev_Miles,
+	// 		&data.Average_rev_miles,
+	// 		&data.Revenue_Miles,
+	// 		&data.Total_Miles,
+	// 		&data.Trucks,
+	// 		&dateStr,
+	// 	)
+	// 	if err != nil {
+	// 		fmt.Println("Error: ", err)
+	// 		return nil, err
+	// 	}
 
-	return result, nil
+	// 	date, err := time.Parse("2006-01-02 00:00:00+00:00", dateStr)
+	// 	if err != nil {
+	// 		fmt.Println("Error: ", err)
+	// 		return nil, err
+	// 	}
+
+	// 	if existingData, ok := dispatcherData[dispatcher]; ok {
+	// 		// Append data to existing entry
+	// 		existingData.Deadhead_percent = append(existingData.Deadhead_percent, data.Deadhead_percent)
+	// 		existingData.Freight = append(existingData.Freight, data.Freight)
+	// 		existingData.Fuel_Surcharge = append(existingData.Fuel_Surcharge, data.Fuel_Surcharge)
+	// 		existingData.Remain_Chgs = append(existingData.Remain_Chgs, data.Remain_Chgs)
+	// 		existingData.Revenue = append(existingData.Revenue, data.Revenue)
+	// 		existingData.Total_Rev_per_rev_miles = append(existingData.Total_Rev_per_rev_miles, data.Total_Rev_per_rev_miles)
+	// 		existingData.Total_Rev_per_Total_Miles = append(existingData.Total_Rev_per_Total_Miles, data.Total_Rev_per_Total_Miles)
+	// 		existingData.Average_weekly_rev = append(existingData.Average_weekly_rev, data.Average_weekly_rev)
+	// 		existingData.Average_weekly_Rev_Miles = append(existingData.Average_weekly_Rev_Miles, data.Average_weekly_Rev_Miles)
+	// 		existingData.Average_rev_miles = append(existingData.Average_rev_miles, data.Average_rev_miles)
+	// 		existingData.Revenue_Miles = append(existingData.Revenue_Miles, data.Revenue_Miles)
+	// 		existingData.Total_Miles = append(existingData.Total_Miles, data.Total_Miles)
+	// 		existingData.Trucks = append(existingData.Trucks, data.Trucks)
+	// 		existingData.Date = append(existingData.Date, date)
+	// 		dispatcherData[dispatcher] = existingData
+	// 	} else {
+	// 		// Create new entry
+	// 		dispatcherData[dispatcher] = models.DriverData{
+	// 			Dispatcher:                dispatcher,
+	// 			Deadhead_percent:          []float64{data.Deadhead_percent},
+	// 			Freight:                   []float64{data.Freight},
+	// 			Fuel_Surcharge:            []float64{data.Fuel_Surcharge},
+	// 			Remain_Chgs:               []float64{data.Remain_Chgs},
+	// 			Revenue:                   []float64{data.Revenue},
+	// 			Total_Rev_per_rev_miles:   []float64{data.Total_Rev_per_rev_miles},
+	// 			Total_Rev_per_Total_Miles: []float64{data.Total_Rev_per_Total_Miles},
+	// 			Average_weekly_rev:        []float64{data.Average_weekly_rev},
+	// 			Average_weekly_Rev_Miles:  []float64{data.Average_weekly_Rev_Miles},
+	// 			Average_rev_miles:         []float64{data.Average_rev_miles},
+	// 			Revenue_Miles:             []float64{data.Revenue_Miles},
+	// 			Total_Miles:               []float64{data.Total_Miles},
+	// 			Trucks:                    []int64{data.Trucks},
+	// 			Date:                      []time.Time{date},
+	// 		}
+	// 	}
+	// }
+
+	// // Convert map to slice
+	// var result []models.DriverData
+	// for _, data := range dispatcherData {
+	// 	// Remove KEVIN BOYDSTUN and add the rest to the result
+	// 	if data.Dispatcher != "KEVIN BOYDSTUN" && data.Dispatcher != "ROCHELLE GENERA" && data.Dispatcher != "STEPHANIE BINGHAM" {
+	// 		result = append(result, data)
+	// 	}
+	// }
+
+	// return result, nil
+
+	return nil, nil
 }
 
 func GetYearByYearData(db *sql.DB, company string) ([]map[string]interface{}, error) {

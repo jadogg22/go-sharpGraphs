@@ -88,3 +88,15 @@ type MilesData struct {
 	TotalMiles       float64 `json:"Total_Actual_Miles"`
 	PercentEmpty     float64 `json:"Percent_empty"`
 }
+
+type OTWTDStats struct {
+	Dispatcher       string
+	Date             time.Time
+	StartDate        time.Time
+	EndDate          time.Time
+	TotalOrders      int
+	TotalStops       int
+	ServiceIncidents int
+	OrderOnTime      float32
+	StopOnTime       float32
+}

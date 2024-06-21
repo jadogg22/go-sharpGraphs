@@ -25,7 +25,7 @@ const DailyOps = () => {
 return (
     <>
     <div className="p-6">
-    <h1 className="text-2xl font-bold text-center p-6">Daily Operations</h1>
+    <h1 className="text-2xl font-bold text-center p-6">Daily Operations Week to Data</h1>
     <PerformanceTable1 />
     <PerformanceTable2 />
    </div>

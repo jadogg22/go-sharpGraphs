@@ -221,6 +221,67 @@ func GetNewWeekFromWeek(weekStr string, amount int) string {
 // 	return revenueArray
 // }
 
+func GetStartDayOfWeek() time.Time {
+	// Get the current date
+	today := time.Now()
+
+	// get the day of the week
+	day := today.Weekday()
+
+	// get monday as the start of the week
+	startOfWeek := today.AddDate(0, 0, -int(day))
+
+	return startOfWeek
+}
+
+func IsHoliday(date time.Time) bool {
+
+	Holidays := []time.Time{
+		// New Year's Day
+		time.Date(2021, time.January, 1, 0, 0, 0, 0, time.UTC),
+		// Memorial Day
+		time.Date(2024, time.May, 31, 0, 0, 0, 0, time.UTC),
+		// Independence Day
+		time.Date(2024, time.July, 4, 0, 0, 0, 0, time.UTC),
+		// Labor Day
+		time.Date(2024, time.September, 6, 0, 0, 0, 0, time.UTC),
+		// Thanksgiving Day
+		time.Date(2024, time.November, 25, 0, 0, 0, 0, time.UTC),
+		// Christmas Day
+		time.Date(2024, time.December, 25, 0, 0, 0, 0, time.UTC),
+	}
+	for _, holiday := range Holidays {
+		if date.Year() == holiday.Year() && date.Month() == holiday.Month() && date.Day() == holiday.Day() {
+			return true
+		}
+	}
+	return false
+}
+
+func CountWorkingDaysInTimeframe(start, end time.Time) (int, error) {
+	// make sure start is before end
+	if start.After(end) {
+		err := fmt.Errorf("start date is after end date")
+		return 0, err
+	}
+
+	// Initialize count for working days
+	workingDays := 0
+
+	// Iterate through each day of the month
+	for d := start; d.Before(end.AddDate(0, 0, 1)); d = d.AddDate(0, 0, 1) {
+		// Check if the day is a weekday (Monday to Friday)
+		if d.Weekday() >= time.Monday && d.Weekday() <= time.Friday {
+			if !IsHoliday(d) {
+				// Increment the count of working days
+				workingDays++
+			}
+		}
+	}
+
+	return workingDays, nil
+}
+
 func SortArraybyRevenue(revenueArray []map[string]interface{}) []map[string]interface{} {
 	// Define the sorting function
 	sortingFunc := func(i, j int) bool {
