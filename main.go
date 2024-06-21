@@ -50,7 +50,7 @@ func main() {
 	// ---------- receive data ----------
 	// Define a POST endpoint to receive DispatcherStats data
 	r.POST("/api/Dispatcher/add/", handlers.Dispatch_post)
-	r.POST("/api/Dispatcher/add/WTDOT", handlers.Dispatch_post_WTDOT)
+	r.POST("/api/OTWTD/add/", handlers.Dispatch_post_WTDOT)
 	// run the server on port 5000
 	r.Run(":5000")
 
