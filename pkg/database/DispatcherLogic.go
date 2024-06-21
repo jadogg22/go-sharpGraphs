@@ -166,7 +166,7 @@ func getColorDH(actual, goal float64) string {
 }
 
 func Add_OTWTDStats(db *sql.DB, data models.OTWTDStats) error {
-	query := `INSERT INTO ot_wtd_stats(dispatcher, date, start_date, end_date, mptpd, rptpd, deadhead)
+	query := `INSERT INTO WTDOTStats(dispatcher, date, start_date, end_date, mptpd, rptpd, deadhead)
 	          VALUES($1, $2, $3, $4, $5, $6, $7)`
 
 	dispatcher := data.Dispatcher
