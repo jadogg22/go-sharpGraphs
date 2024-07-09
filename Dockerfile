@@ -39,6 +39,8 @@ WORKDIR /app
 COPY --from=go-builder /app/server .
 COPY --from=go-builder /app/frontend/dist ./frontend/dist
 
+COPY .env ./.env
+
 # Expose port 8080 to the outside world
 EXPOSE 8080
 
