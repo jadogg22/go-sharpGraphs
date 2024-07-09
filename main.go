@@ -52,6 +52,8 @@ func main() {
 	r.POST("/api/Dispatcher/add/", handlers.Dispatch_post)
 	r.POST("/api/OTWTD/add/", handlers.Dispatch_post_WTDOT)
 	// run the server on port 5000
+
+	r.GET("/api/test_db", handlers.Test_db)
 	r.Run(":5000")
 
 }

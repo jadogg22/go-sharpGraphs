@@ -17,6 +17,21 @@ func TestHandler(c *gin.Context) {
 	})
 }
 
+func Test_db(c *gin.Context) {
+	// connect to the database
+	_, err := database.PG_Make_connection()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"Message": "Error connecting to the database",
+		})
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"Message": "the database is working",
+	})
+}
+
 // ---------- Transportation Handlers ----------
 func Trans_year_by_year(c *gin.Context) {
 	// get date from system

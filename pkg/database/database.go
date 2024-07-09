@@ -4,17 +4,56 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"os"
 	"strconv"
 	"time"
 
 	"github.com/jadogg22/go-sharpGraphs/pkg/helpers"
 	"github.com/jadogg22/go-sharpGraphs/pkg/models"
+	_ "github.com/lib/pq"
 
 	_ "github.com/mattn/go-sqlite3"
+	// get the env variables
+	"github.com/joho/godotenv"
 )
+
+var (
+	PG_HOST     string
+	PG_PORT     string
+	PG_USER     string
+	PG_PASSWORD string
+	PG_DATABASE string
+)
+
+func init() {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
+	PG_HOST = os.Getenv("PG_HOST")
+	PG_PORT = os.Getenv("PG_PORT")
+	PG_USER = os.Getenv("PG_USER")
+	PG_PASSWORD = os.Getenv("PG_PASSWORD")
+	PG_DATABASE = os.Getenv("PG_DATABASE")
+}
 
 func Make_connection() (*sql.DB, error) {
 	db, err := sql.Open("sqlite3", "Data/Production.db")
+	if err != nil {
+		log.Fatal(err)
+		return nil, err
+	}
+
+	return db, nil
+}
+
+func PG_Make_connection() (*sql.DB, error) {
+
+	// grab env variables for db connection
+	connectionString := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", PG_HOST, PG_PORT, PG_USER, PG_PASSWORD, PG_DATABASE)
+
+	db, err := sql.Open("postgres", connectionString)
 	if err != nil {
 		log.Fatal(err)
 		return nil, err
@@ -555,7 +594,7 @@ func AddOrderToDB(conn *sql.DB, loadData *[]models.LoadData, company string) err
 		return fmt.Errorf("invalid company")
 	}
 
-	query := fmt.Sprintf("INSERT OR REPLACE INTO %s (RevenueCode, OrderNumber, OrderType, Freight, FuelSurcharge, RemainingCharges, TotalRevenue, BillMiles, LoadedMiles, EmptyMiles, TotalMiles, EmptyPercentage, RevLoadedMile, RevTotalMile, DeliveryDate, Origin, Destination, Customer, CustomerCategory, OperationsUser, Billed, ControllingParty, Commodity, TrailerType, OriginState, DestinationState, Week, Month, Quarter, Brokered) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", company)
+	query := fmt.Sprintf("INSERT OR REPLACE INTO %s (RevenueCode, OrderNumber, OrderType, Freight, FuelSurcharge, RemainingCharges, TotalRevenue, BillMiles, LoadedMiles, EmptyMiles, TotalMiles, EmptyPercentage, RevLoadedMile, RevTotalMile, DeliveryDate, Origin, Destination, Customer, CustomerCategory, OperationsUser, Billed, ControllingParty, Commodity, TrailerType, OriginState, DestinationState, Week, Month, Quarter, Brokered) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT (OrderNumber) DO NOTHING;", company)
 
 	// Prepare the INSERT OR REPLACE statement
 	stmt, err := tx.Prepare(query)
