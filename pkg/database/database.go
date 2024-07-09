@@ -273,21 +273,6 @@ func GetYearByYearData(db *sql.DB, company string) ([]map[string]interface{}, er
 		//check if the table exists
 	}
 
-	query1 := fmt.Sprintf("CREATE TABLE IF NOT EXISTS %s (", dbTable)
-	query = query1 + `
-        ID INTEGER PRIMARY KEY AUTOINCREMENT,
-        Year INTEGER NOT NULL,
-        Week INTEGER NOT NULL,
-        TotalRevenue REAL NOT NULL
-		);`
-
-	_, err := db.Exec(query)
-	if err != nil {
-		// Handle error
-		fmt.Println("we;re ducked")
-		return nil, err
-	}
-
 	query = fmt.Sprintf("SELECT TotalRevenue FROM %s WHERE Year = ? AND Week = ?", dbTable)
 	// Prepare the SQL statement for querying revenue da
 	stmt, err := db.Prepare(query)

@@ -37,7 +37,8 @@ func Trans_year_by_year(c *gin.Context) {
 	// get date from system
 	// conncet to database
 	// pull all year by year data and and compair data
-	db, err := database.Make_connection()
+
+	db, err := database.PG_Make_connection()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"Message": "Error connecting to the database",
