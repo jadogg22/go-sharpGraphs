@@ -19,7 +19,7 @@ func TestHandler(c *gin.Context) {
 
 func Test_db(c *gin.Context) {
 	// connect to the database
-	_, err := database.PG_Make_connection()
+	db, err := database.PG_Make_connection()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"Message": "Error connecting to the database",
@@ -27,9 +27,25 @@ func Test_db(c *gin.Context) {
 		return
 	}
 
+	rows, err := db.Query("SELECT count(*) FROM transportation")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"Message": "Error querying the database",
+		})
+		return
+	}
+
+	defer rows.Close()
+
+	var count int
+
+	for rows.Next() {
+		rows.Scan(&count)
+	}
+
 	c.JSON(200, gin.H{
-		"Message": "the database is working",
-	})
+		"message": "Successfully connected to the database, there are " + fmt.Sprint(count) + " rows in the transportation table"})
+
 }
 
 // ---------- Transportation Handlers ----------
