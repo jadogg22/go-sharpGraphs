@@ -100,3 +100,11 @@ type OTWTDStats struct {
 	OrderOnTime      float32
 	StopOnTime       float32
 }
+
+type WeeklyRevenue struct {
+	Name        int      `json:"Name"`
+	Revenue2021 *float64 `json:"2021 Revenue,omitempty"`
+	Revenue2022 *float64 `json:"2022 Revenue,omitempty"`
+	Revenue2023 *float64 `json:"2023 Revenue,omitempty"`
+	Revenue2024 *float64 `json:"2024 Revenue,omitempty"`
+}

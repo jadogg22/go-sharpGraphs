@@ -58,16 +58,20 @@ func Trans_year_by_year(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"Message": "Error connecting to the database",
+			"Error":   err,
 		})
 		return
 	}
 
 	//For now we're going to just get all data from the database
 	//This data only includes finished weeks.
-	data, err := database.GetYearByYearData(db, "transportation")
+	fmt.Println("Getting the first data")
+	// change to fectch data and use the new struct
+	data, err := database.GetCachedData(db, "transportation")
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"Message": "Error getting data from the database",
+			"Error":   err,
 		})
 		return
 	}
@@ -77,7 +81,7 @@ func Trans_year_by_year(c *gin.Context) {
 	// and we want to show the most recent data we need to check the
 	// Transportation table and get the most recent data
 
-	newData, err := database.GetNewestYearByYearData(db, data, "transportation")
+	newData, err := database.GetYearByYearDataRefactored(db, data, "transportation")
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"Message": "Error getting newest data from the database",
@@ -220,7 +224,7 @@ func Log_year_by_year(c *gin.Context) {
 
 	//For now we're going to just get all data from the database
 	//This data only includes finished weeks.
-	data, err := database.GetYearByYearData(db, "logistics")
+	data, err := database.FetchRevenueDataToWeeklyRevenue(db, "logistics")
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"Message": "Error getting data from the database",
@@ -231,7 +235,7 @@ func Log_year_by_year(c *gin.Context) {
 	// and we want to show the most recent data we need to check the
 	// Transportation table and get the most recent data
 
-	newData, err := database.GetNewestYearByYearData(db, data, "logistics")
+	newData, err := database.GetYearByYearDataRefactored(db, data, "logistics")
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"Message": "Error getting newest data from the database",

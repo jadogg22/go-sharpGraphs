@@ -4,8 +4,7 @@ This is a simple revenue reporting tool that takes in reports from mcloud and ge
 
 ## running the project
 
-running the project is simple make sure you have dockerinstalled and then just run the bash script 'Deploy.sh' in the root of the project. This will build the docker images and run the containers.
-
+Odviously I'm not going to include our internal company data in this repo, If you are a sharp guy connect with me and I can get you the proper .env file to get this running properly. If you are not a sharp guy, you can still run this project, with the included sample data. this will just be a local sqlite database with some sample data. to prove its working.
 ## Dispatchers
 
 The dispatchers are hardcoded to be over spacific areas, if they change the dispatchers will need to be updated. in the function getLocation in pgk/database/dispatcher.go.
