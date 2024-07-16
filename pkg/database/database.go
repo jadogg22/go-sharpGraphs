@@ -640,22 +640,34 @@ func AddOrderToDB(conn *sql.DB, loadData *[]models.LoadData, company string) err
 	// Begin a transaction
 	tx, err := conn.Begin()
 	if err != nil {
-		return fmt.Errorf("failed to start transaction")
+		return fmt.Errorf("failed to start transaction: %w", err)
 	}
+	defer tx.Rollback() // This will be a no-op if the transaction is committed successfully
+
 	if company != "transportation" && company != "logistics" {
 		return fmt.Errorf("invalid company")
 	}
 
-	query := fmt.Sprintf("INSERT OR REPLACE INTO %s (RevenueCode, OrderNumber, OrderType, Freight, FuelSurcharge, RemainingCharges, TotalRevenue, BillMiles, LoadedMiles, EmptyMiles, TotalMiles, EmptyPercentage, RevLoadedMile, RevTotalMile, DeliveryDate, Origin, Destination, Customer, CustomerCategory, OperationsUser, Billed, ControllingParty, Commodity, TrailerType, OriginState, DestinationState, Week, Month, Quarter, Brokered) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT (OrderNumber) DO NOTHING;", company)
+	query := fmt.Sprintf(`
+        INSERT INTO %s (
+            RevenueCode, OrderNumber, OrderType, Freight, FuelSurcharge, RemainingCharges,
+            TotalRevenue, BillMiles, LoadedMiles, EmptyMiles, TotalMiles, EmptyPercentage,
+            RevLoadedMile, RevTotalMile, DeliveryDate, Origin, Destination, Customer,
+            CustomerCategory, OperationsUser, Billed, ControllingParty, Commodity,
+            TrailerType, OriginState, DestinationState, Week, Month, Quarter, Brokered
+        ) VALUES (
+            $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17,
+            $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30
+        ) ON CONFLICT (OrderNumber) DO NOTHING;`, company)
 
-	// Prepare the INSERT OR REPLACE statement
+	// Prepare the INSERT statement
 	stmt, err := tx.Prepare(query)
 	if err != nil {
-		return fmt.Errorf("failed to prepare statment")
+		return fmt.Errorf("failed to prepare statement: %w", err)
 	}
 	defer stmt.Close()
 
-	// Insert or replace each LoadData object into the database
+	// Insert or ignore each LoadData object into the database
 	for _, data := range *loadData {
 		_, err := stmt.Exec(
 			data.RevenueCode,
@@ -690,14 +702,14 @@ func AddOrderToDB(conn *sql.DB, loadData *[]models.LoadData, company string) err
 			data.Brokered,
 		)
 		if err != nil {
-			tx.Rollback()
-			return fmt.Errorf("faild to do transaction")
+			return fmt.Errorf("failed to execute statement: %w", err)
 		}
 	}
 
 	// Commit the transaction
 	if err := tx.Commit(); err != nil {
-		return fmt.Errorf("faild to commit the transaction")
+		return fmt.Errorf("failed to commit the transaction: %w", err)
 	}
+
 	return nil
 }

@@ -192,7 +192,7 @@ func Transportation_post(c *gin.Context) {
 	}
 
 	// driver add the data to the database
-	conn, err := database.Make_connection()
+	conn, err := database.PG_Make_connection()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
