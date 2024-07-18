@@ -214,23 +214,30 @@ func Log_year_by_year(c *gin.Context) {
 	// get date from system
 	// conncet to database
 	// pull all year by year data and and compair data
-	db, err := database.Make_connection()
+
+	db, err := database.PG_Make_connection()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"Message": "Error connecting to the database",
+			"Error":   err,
 		})
 		return
 	}
 
 	//For now we're going to just get all data from the database
 	//This data only includes finished weeks.
-	data, err := database.FetchRevenueDataToWeeklyRevenue(db, "logistics")
+	fmt.Println("Getting the first data")
+	// change to fectch data and use the new struct
+	data, err := database.GetCachedData(db, "logistics")
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"Message": "Error getting data from the database",
+			"Error":   err,
 		})
 		return
 	}
+
+	fmt.Println("finished getting the first data")
 	// Because its not very likly that we are at the end of the week
 	// and we want to show the most recent data we need to check the
 	// Transportation table and get the most recent data
