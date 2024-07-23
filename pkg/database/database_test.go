@@ -70,7 +70,6 @@ func TestPG_tables_exist(t *testing.T) {
 	if err == nil {
 		t.Error("Found a table that doesnt exist")
 	}
-	fmt.Println("Test: testPG_tables_exist passed - all tables exist")
 }
 
 // func TestRefactoredYearbyYearData(t *testing.T) {
@@ -223,12 +222,15 @@ func TestFindMissingData(t *testing.T) {
 	// get the missing data
 
 	missingData, err := FindMissingData(transportationData)
-
-	fmt.Println("Missing data:" + fmt.Sprint(len(missingData)))
-
-	for _, data := range missingData {
-		fmt.Println(data)
+	if err != nil {
+		t.Error("Failed to get missing data with error: ", err)
 	}
+
+	// check if the missing data is correct
+	if len(missingData) < 2 {
+		t.Error("Failed to get correct missing data")
+	}
+
 	// looking like its working
 
 	data, err := GetYearByYearDataRefactored(db, transportationData, "logistics")
@@ -236,12 +238,7 @@ func TestFindMissingData(t *testing.T) {
 		t.Error("Failed to get year by year data with error: ", err)
 	}
 
-	fmt.Println("Data:" + fmt.Sprint(len(data)))
-
-	for _, data := range data {
-		fmt.Println(data)
+	if len(data) != 52 {
+		t.Error("Failed to get correct data")
 	}
-
-	t.Error("This test is not complete")
-
 }

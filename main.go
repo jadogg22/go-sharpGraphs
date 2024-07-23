@@ -40,7 +40,7 @@ func main() {
 	// // ---------- Logisitics Handlers ----------
 	r.GET("/api/Logistics/get_yearly_revenue", handlers.Log_year_by_year)
 
-	// r.GET("/Logistics/Stacked_miles/", Log_stacked_miles)
+	//r.GET("/Logistics/Stacked_miles/", Log_stacked_miles)
 
 	r.POST("/api/Logistics/add/", handlers.Logistics_post)
 

@@ -74,7 +74,6 @@ func PG_Make_connection() (*sql.DB, error) {
 		log.Fatal(err)
 		return nil, err
 	}
-
 	return db, nil
 }
 
@@ -544,68 +543,87 @@ func GetCodedRevenueData(conn *sql.DB, when string) ([]map[string]interface{}, f
 	return filteredRevenueArray, totalRevenue, totalCount, nil
 }
 
-func GetMilesData(conn *sql.DB, when, company string) ([]models.MilesData, error) {
+func formatDate(dateStr string) (string, error) {
+	// Parse the input date string
+	t, err := time.Parse(time.RFC3339, dateStr)
+	if err != nil {
+		return "", fmt.Errorf("error parsing date: %v", err)
+	}
 
+	// Format the date in a more human-readable way
+	return t.Format("Jan 2"), nil
+}
+
+func GetMilesData(conn *sql.DB, when, company string) ([]models.MilesData, error) {
 	var query string
-	var startDate string
-	var endDate string
 
 	if company != "transportation" && company != "logistics" {
-		return nil, fmt.Errorf("this company doesnt exist")
+		return nil, fmt.Errorf("this company doesn't exist")
 	}
 
 	switch when {
 	case "week_to_date":
-		today := time.Now()
-		year, week := today.ISOWeek()
-
-		startDate = fmt.Sprintf("%d W%02d", year, week-1)
-		endDate = fmt.Sprintf("%d W%02d", year, week)
-
-		fmt.Println("Getting data between: ", startDate, " and ", endDate)
-
 		query = fmt.Sprintf(`
-			SELECT DeliveryDate,
-				DeliveryDate as Name,
-				strftime('%%w', DeliveryDate) as NameStr,
-				SUM(LoadedMiles) AS TotalLoadedMiles,
-				SUM(EmptyMiles) AS TotalEmptyMiles,
-				SUM(TotalMiles) AS TotalMiles,
-				SUM(EmptyMiles) / SUM(TotalMiles) * 100 AS PercentEmpty
-			FROM %s
-			WHERE Week BETWEEN ? AND ?
-			GROUP BY DeliveryDate;`, company)
+			SELECT 
+				deliverydate,
+				deliverydate::date AS name,
+				EXTRACT(DOW FROM deliverydate::date) AS NameStr,
+				SUM(loadedmiles) AS total_loaded_miles,
+				SUM(emptymiles) AS total_empty_miles,
+				SUM(totalmiles) AS total_miles,
+			CASE 
+				WHEN SUM(totalmiles) > 0 THEN 
+					(SUM(emptymiles) / SUM(totalmiles)) * 100 
+					ELSE 0 
+				END AS percent_empty
+			FROM 
+				%s
+			GROUP BY 
+				deliverydate
+			ORDER BY 
+				deliverydate::date DESC
+				LIMIT 7;`, company)
 
 	case "month_to_date":
-		today := time.Now()
-		year, month, _ := today.Date()
-
-		startDate = fmt.Sprintf("%d M%02d", year, int(month)-1)
-		endDate = fmt.Sprintf("%d M%02d", year, int(month))
-
 		query = fmt.Sprintf(`
-        SELECT DeliveryDate,
-            Week as Name,
-            strftime('%%m', DeliveryDate) as NameStr,
-            SUM(LoadedMiles) AS TotalLoadedMiles,
-            SUM(EmptyMiles) AS TotalEmptyMiles,
-            SUM(TotalMiles) AS TotalMiles,
-            SUM(EmptyMiles) / SUM(TotalMiles) * 100 AS PercentEmpty
+    WITH last_6_weeks AS (
+        SELECT DISTINCT week
         FROM %s
-        WHERE Month BETWEEN ? AND ?
-        GROUP BY Name;`, company)
+        ORDER BY week DESC
+        LIMIT 6
+    )
+    SELECT 
+        t.week,
+        MIN(t.deliverydate::date) AS week_start,
+        MAX(t.deliverydate::date) AS week_end,
+        SUM(t.loadedmiles) AS total_loaded_miles,
+        SUM(t.emptymiles) AS total_empty_miles,
+        SUM(t.totalmiles) AS total_miles,
+        CASE 
+            WHEN SUM(t.totalmiles) > 0 THEN 
+                (SUM(t.emptymiles) / SUM(t.totalmiles)) * 100 
+            ELSE 0 
+        END AS percent_empty
+    FROM 
+        %s t
+    JOIN 
+        last_6_weeks l6w ON t.week = l6w.week
+    GROUP BY 
+        t.week
+    ORDER BY 
+        MIN(t.deliverydate::date) DESC;`, company, company)
 
 	default:
 		return nil, fmt.Errorf("unsupported time period")
-
 	}
 
-	fmt.Println("Getting data between ", startDate, " and ", endDate)
-
 	// Execute the query
-	rows, err := conn.Query(query, startDate, endDate)
+	rows, err := conn.Query(query)
 	if err != nil {
-		println("Error making query: ", err)
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("no data found")
+		}
+		fmt.Println("Error making query:", err)
 		return nil, err
 	}
 	defer rows.Close()
@@ -625,15 +643,43 @@ func GetMilesData(conn *sql.DB, when, company string) ([]models.MilesData, error
 		if err != nil {
 			return nil, err
 		}
+
+		// Format the date in a more human-readable way
+		md.NameStr, err = formatDate(md.Name)
+		if err != nil {
+			return nil, err
+		}
 		results = append(results, md)
 	}
+
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
+
 	if len(results) == 0 {
-		return nil, fmt.Errorf("no data found")
+		return nil, fmt.Errorf("no data found, Please check the DB")
 	}
+
 	return results, nil
+}
+
+func FindNewestMilesData(conn *sql.DB, company string) (time.Time, error) {
+	var query string
+	if company != "transportation" && company != "logistics" {
+		return time.Time{}, fmt.Errorf("this company doesn't exist")
+	}
+
+	query = fmt.Sprintf(`
+		SELECT MAX(deliverydate)
+		FROM %s
+	`, company)
+
+	var newestDate time.Time
+	err := conn.QueryRow(query).Scan(&newestDate)
+	if err != nil {
+		return time.Time{}, err
+	}
+	return newestDate, nil
 }
 
 func AddOrderToDB(conn *sql.DB, loadData *[]models.LoadData, company string) error {

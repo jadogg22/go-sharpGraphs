@@ -17,6 +17,20 @@ func GetYearAndWeek() (int, int) {
 	return year, week
 }
 
+func StartOfISOWeek(year int, week int) time.Time {
+	date := time.Date(year, 0, 0, 0, 0, 0, 0, time.UTC)
+	isoYear, isoWeek := date.ISOWeek()
+	for date.Weekday() != time.Monday { // iterate back to Monday
+		date = date.AddDate(0, 0, -1)
+		isoYear, isoWeek = date.ISOWeek()
+	}
+	for isoYear < year || (isoYear == year && isoWeek < week) {
+		date = date.AddDate(0, 0, 7)
+		isoYear, isoWeek = date.ISOWeek()
+	}
+	return date
+}
+
 // takes a slice of YearByYear data and returns the newest week and year
 func GetNewestWeek(data []map[string]interface{}) int {
 	newestYear := 0
