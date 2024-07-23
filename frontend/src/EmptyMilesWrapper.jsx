@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import StackedMilesGraph from './components/StackedMilesGraph';
 
+
 const EmptyMilesWrapper = () => {
   const [milesData, setMilesData] = useState([]);
   const [timeFrame, setTimeFrame] = useState('month_to_date');
