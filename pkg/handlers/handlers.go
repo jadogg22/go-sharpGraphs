@@ -101,7 +101,7 @@ func Trans_year_by_year(c *gin.Context) {
 func Trans_stacked_miles(c *gin.Context) {
 	timePeriod := c.Param("when")
 
-	conn, err := database.Make_connection()
+	conn, err := database.PG_Make_connection()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"Message": "Error connecting to the database",
