@@ -14,8 +14,7 @@ const EmptyMilesWrapper = () => {
     setError(null);
     try {
       const response = await axios.get(`http://192.168.0.62:5000/api/Transportation/Stacked_miles/${timeFrame}`);
-      setMilesData(response.data);
-      console.log('Data fetched:', response.data);
+      setMilesData(response.data.reverse());
     } catch (err) {
       setError('Failed to fetch data. Please try again.');
       console.error('Error fetching data:', err);
@@ -35,10 +34,16 @@ const EmptyMilesWrapper = () => {
 
   return (
     <div>
-      <h1>Empty Miles</h1>
-      <button onClick={toggleTimeFrame}>
-        Switch to {timeFrame === 'month_to_date' ? 'Week to Date' : 'Month to Date'}
-      </button>
+      <h1 className="text-2xl font-bold text-center p-6">Empty Miles - {timeFrame === 'month_to_date' ? "Weekly View" : "Daily view"}</h1>
+      <div className="flex justify-between items-center px-16 pb-6"> {/* Flex container for button */}
+    <button
+      onClick={toggleTimeFrame}
+      className="bg-blue-400 text-white font-bold py-2 px-4 rounded focus:outline-none"
+      style={{ alignSelf: 'flex-end' }}  // Align button to the bottom of its container
+    >
+      Switch to {timeFrame === 'month_to_date' ? 'Week to Date' : 'Month to Date'}
+    </button>
+  </div>
       {isLoading && <p>Loading...</p>}
       {error && <p style={{ color: 'red' }}>{error}</p>}
       {!isLoading && !error && milesData.length > 0 && (
