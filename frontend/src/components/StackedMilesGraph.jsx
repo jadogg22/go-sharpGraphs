@@ -12,9 +12,10 @@ const MilesBarChart = ({ data }) => {
       return (
         <div style={{ backgroundColor: 'white', padding: '10px', border: '1px solid #ccc' }}>
           <p><strong>{label}</strong></p>
-          <p>Total Loaded Miles: {data.TotalLoadedMiles.toFixed(2)}</p>
-          <p>Total Empty Miles: {data.TotalEmptyMiles.toFixed(2)}</p>
-          <p>Total Miles: {data.TotalMiles.toFixed(2)}</p>
+          <p>Total Loaded Miles: {data["Total_Loaded_Miles"].toFixed(2)}</p>
+          <p>Total Empty Miles: {data["Total_Empty_Miles"].toFixed(2)}</p>
+          <p>Total Miles: {data["Total_Actual_Miles"].toFixed(2)}</p>
+          <p>Percent Empty: {data["Percent_empty"].toFixed(2)}</p>
         </div>
       );
     }

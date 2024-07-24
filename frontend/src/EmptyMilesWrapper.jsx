@@ -5,7 +5,7 @@ import StackedMilesGraph from './components/StackedMilesGraph';
 
 const EmptyMilesWrapper = () => {
   const [milesData, setMilesData] = useState([]);
-  const [timeFrame, setTimeFrame] = useState('month_to_date');
+  const [timeFrame, setTimeFrame] = useState('week_to_date');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
