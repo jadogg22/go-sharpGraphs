@@ -695,16 +695,16 @@ func AddOrderToDB(conn *sql.DB, loadData *[]models.LoadData, company string) err
 	}
 
 	query := fmt.Sprintf(`
-        INSERT INTO %s (
-            RevenueCode, OrderNumber, OrderType, Freight, FuelSurcharge, RemainingCharges,
-            TotalRevenue, BillMiles, LoadedMiles, EmptyMiles, TotalMiles, EmptyPercentage,
-            RevLoadedMile, RevTotalMile, DeliveryDate, Origin, Destination, Customer,
-            CustomerCategory, OperationsUser, Billed, ControllingParty, Commodity,
-            TrailerType, OriginState, DestinationState, Week, Month, Quarter, Brokered
-        ) VALUES (
-            $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17,
-            $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30
-        ) ON CONFLICT (OrderNumber) DO NOTHING;`, company)
+       INSERT INTO %s (
+    revenuecode, ordernumber, ordertype, freight, fuelsurcharge, remainingcharges,
+    totalrevenue, billmiles, loadedmiles, emptymiles, totalmiles, emptypercentage,
+    revloadedmile, revtotalmile, deliverydate, origin, destination, customer,
+    customercategory, operationsuser, billed, controllingparty, commodity,
+    trailertype, originstate, destinationstate, week, month, quarter, brokered
+) VALUES (
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17,
+    $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30
+) ON CONFLICT (ordernumber) DO NOTHING;`, company)
 
 	// Prepare the INSERT statement
 	stmt, err := tx.Prepare(query)
