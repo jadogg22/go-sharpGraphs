@@ -1,8 +1,42 @@
 package models
 
 import (
+	"database/sql"
 	"time"
 )
+
+type TransportationOrder struct {
+	TotalRevenue     sql.NullFloat64 `json:"total_revenue"`
+	BillMiles        sql.NullInt64   `json:"bill_miles"`
+	LoadedMiles      sql.NullInt64   `json:"loaded_miles"`
+	Billed           sql.NullBool    `json:"billed"`
+	EmptyMiles       sql.NullInt64   `json:"empty_miles"`
+	TotalMiles       sql.NullInt64   `json:"total_miles"`
+	EmptyPercentage  sql.NullFloat64 `json:"empty_pct"`
+	RevLoadedMile    sql.NullFloat64 `json:"rev_per_loaded_mile"`
+	RevTotalMile     sql.NullFloat64 `json:"rev_per_total_mile"`
+	Freight          sql.NullFloat64 `json:"freight"`
+	FuelSurcharge    sql.NullFloat64 `json:"fuel_surcharge"`
+	RemainingCharges sql.NullFloat64 `json:"remaining_charges"`
+	Brokered         sql.NullBool    `json:"brokered"`
+	DestinationState sql.NullString  `json:"destination_state"`
+	Week             sql.NullString  `json:"week"`
+	Month            sql.NullString  `json:"month"`
+	Quarter          sql.NullString  `json:"quarter"`
+	Origin           sql.NullString  `json:"origin"`
+	OrderNumber      string          `json:"order"`
+	OrderType        sql.NullString  `json:"order_type"`
+	DeliveryDate     sql.NullString  `json:"delivery_date"`
+	RevenueCode      sql.NullString  `json:"revenue_code"`
+	Destination      sql.NullString  `json:"destination"`
+	Customer         sql.NullString  `json:"customer"`
+	CustomerCategory sql.NullString  `json:"customer_category"`
+	OperationsUser   sql.NullString  `json:"operations_user"`
+	ControllingParty sql.NullString  `json:"controlling_party"`
+	Commodity        sql.NullString  `json:"commodity"`
+	TrailerType      sql.NullString  `json:"trailer_type"`
+	OriginState      sql.NullString  `json:"origin_state"`
+}
 
 type LoadData struct {
 	RevenueCode      string  `json:"revenue_code"`

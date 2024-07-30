@@ -682,7 +682,7 @@ func FindNewestMilesData(conn *sql.DB, company string) (time.Time, error) {
 	return newestDate, nil
 }
 
-func AddOrderToDB(conn *sql.DB, loadData *[]models.LoadData, company string) error {
+func AddOrderToDB(conn *sql.DB, loadData *[]models.TransportationOrder, company string) error {
 	// Begin a transaction
 	tx, err := conn.Begin()
 	if err != nil {
@@ -717,7 +717,7 @@ func AddOrderToDB(conn *sql.DB, loadData *[]models.LoadData, company string) err
 	for _, data := range *loadData {
 		_, err := stmt.Exec(
 			data.RevenueCode,
-			data.Order,
+			data.OrderNumber,
 			data.OrderType,
 			data.Freight,
 			data.FuelSurcharge,
@@ -727,9 +727,9 @@ func AddOrderToDB(conn *sql.DB, loadData *[]models.LoadData, company string) err
 			data.LoadedMiles,
 			data.EmptyMiles,
 			data.TotalMiles,
-			data.EmptyPct,
-			data.RevPerLoadedMile,
-			data.RevPerTotalMile,
+			data.EmptyPercentage,
+			data.RevLoadedMile,
+			data.RevTotalMile,
 			data.DeliveryDate,
 			data.Origin,
 			data.Destination,
