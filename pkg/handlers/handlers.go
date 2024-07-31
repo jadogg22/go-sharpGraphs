@@ -182,31 +182,25 @@ func Daily_Ops(c *gin.Context) {
 }
 
 func Transportation_post(c *gin.Context) {
-	// receive data from the client
-	var loadData []models.LoadData
+	var data []models.LoadData
 
-	// Bind the request body to the loadData slice
-	if err := c.BindJSON(&loadData); err != nil {
+	if err := c.ShouldBindJSON(&data); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	// driver add the data to the database
 	conn, err := database.PG_Make_connection()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	err2 := database.AddOrderToDB(conn, &loadData, "transportation")
-	if err2 != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err2.Error()})
-		return
-	}
+	fmt.Println("Adding data to the database")
 
-	c.JSON(200, gin.H{
-		"Message": "Successfully added to DB",
-	})
+	err = database.AddOrderToDB(conn, &data, "transportation")
+	if err != nil {
+		fmt.Printf("error %v \n", err)
+	}
 }
 
 // ---------- Logisitics Handlers ----------
