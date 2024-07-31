@@ -183,7 +183,7 @@ func Daily_Ops(c *gin.Context) {
 
 func Transportation_post(c *gin.Context) {
 	// receive data from the client
-	var loadData []models.TransportationOrder
+	var loadData []models.LoadData
 
 	// Bind the request body to the loadData slice
 	if err := c.BindJSON(&loadData); err != nil {
@@ -263,14 +263,14 @@ func Log_stacked_miles(c *gin.Context) {
 }
 
 func Logistics_post(c *gin.Context) {
-	var data []models.TransportationOrder
+	var data []models.LoadData
 
 	if err := c.ShouldBindJSON(&data); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	conn, err := database.Make_connection()
+	conn, err := database.PG_Make_connection()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
