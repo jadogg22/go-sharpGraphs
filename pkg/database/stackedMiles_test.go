@@ -9,15 +9,12 @@ import (
 func TestGetMilesData(t *testing.T) {
 
 	fmt.Println("Test: TestGetMilesData")
-	db, err := PG_Make_connection()
-	if err != nil {
-		t.Error("Failed to connect to database with error: ", err)
-	}
 
 	var mileData []models.MilesData
 	var mileData2 []models.MilesData
+	var err error
 
-	mileData, err = GetMilesData(db, "week_to_date", "transportation")
+	mileData, err = GetMilesData("week_to_date", "transportation")
 	if err != nil {
 		t.Error("Failed to get miles data with error: ", err)
 	}
@@ -29,7 +26,7 @@ func TestGetMilesData(t *testing.T) {
 		t.Error("Failed to get any data from the database")
 	}
 
-	mileData2, err = GetMilesData(db, "month_to_date", "transportation")
+	mileData2, err = GetMilesData("month_to_date", "transportation")
 	if err != nil {
 		t.Error("Failed to get miles data with error: ", err)
 	}

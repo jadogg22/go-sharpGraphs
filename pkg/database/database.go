@@ -59,6 +59,7 @@ func init() {
 	if err != nil {
 		fmt.Println("Error connecting to the database")
 	}
+
 }
 
 func Make_connection() (*sql.DB, error) {
@@ -94,9 +95,9 @@ func test_make_connection(dbPath string) (*sql.DB, error) {
 }
 
 // Add_DailyDriverData adds a DailyDriverData to the database
-func Add_DailyDriverData(db *sql.DB, dailyData models.DailyDriverData) error {
+func Add_DailyDriverData(dailyData models.DailyDriverData) error {
 	// Add the dailyDriverData to the db
-	_, err := db.Exec(`INSERT INTO daily_driver_data (dispatcher, deadhead_percent, freight, fuel_surcharge, remain_chgs, revenue, total_rev_per_rev_miles, total_rev_per_total_miles, average_weekly_rev, average_weekly_rev_miles, average_rev_miles, revenue_miles, total_miles, trucks, date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+	_, err := DB.Exec(`INSERT INTO daily_driver_data (dispatcher, deadhead_percent, freight, fuel_surcharge, remain_chgs, revenue, total_rev_per_rev_miles, total_rev_per_total_miles, average_weekly_rev, average_weekly_rev_miles, average_rev_miles, revenue_miles, total_miles, trucks, date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		dailyData.Dispatcher, dailyData.Deadhead_percent, dailyData.Freight, dailyData.Fuel_Surcharge, dailyData.Remain_Chgs, dailyData.Revenue, dailyData.Total_Rev_per_rev_miles, dailyData.Total_Rev_per_Total_Miles, dailyData.Average_weekly_rev, dailyData.Average_weekly_Rev_Miles, dailyData.Average_rev_miles, dailyData.Revenue_Miles, dailyData.Total_Miles, dailyData.Trucks, dailyData.Date)
 	if err != nil {
 		return err
@@ -115,7 +116,7 @@ func Add_DailyDriverData(db *sql.DB, dailyData models.DailyDriverData) error {
 // then for each of them we can have a color code like item.AverageMPTPDCOlOR: "Green"
 // Then on the front end we can have a function take the color and return the correct color.
 
-func GetDispacherDataFromDB(db *sql.DB) ([]models.DriverData, error) {
+func GetDispacherDataFromDB() ([]models.DriverData, error) {
 	// Query to retrieve this weeks data for each dispatcher
 
 	// TODO - combine Freight and Fueil_Surcharge into a single field called truckHire
@@ -140,7 +141,7 @@ func GetDispacherDataFromDB(db *sql.DB) ([]models.DriverData, error) {
 		ORDER BY dispatcher;
 	`)
 
-	rows, err := db.Query(query)
+	rows, err := DB.Query(query)
 	if err != nil {
 		fmt.Println("Error: ", err)
 		return nil, err
@@ -166,88 +167,6 @@ func GetDispacherDataFromDB(db *sql.DB) ([]models.DriverData, error) {
 			return nil, err
 		}
 	}
-
-	// for rows.Next() {
-	// 	var dispatcher string
-	// 	var dateStr string
-	// 	var data models.DailyDriverData
-	// 	err := rows.Scan(
-	// 		&dispatcher,
-	// 		&data.Deadhead_percent,
-	// 		&data.Freight,
-	// 		&data.Fuel_Surcharge,
-	// 		&data.Remain_Chgs,
-	// 		&data.Revenue,
-	// 		&data.Total_Rev_per_rev_miles,
-	// 		&data.Total_Rev_per_Total_Miles,
-	// 		&data.Average_weekly_rev,
-	// 		&data.Average_weekly_Rev_Miles,
-	// 		&data.Average_rev_miles,
-	// 		&data.Revenue_Miles,
-	// 		&data.Total_Miles,
-	// 		&data.Trucks,
-	// 		&dateStr,
-	// 	)
-	// 	if err != nil {
-	// 		fmt.Println("Error: ", err)
-	// 		return nil, err
-	// 	}
-
-	// 	date, err := time.Parse("2006-01-02 00:00:00+00:00", dateStr)
-	// 	if err != nil {
-	// 		fmt.Println("Error: ", err)
-	// 		return nil, err
-	// 	}
-
-	// 	if existingData, ok := dispatcherData[dispatcher]; ok {
-	// 		// Append data to existing entry
-	// 		existingData.Deadhead_percent = append(existingData.Deadhead_percent, data.Deadhead_percent)
-	// 		existingData.Freight = append(existingData.Freight, data.Freight)
-	// 		existingData.Fuel_Surcharge = append(existingData.Fuel_Surcharge, data.Fuel_Surcharge)
-	// 		existingData.Remain_Chgs = append(existingData.Remain_Chgs, data.Remain_Chgs)
-	// 		existingData.Revenue = append(existingData.Revenue, data.Revenue)
-	// 		existingData.Total_Rev_per_rev_miles = append(existingData.Total_Rev_per_rev_miles, data.Total_Rev_per_rev_miles)
-	// 		existingData.Total_Rev_per_Total_Miles = append(existingData.Total_Rev_per_Total_Miles, data.Total_Rev_per_Total_Miles)
-	// 		existingData.Average_weekly_rev = append(existingData.Average_weekly_rev, data.Average_weekly_rev)
-	// 		existingData.Average_weekly_Rev_Miles = append(existingData.Average_weekly_Rev_Miles, data.Average_weekly_Rev_Miles)
-	// 		existingData.Average_rev_miles = append(existingData.Average_rev_miles, data.Average_rev_miles)
-	// 		existingData.Revenue_Miles = append(existingData.Revenue_Miles, data.Revenue_Miles)
-	// 		existingData.Total_Miles = append(existingData.Total_Miles, data.Total_Miles)
-	// 		existingData.Trucks = append(existingData.Trucks, data.Trucks)
-	// 		existingData.Date = append(existingData.Date, date)
-	// 		dispatcherData[dispatcher] = existingData
-	// 	} else {
-	// 		// Create new entry
-	// 		dispatcherData[dispatcher] = models.DriverData{
-	// 			Dispatcher:                dispatcher,
-	// 			Deadhead_percent:          []float64{data.Deadhead_percent},
-	// 			Freight:                   []float64{data.Freight},
-	// 			Fuel_Surcharge:            []float64{data.Fuel_Surcharge},
-	// 			Remain_Chgs:               []float64{data.Remain_Chgs},
-	// 			Revenue:                   []float64{data.Revenue},
-	// 			Total_Rev_per_rev_miles:   []float64{data.Total_Rev_per_rev_miles},
-	// 			Total_Rev_per_Total_Miles: []float64{data.Total_Rev_per_Total_Miles},
-	// 			Average_weekly_rev:        []float64{data.Average_weekly_rev},
-	// 			Average_weekly_Rev_Miles:  []float64{data.Average_weekly_Rev_Miles},
-	// 			Average_rev_miles:         []float64{data.Average_rev_miles},
-	// 			Revenue_Miles:             []float64{data.Revenue_Miles},
-	// 			Total_Miles:               []float64{data.Total_Miles},
-	// 			Trucks:                    []int64{data.Trucks},
-	// 			Date:                      []time.Time{date},
-	// 		}
-	// 	}
-	// }
-
-	// // Convert map to slice
-	// var result []models.DriverData
-	// for _, data := range dispatcherData {
-	// 	// Remove KEVIN BOYDSTUN and add the rest to the result
-	// 	if data.Dispatcher != "KEVIN BOYDSTUN" && data.Dispatcher != "ROCHELLE GENERA" && data.Dispatcher != "STEPHANIE BINGHAM" {
-	// 		result = append(result, data)
-	// 	}
-	// }
-
-	// return result, nil
 
 	return nil, nil
 }
@@ -487,7 +406,7 @@ func CreateYearlyRevenueRecord(db *sql.DB, year int, week int, revenue float64) 
 
 }
 
-func GetCodedRevenueData(conn *sql.DB, when string) ([]map[string]interface{}, float64, int64, error) {
+func GetCodedRevenueData(when string) ([]map[string]interface{}, float64, int64, error) {
 	// Query to retrieve revenue data grouped by RevenueCode
 	query := `
     SELECT RevenueCode,
@@ -503,7 +422,7 @@ func GetCodedRevenueData(conn *sql.DB, when string) ([]map[string]interface{}, f
 	fmt.Println("calling database fron", when, when2)
 
 	//when2 is actually 4 weeks before
-	rows, err := conn.Query(query, when2, when)
+	rows, err := DB.Query(query, when2, when)
 	if err != nil {
 		return nil, 0.0, 0, err
 	}
@@ -561,7 +480,7 @@ func formatDate(dateStr string) (string, error) {
 	return t.Format("Jan 2"), nil
 }
 
-func GetMilesData(conn *sql.DB, when, company string) ([]models.MilesData, error) {
+func GetMilesData(when, company string) ([]models.MilesData, error) {
 	var query string
 
 	if company != "transportation" && company != "logistics" {
@@ -625,7 +544,7 @@ func GetMilesData(conn *sql.DB, when, company string) ([]models.MilesData, error
 	}
 
 	// Execute the query
-	rows, err := conn.Query(query)
+	rows, err := DB.Query(query)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, fmt.Errorf("no data found")
@@ -670,7 +589,7 @@ func GetMilesData(conn *sql.DB, when, company string) ([]models.MilesData, error
 	return results, nil
 }
 
-func FindNewestMilesData(conn *sql.DB, company string) (time.Time, error) {
+func FindNewestMilesData(company string) (time.Time, error) {
 	var query string
 	if company != "transportation" && company != "logistics" {
 		return time.Time{}, fmt.Errorf("this company doesn't exist")
@@ -682,16 +601,16 @@ func FindNewestMilesData(conn *sql.DB, company string) (time.Time, error) {
 	`, company)
 
 	var newestDate time.Time
-	err := conn.QueryRow(query).Scan(&newestDate)
+	err := DB.QueryRow(query).Scan(&newestDate)
 	if err != nil {
 		return time.Time{}, err
 	}
 	return newestDate, nil
 }
 
-func AddOrderToDB(conn *sql.DB, loadData *[]models.LoadData, company string) error {
+func AddOrderToDB(loadData *[]models.LoadData, company string) error {
 	// Begin a transaction
-	tx, err := conn.Begin()
+	tx, err := DB.Begin()
 	if err != nil {
 		return fmt.Errorf("failed to start transaction: %w", err)
 	}

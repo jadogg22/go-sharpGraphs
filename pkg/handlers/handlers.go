@@ -89,15 +89,7 @@ func Trans_year_by_year(c *gin.Context) {
 func Trans_stacked_miles(c *gin.Context) {
 	timePeriod := c.Param("when")
 
-	conn, err := database.PG_Make_connection()
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"Message": "Error connecting to the database",
-		})
-		return
-	}
-
-	data, err2 := database.GetMilesData(conn, timePeriod, "transportation")
+	data, err2 := database.GetMilesData(timePeriod, "transportation")
 	if err2 != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"Message": "Error getting data from the database",
@@ -113,14 +105,6 @@ func Trans_coded_revenue(c *gin.Context) {
 	when := c.Param("when")
 	fmt.Println("Getting coded revenue for ", when)
 
-	conn, err := database.Make_connection()
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"Message": "Error connecting to the database",
-		})
-		return
-	}
-
 	// parts := strings.Split(when, "-")
 
 	// if len(parts) == 1 {
@@ -135,7 +119,7 @@ func Trans_coded_revenue(c *gin.Context) {
 	// 	fmt.Println("Sorry but, WTF")
 	// }
 
-	data, revenue, count, err2 := database.GetCodedRevenueData(conn, when)
+	data, revenue, count, err2 := database.GetCodedRevenueData(when)
 	if err2 != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"Message": "Error getting data from the database",
@@ -177,15 +161,10 @@ func Transportation_post(c *gin.Context) {
 		return
 	}
 
-	conn, err := database.PG_Make_connection()
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
 	fmt.Println("Adding data to the database")
 
-	err = database.AddOrderToDB(conn, &data, "transportation")
+	var err error
+	err = database.AddOrderToDB(&data, "transportation")
 	if err != nil {
 		fmt.Printf("error %v \n", err)
 	}
@@ -240,15 +219,10 @@ func Logistics_post(c *gin.Context) {
 		return
 	}
 
-	conn, err := database.PG_Make_connection()
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
 	fmt.Println("Adding data to the database")
 
-	err = database.AddOrderToDB(conn, &data, "logistics")
+	var err error
+	err = database.AddOrderToDB(&data, "logistics")
 	if err != nil {
 		fmt.Printf("error %v \n", err)
 	}
@@ -258,9 +232,7 @@ func Logistics_post(c *gin.Context) {
 
 func Dispach_week_to_date(c *gin.Context) {
 
-	conn, _ := database.Make_connection()
-
-	data, err := database.GetDispacherDataFromDB(conn)
+	data, err := database.GetDispacherDataFromDB()
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{
 			"Message": "i borke this",
@@ -281,14 +253,9 @@ func Dispatch_post(c *gin.Context) {
 	}
 
 	// driver add the data to the database
-	conn, err := database.Make_connection()
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
+	var err error
 	for _, driver := range data {
-		err = database.Add_DailyDriverData(conn, driver)
+		err = database.Add_DailyDriverData(driver)
 		if err != nil {
 
 			fmt.Printf("error %v \n", err)
