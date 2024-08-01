@@ -50,24 +50,12 @@ func Test_db(c *gin.Context) {
 
 // ---------- Transportation Handlers ----------
 func Trans_year_by_year(c *gin.Context) {
-	// get date from system
-	// conncet to database
-	// pull all year by year data and and compair data
-
-	db, err := database.PG_Make_connection()
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"Message": "Error connecting to the database",
-			"Error":   err,
-		})
-		return
-	}
 
 	//For now we're going to just get all data from the database
 	//This data only includes finished weeks.
 	fmt.Println("Getting the first data")
 	// change to fectch data and use the new struct
-	data, err := database.GetCachedData(db, "transportation")
+	data, err := database.GetCachedData("transportation")
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"Message": "Error getting data from the database",
@@ -81,7 +69,7 @@ func Trans_year_by_year(c *gin.Context) {
 	// and we want to show the most recent data we need to check the
 	// Transportation table and get the most recent data
 
-	newData, err := database.GetYearByYearDataRefactored(db, data, "transportation")
+	newData, err := database.GetYearByYearDataRefactored(data, "transportation")
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"Message": "Error getting newest data from the database",
@@ -205,24 +193,12 @@ func Transportation_post(c *gin.Context) {
 
 // ---------- Logisitics Handlers ----------
 func Log_year_by_year(c *gin.Context) {
-	// get date from system
-	// conncet to database
-	// pull all year by year data and and compair data
-
-	db, err := database.PG_Make_connection()
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"Message": "Error connecting to the database",
-			"Error":   err,
-		})
-		return
-	}
 
 	//For now we're going to just get all data from the database
 	//This data only includes finished weeks.
 	fmt.Println("Getting the first data")
 	// change to fectch data and use the new struct
-	data, err := database.GetCachedData(db, "logistics")
+	data, err := database.GetCachedData("logistics")
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"Message": "Error getting data from the database",
@@ -236,7 +212,7 @@ func Log_year_by_year(c *gin.Context) {
 	// and we want to show the most recent data we need to check the
 	// Transportation table and get the most recent data
 
-	newData, err := database.GetYearByYearDataRefactored(db, data, "logistics")
+	newData, err := database.GetYearByYearDataRefactored(data, "logistics")
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"Message": "Error getting newest data from the database",

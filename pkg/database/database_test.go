@@ -233,7 +233,7 @@ func TestFindMissingData(t *testing.T) {
 
 	// looking like its working
 
-	data, err := GetYearByYearDataRefactored(db, transportationData, "logistics")
+	data, err := GetYearByYearDataRefactored(transportationData, "logistics")
 	if err != nil {
 		t.Error("Failed to get year by year data with error: ", err)
 	}

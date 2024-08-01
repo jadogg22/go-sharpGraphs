@@ -23,6 +23,8 @@ var (
 	PG_USER     string
 	PG_PASSWORD string
 	PG_DATABASE string
+
+	DB *sql.DB
 )
 
 func init() {
@@ -52,6 +54,11 @@ func init() {
 	PG_USER = os.Getenv("PG_USER")
 	PG_PASSWORD = os.Getenv("PG_PASSWORD")
 	PG_DATABASE = os.Getenv("PG_DATABASE")
+
+	DB, err = PG_Make_connection()
+	if err != nil {
+		fmt.Println("Error connecting to the database")
+	}
 }
 
 func Make_connection() (*sql.DB, error) {
@@ -245,7 +252,7 @@ func GetDispacherDataFromDB(db *sql.DB) ([]models.DriverData, error) {
 	return nil, nil
 }
 
-func GetCachedData(db *sql.DB, company string) ([]models.WeeklyRevenue, error) {
+func GetCachedData(company string) ([]models.WeeklyRevenue, error) {
 	var dbTable string
 	switch company {
 	case "transportation":
@@ -256,7 +263,7 @@ func GetCachedData(db *sql.DB, company string) ([]models.WeeklyRevenue, error) {
 		return nil, fmt.Errorf("invalid company: %s", company)
 	}
 
-	data, err := FetchRevenueDataToWeeklyRevenue(db, dbTable)
+	data, err := FetchRevenueDataToWeeklyRevenue(DB, dbTable)
 	if err != nil {
 		return nil, fmt.Errorf("error fetching revenue data: %w", err)
 	}
@@ -316,7 +323,7 @@ func FetchRevenueDataToWeeklyRevenue(db *sql.DB, dbTable string) ([]models.Weekl
 	return data, nil
 }
 
-func GetYearByYearDataRefactored(db *sql.DB, data []models.WeeklyRevenue, company string) ([]models.WeeklyRevenue, error) {
+func GetYearByYearDataRefactored(data []models.WeeklyRevenue, company string) ([]models.WeeklyRevenue, error) {
 	currentYear, currentWeek := time.Now().ISOWeek()
 	if company != "transportation" && company != "logistics" {
 		return nil, fmt.Errorf("invalid company")
@@ -328,7 +335,7 @@ func GetYearByYearDataRefactored(db *sql.DB, data []models.WeeklyRevenue, compan
 	}
 
 	query := fmt.Sprintf("SELECT COALESCE(SUM(TotalRevenue), 0) FROM %s WHERE Week = $1", company)
-	stmt, err := db.Prepare(query)
+	stmt, err := DB.Prepare(query)
 	if err != nil {
 		return nil, fmt.Errorf("error preparing statement: %w", err)
 	}
