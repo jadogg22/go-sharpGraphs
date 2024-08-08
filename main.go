@@ -1,10 +1,12 @@
 package main
 
 import (
-	// my local packages
 	"github.com/gin-gonic/contrib/static"
 	"github.com/gin-gonic/gin"
+	"github.com/jadogg22/go-sharpGraphs/pkg/getData"
 	"github.com/jadogg22/go-sharpGraphs/pkg/handlers"
+	"github.com/robfig/cron/v3"
+	"log"
 	"net/http"
 	"strings"
 )
@@ -14,6 +16,18 @@ import (
 //
 
 func main() {
+	// Create a new cron scheduler for db updates
+	cr := cron.New()
+
+	// Add a new job to the cron scheduler
+	_, err := cr.AddFunc("0 0 * * *", getdata.RunUpdater)
+	if err != nil {
+		log.Println(err)
+	}
+
+	// Start the cron scheduler
+	cr.Start()
+
 	r := gin.Default()
 
 	// setup cors middleware
@@ -34,6 +48,7 @@ func main() {
 	r.GET("/api/Transportation/Stacked_miles/:when", handlers.Trans_stacked_miles)
 	r.GET("/api/Transportation/get_coded_revenue/:when", handlers.Trans_coded_revenue)
 	r.GET("/api/Transportation/Daily_Ops/", handlers.Daily_Ops)
+	r.GET("/api/Transportation/Daily_Ops_TEST/", handlers.Daily_Ops_TEST)
 
 	r.POST("/api/Transportation/add/", handlers.Transportation_post)
 

@@ -685,3 +685,84 @@ func AddOrderToDB(loadData *[]models.LoadData, company string) error {
 
 	return nil
 }
+
+func AddTransprotationTractorRevenue(dbData []*models.TractorRevenue) error {
+	// Begin a transaction
+
+	tx, err := DB.Begin()
+	if err != nil {
+		return fmt.Errorf("failed to start transaction: %w", err)
+	}
+	defer tx.Rollback() // This will be a no-op if the transaction is committed successfully
+
+	// Prepare the INSERT statement
+	stmt, err := tx.Prepare(`
+		INSERT INTO Transportation_Tractor_Revenue (
+			move_id, move_distance, loaded, order_id, charges, bill_distance, freight_charge, origin_city, origin_state, equip_id, actual_arrival, del_date, tractor, equipment_type_id, dispatcher, fleet_id, fleet_description, user_name, servicefail_count, has_servicefail, stop_count 
+		) VALUES (
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21
+)
+ON CONFLICT (move_id) DO UPDATE SET
+    move_distance = EXCLUDED.move_distance,
+    loaded = EXCLUDED.loaded,
+    order_id = EXCLUDED.order_id,
+    charges = EXCLUDED.charges,
+    bill_distance = EXCLUDED.bill_distance,
+    freight_charge = EXCLUDED.freight_charge,
+    origin_city = EXCLUDED.origin_city,
+    origin_state = EXCLUDED.origin_state,
+    equip_id = EXCLUDED.equip_id,
+    actual_arrival = EXCLUDED.actual_arrival,
+    del_date = EXCLUDED.del_date,
+    tractor = EXCLUDED.tractor,
+    equipment_type_id = EXCLUDED.equipment_type_id,
+    dispatcher = EXCLUDED.dispatcher,
+    fleet_id = EXCLUDED.fleet_id,
+    fleet_description = EXCLUDED.fleet_description,
+    user_name = EXCLUDED.user_name,
+    servicefail_count = EXCLUDED.servicefail_count,
+    has_servicefail = EXCLUDED.has_servicefail,
+    stop_count = EXCLUDED.stop_count;`)
+
+	if err != nil {
+		return fmt.Errorf("failed to prepare statement: %w", err)
+	}
+	defer stmt.Close()
+
+	// Insert each TractorRevenue object into the database
+	for _, d := range dbData {
+		_, err := stmt.Exec(
+			&d.MoveID,
+			&d.MoveDistance,
+			&d.Loaded,
+			&d.OrderID,
+			&d.Charges,
+			&d.BillDistance,
+			&d.FreightCharge,
+			&d.OriginCity,
+			&d.OriginState,
+			&d.EquipID,
+			&d.ActualArrival,
+			&d.DelDate,
+			&d.Tractor,
+			&d.EquipmentTypeID,
+			&d.Dispatcher,
+			&d.FleetID,
+			&d.FleetDescription,
+			&d.UserName,
+			&d.ServiceFailCount,
+			&d.HasServiceFail,
+			&d.StopCount,
+		)
+		if err != nil {
+			return fmt.Errorf("failed to execute statement: %w", err)
+		}
+	}
+
+	// Commit the transaction
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("failed to commit the transaction: %w", err)
+	}
+
+	return nil
+}

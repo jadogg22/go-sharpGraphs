@@ -38,6 +38,30 @@ type TransportationOrder struct {
 	OriginState      sql.NullString  `json:"origin_state"`
 }
 
+type TractorRevenue struct {
+	MoveID           int
+	MoveDistance     float64
+	Loaded           string
+	OrderID          int
+	Charges          float64
+	BillDistance     float64
+	FreightCharge    float64
+	OriginCity       string
+	OriginState      sql.NullString
+	EquipID          sql.NullString
+	ActualArrival    time.Time
+	DelDate          time.Time
+	Tractor          sql.NullString
+	EquipmentTypeID  sql.NullString
+	Dispatcher       sql.NullString
+	FleetID          sql.NullString
+	FleetDescription sql.NullString
+	UserName         sql.NullString
+	ServiceFailCount int
+	HasServiceFail   bool
+	StopCount        int
+}
+
 type LoadData struct {
 	RevenueCode      string  `json:"revenue_code"`
 	Order            string  `json:"order"`

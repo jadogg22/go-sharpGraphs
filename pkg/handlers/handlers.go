@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/jadogg22/go-sharpGraphs/pkg/database"
+	"github.com/jadogg22/go-sharpGraphs/pkg/getData"
 	"github.com/jadogg22/go-sharpGraphs/pkg/models"
 
 	"github.com/gin-gonic/gin"
@@ -151,6 +152,19 @@ func Trans_coded_revenue(c *gin.Context) {
 func Daily_Ops(c *gin.Context) {
 
 	c.JSON(200, gin.H{"Message": "Working on it"})
+}
+
+func Daily_Ops_TEST(c *gin.Context) {
+	// purely for testing if the database connection works from the server
+	data, err := getdata.TestConnection()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"Message": "Error getting data from the database",
+		})
+		return
+	}
+
+	c.JSON(200, data)
 }
 
 func Transportation_post(c *gin.Context) {
