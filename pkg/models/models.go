@@ -62,6 +62,15 @@ type TractorRevenue struct {
 	StopCount        int
 }
 
+type DailyOpsData struct {
+	Manager  string  `json:"driverManager"`
+	Trucks   int     `json:"numberOfTrucks"`
+	Miles    float64 `json:"milesPerTruck"`
+	Deadhead float64 `json:"deadhead"`
+	Order    float64 `json:"order"`
+	Stop     float64 `json:"stop"`
+}
+
 type LoadData struct {
 	RevenueCode      string  `json:"revenue_code"`
 	Order            string  `json:"order"`

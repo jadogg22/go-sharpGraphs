@@ -84,7 +84,7 @@ func RunUpdater() {
 	}
 
 	// helper functions to grab data from the database
-	//getTransportationTractorRevenue(conn)
+	getTransportationTractorRevenue(conn)
 
 	conn.Close()
 
@@ -125,7 +125,7 @@ func getTransportationTractorRevenue(conn *sql.DB) {
 	// first query the sql server to get the data from mcloud
 
 	yesterday := time.Now().AddDate(0, 0, -1).Format("2006-01-02")
-	coupleDaysAgo := time.Now().AddDate(0, 0, -3).Format("2006-01-02")
+	//coupleDaysAgo := time.Now().AddDate(0, 0, -3).Format("2006-01-02")
 
 	query := fmt.Sprintf(`SELECT 
     movement.id AS move_id,
@@ -194,8 +194,8 @@ GROUP BY
 	stop_count.stop_count
 ORDER BY 
     dispatcher, 
-    tractor,
-    continuity.dest_actualarrival;`, yesterday, coupleDaysAgo)
+    tractor, 
+    continuity.dest_actualarrival;`, "2024-07-01", yesterday)
 
 	rows, err := conn.Query(query)
 	if err != nil {

@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/jadogg22/go-sharpGraphs/pkg/database"
-	"github.com/jadogg22/go-sharpGraphs/pkg/getData"
 	"github.com/jadogg22/go-sharpGraphs/pkg/models"
 
 	"github.com/gin-gonic/gin"
@@ -150,20 +149,17 @@ func Trans_coded_revenue(c *gin.Context) {
 // then on the front end we're going to be able to use the correct colors with a simple funtion.
 
 func Daily_Ops(c *gin.Context) {
-
-	c.JSON(200, gin.H{"Message": "Working on it"})
-}
-
-func Daily_Ops_TEST(c *gin.Context) {
-	// purely for testing if the database connection works from the server
-	data, err := getdata.TestConnection()
+	data, err := database.GetDailyOpsData("transportation")
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"Message": "Error getting data from the database",
+			"test":    err,
+			"error":   fmt.Sprintf("%s", err),
 		})
 		return
 	}
 
+	//Finally update the Response with the json data
 	c.JSON(200, data)
 }
 

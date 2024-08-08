@@ -48,7 +48,6 @@ func main() {
 	r.GET("/api/Transportation/Stacked_miles/:when", handlers.Trans_stacked_miles)
 	r.GET("/api/Transportation/get_coded_revenue/:when", handlers.Trans_coded_revenue)
 	r.GET("/api/Transportation/Daily_Ops/", handlers.Daily_Ops)
-	r.GET("/api/Transportation/Daily_Ops_TEST/", handlers.Daily_Ops_TEST)
 
 	r.POST("/api/Transportation/add/", handlers.Transportation_post)
 

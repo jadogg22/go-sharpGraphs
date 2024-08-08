@@ -698,32 +698,31 @@ func AddTransprotationTractorRevenue(dbData []*models.TractorRevenue) error {
 	// Prepare the INSERT statement
 	stmt, err := tx.Prepare(`
 		INSERT INTO Transportation_Tractor_Revenue (
-			move_id, move_distance, loaded, order_id, charges, bill_distance, freight_charge, origin_city, origin_state, equip_id, actual_arrival, del_date, tractor, equipment_type_id, dispatcher, fleet_id, fleet_description, user_name, servicefail_count, has_servicefail, stop_count 
+			move_id, move_distance, loaded, order_id, charges, bill_distance, freight_charge, origin_city, origin_state, equip_id, actual_arrival, del_date, tractor, equipment_type_id, dispatcher, fleet_id, fleet_description, user_name, service_fail_count, has_service_fail, stop_count 
 		) VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21
-)
-ON CONFLICT (move_id) DO UPDATE SET
-    move_distance = EXCLUDED.move_distance,
-    loaded = EXCLUDED.loaded,
-    order_id = EXCLUDED.order_id,
-    charges = EXCLUDED.charges,
-    bill_distance = EXCLUDED.bill_distance,
-    freight_charge = EXCLUDED.freight_charge,
-    origin_city = EXCLUDED.origin_city,
-    origin_state = EXCLUDED.origin_state,
-    equip_id = EXCLUDED.equip_id,
-    actual_arrival = EXCLUDED.actual_arrival,
-    del_date = EXCLUDED.del_date,
-    tractor = EXCLUDED.tractor,
-    equipment_type_id = EXCLUDED.equipment_type_id,
-    dispatcher = EXCLUDED.dispatcher,
-    fleet_id = EXCLUDED.fleet_id,
-    fleet_description = EXCLUDED.fleet_description,
-    user_name = EXCLUDED.user_name,
-    servicefail_count = EXCLUDED.servicefail_count,
-    has_servicefail = EXCLUDED.has_servicefail,
-    stop_count = EXCLUDED.stop_count;`)
-
+			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21
+		)
+		ON CONFLICT (move_id) DO UPDATE SET
+			move_distance = EXCLUDED.move_distance,
+			loaded = EXCLUDED.loaded,
+			order_id = EXCLUDED.order_id,
+			charges = EXCLUDED.charges,
+			bill_distance = EXCLUDED.bill_distance,
+			freight_charge = EXCLUDED.freight_charge,
+			origin_city = EXCLUDED.origin_city,
+			origin_state = EXCLUDED.origin_state,
+			equip_id = EXCLUDED.equip_id,
+			actual_arrival = EXCLUDED.actual_arrival,
+			del_date = EXCLUDED.del_date,
+			tractor = EXCLUDED.tractor,
+			equipment_type_id = EXCLUDED.equipment_type_id,
+			dispatcher = EXCLUDED.dispatcher,
+			fleet_id = EXCLUDED.fleet_id,
+			fleet_description = EXCLUDED.fleet_description,
+			user_name = EXCLUDED.user_name,
+			service_fail_count = EXCLUDED.service_fail_count,
+			has_service_fail = EXCLUDED.has_service_fail,
+			stop_count = EXCLUDED.stop_count;`)
 	if err != nil {
 		return fmt.Errorf("failed to prepare statement: %w", err)
 	}

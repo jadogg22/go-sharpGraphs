@@ -66,6 +66,87 @@ var goals = Goals{
 // Manager | Average MPTPD | Average RPTPD | DH% | Order OTP | Stop OTP | AVG MPTPD Needed to Make Goal
 // then for each of them we can have a color code like item.AverageMPTPDCOlOR: "Green"
 // Then on the front end we can have a function take the color and return the correct color.
+func GetDailyOpsData(company string) ([]models.DailyOpsData, error) {
+	// find the date for the last sunday
+	var myData []models.DailyOpsData
+
+	// get the data from the database
+	query := `
+WITH filtered_movements AS (
+    SELECT 
+        user_name AS dispatcher,
+        SUM(move_distance) AS total_miles,
+        COUNT(DISTINCT tractor) AS unique_trucks,
+        SUM(CASE WHEN loaded = 'E' THEN move_distance ELSE 0 END) AS empty_miles,
+        COUNT(DISTINCT order_id) AS total_orders,
+        COUNT(DISTINCT CASE WHEN service_fail_count > 0 THEN order_id END) AS orders_with_servicefail
+    FROM 
+        Transportation_Tractor_Revenue
+    WHERE 
+        del_date >= (current_date - extract(dow from current_date)::integer)
+    GROUP BY 
+        user_name
+),
+order_summary AS (
+    SELECT 
+        user_name AS dispatcher,
+        order_id,
+        SUM(stop_count) AS total_stops_per_order,
+        SUM(service_fail_count) AS total_servicefail_per_order
+    FROM 
+        Transportation_Tractor_Revenue
+    WHERE 
+        del_date >= (current_date - extract(dow from current_date)::integer)
+    GROUP BY 
+        user_name, order_id
+),
+dispatcher_summary AS (
+    SELECT 
+        dispatcher,
+        COUNT(DISTINCT order_id) AS unique_orders,
+        SUM(total_stops_per_order) AS total_stops,
+        SUM(total_servicefail_per_order) AS total_servicefail
+    FROM 
+        order_summary
+    GROUP BY 
+        dispatcher
+)
+SELECT 
+    f.dispatcher,
+    f.total_miles,
+    f.unique_trucks,
+    f.empty_miles,
+    ((f.total_miles - f.empty_miles * 1.0) / f.total_miles) * 100 AS deadhead_percentage,
+    f.orders_with_servicefail * 1.0 / f.total_orders) * 100 AS order_percentage,
+    s.total_stops,
+    s.total_servicefail,
+    s.total_servicefail * 1.0 / s.total_stops * 100 AS stop_percentage
+FROM 
+    filtered_movements f
+    LEFT JOIN dispatcher_summary s ON f.dispatcher = s.dispatcher
+ORDER BY 
+    f.dispatcher;
+`
+	rows, err := DB.Query(query)
+	if err != nil {
+		return nil, fmt.Errorf("error querying database: %v", err)
+	}
+
+	defer rows.Close()
+
+	var EmptyMiles float64
+	for rows.Next() {
+		var data models.DailyOpsData
+		err = rows.Scan(&data.Manager, &data.Miles, &data.Trucks, &EmptyMiles, &data.Deadhead, &data.Order, &data.Stop)
+		if err != nil {
+			return nil, fmt.Errorf("error scanning row: %v", err)
+		}
+
+		myData = append(myData, data)
+	}
+
+	return myData, nil
+}
 
 func WeekToDateDispatcherStats(db *sql.DB) ([]DispatcherData, error) {
 	today := time.Now()
