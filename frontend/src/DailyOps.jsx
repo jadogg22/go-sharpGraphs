@@ -1,43 +1,43 @@
 import React, { useState, useEffect } from 'react';
+ import { PropagateLoader } from 'react-spinners';
 
 
 const DailyOps = () => {
-  
-    const [data] = useState([
-        {
-          driverManager: 'John Doe',
-          numberOfTrucks: 12,
-          milesPerTruck: 350,
-          deadhead: 25,
-          order: 'ORD12345',
-          stop: 'STOP67890',
-        },
-        {
-          driverManager: 'Jane Smith',
-          numberOfTrucks: 8,
-          milesPerTruck: 420,
-          deadhead: 30,
-          order: 'ORD23456',
-          stop: 'STOP78901',
-        },
-        {
-          driverManager: 'Mark Johnson',
-          numberOfTrucks: 15,
-          milesPerTruck: 300,
-          deadhead: 20,
-          order: 'ORD34567',
-          stop: 'STOP89012',
-        },
-        {
-          driverManager: 'Emily Davis',
-          numberOfTrucks: 10,
-          milesPerTruck: 375,
-          deadhead: 15,
-          order: 'ORD45678',
-          stop: 'STOP90123',
-        },
-      ]);
+
+        const [data, setData] = useState([]);
+        const [loading, setLoading] = useState(true);
+        const [error, setError] = useState(null);
     
+        useEffect(() => {
+            setLoading(true);
+            setError(null); // Reset error state before fetching
+    
+            fetch('http://localhost:5000/api/Transportation/Daily_Ops/')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`Error: ${response.statusText}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    setData(data);
+                    setLoading(false);
+                })
+                .catch(err => {
+                    setError(err.message);
+                    setLoading(false);
+                });
+        }, []);
+    
+        if (loading) {
+            return <div className="text-center"><PropagateLoader /></div>;
+        }
+    
+        if (error) {
+            return <p className="text-red-500">Failed to load data: {error}</p>;
+        }
+    
+
       return (
         <div className="p-6 bg-grey-100 min-h-screen">
           <h1 className="text-3xl font-bold text-center mb-8">Daily Operations Summary</h1>
@@ -58,10 +58,10 @@ const DailyOps = () => {
                   <tr key={index} className="border-t hover:bg-gray-100">
                     <td className="py-3 px-4 text-gray-900">{row.driverManager}</td>
                     <td className="py-3 px-4 text-gray-900">{row.numberOfTrucks}</td>
-                    <td className="py-3 px-4 text-gray-900">{row.milesPerTruck}</td>
-                    <td className="py-3 px-4 text-gray-900">{row.deadhead}</td>
-                    <td className="py-3 px-4 text-gray-900">{row.order}</td>
-                    <td className="py-3 px-4 text-gray-900">{row.stop}</td>
+                    <td className="py-3 px-4 text-gray-900">{Math.round(row.milesPerTruck)}</td>
+                    <td className="py-3 px-4 text-gray-900">{Math.round(row.deadhead)}%</td>
+                    <td className="py-3 px-4 text-gray-900">{Math.round(row.order)}%</td>
+                    <td className="py-3 px-4 text-gray-900">{Math.round(row.stop)}%</td>
                   </tr>
                 ))}
               </tbody>

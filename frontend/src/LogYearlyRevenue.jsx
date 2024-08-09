@@ -10,6 +10,7 @@ import {
   } from 'recharts';
   import React, { useState, useEffect } from 'react';
   import { Menu } from '@headlessui/react';
+  import { PropagateLoader } from 'react-spinners';
 
 
 
@@ -87,7 +88,7 @@ import {
     fetchData();
   }, []);  
     if (isLoading) {
-      return <div className="text-center">Loading</div>;
+      return <div className="text-center"><PropagateLoader /></div>;
     }
   
     if (error) {
@@ -107,6 +108,7 @@ import {
         }
       });
     };
+    
   
     return (
       <div className="relative">

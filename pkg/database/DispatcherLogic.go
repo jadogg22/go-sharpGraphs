@@ -75,15 +75,15 @@ func GetDailyOpsData(company string) ([]models.DailyOpsData, error) {
 WITH filtered_movements AS (
     SELECT 
         user_name AS dispatcher,
-        SUM(move_distance) AS total_miles,
         COUNT(DISTINCT tractor) AS unique_trucks,
+        SUM(move_distance) AS total_miles,
         SUM(CASE WHEN loaded = 'E' THEN move_distance ELSE 0 END) AS empty_miles,
         COUNT(DISTINCT order_id) AS total_orders,
         COUNT(DISTINCT CASE WHEN service_fail_count > 0 THEN order_id END) AS orders_with_servicefail
     FROM 
         Transportation_Tractor_Revenue
     WHERE 
-        del_date >= (current_date - extract(dow from current_date)::integer)
+        del_date >= (current_date - extract(dow FROM current_date)::integer)
     GROUP BY 
         user_name
 ),
@@ -96,7 +96,7 @@ order_summary AS (
     FROM 
         Transportation_Tractor_Revenue
     WHERE 
-        del_date >= (current_date - extract(dow from current_date)::integer)
+        del_date >= (current_date - extract(dow FROM current_date)::integer)
     GROUP BY 
         user_name, order_id
 ),
@@ -113,14 +113,11 @@ dispatcher_summary AS (
 )
 SELECT 
     f.dispatcher,
-    f.total_miles,
     f.unique_trucks,
-    f.empty_miles,
-    ((f.total_miles - f.empty_miles * 1.0) / f.total_miles) * 100 AS deadhead_percentage,
-    f.orders_with_servicefail * 1.0 / f.total_orders) * 100 AS order_percentage,
-    s.total_stops,
-    s.total_servicefail,
-    s.total_servicefail * 1.0 / s.total_stops * 100 AS stop_percentage
+    f.total_miles / NULLIF(f.unique_trucks, 0) AS miles_per_truck,  -- Average miles per truck
+    (f.empty_miles / NULLIF(f.total_miles, 0)) * 100 AS deadhead_percentage,
+    ((f.total_orders - f.orders_with_servicefail) * 1.0 / NULLIF(f.total_orders, 0)) * 100 AS order_percentage,
+    ((s.total_stops - s.total_servicefail) / NULLIF(s.total_stops, 0)) * 100 AS stop_percentage
 FROM 
     filtered_movements f
     LEFT JOIN dispatcher_summary s ON f.dispatcher = s.dispatcher
@@ -134,10 +131,9 @@ ORDER BY
 
 	defer rows.Close()
 
-	var EmptyMiles float64
 	for rows.Next() {
 		var data models.DailyOpsData
-		err = rows.Scan(&data.Manager, &data.Miles, &data.Trucks, &EmptyMiles, &data.Deadhead, &data.Order, &data.Stop)
+		err = rows.Scan(&data.Manager, &data.Trucks, &data.Miles, &data.Deadhead, &data.Order, &data.Stop)
 		if err != nil {
 			return nil, fmt.Errorf("error scanning row: %v", err)
 		}
