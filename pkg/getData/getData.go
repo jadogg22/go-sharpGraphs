@@ -85,6 +85,7 @@ func RunUpdater() {
 
 	// helper functions to grab data from the database
 	getTransportationTractorRevenue(conn)
+	addTransportationBadStops(conn)
 
 	conn.Close()
 
@@ -195,7 +196,7 @@ GROUP BY
 ORDER BY 
     dispatcher, 
     tractor, 
-    continuity.dest_actualarrival;`, "2024-07-01", yesterday)
+    continuity.dest_actualarrival;`, yesterday, yesterday)
 
 	rows, err := conn.Query(query)
 	if err != nil {
@@ -277,5 +278,85 @@ ORDER BY
 		log.Println("Error adding data to database: " + err.Error())
 		return
 	}
+	log.Printf("Added %d rows to the database\n", len(dbData))
+}
+
+func addTransportationBadStops(conn *sql.DB) {
+	// first query the sql server to get the data from mcloud
+
+	yesterday := time.Now().AddDate(0, 0, -1).Format("2006-01-02")
+	//coupleDaysAgo := time.Now().AddDate(0, 0, -3).Format("2006-01-02")
+
+	query := fmt.Sprintf(`select stop.id, stop.order_id, stop.movement_id, stop.actual_arrival,
+	stop.sched_arrive_early, stop.sched_arrive_late, stop.movement_sequence,
+	movement.equipment_group_id equipment_group_id, movement.dispatcher_user_id dispatcher_user_id,
+	equipment_item.equipment_id equipment_id, equipment_item.equipment_type_id equipment_type_id,
+	driver.fleet_manager fleet_manager, driver.id driver_id, servicefail.stop_id stop_id, servicefail.minutes_late minutes_late,
+	servicefail.appt_required appt_required, servicefail.stop_type stop_type, servicefail.entered_user_id entered_user_id,
+	servicefail.entered_date entered_date, servicefail.edi_standard_code edi_standard_code, servicefail.dsp_comment dsp_comment,
+	servicefail.fault_of_carrier_or_driver sf_fault_of_carrier_or_driver, orders.customer_id customer_id,
+	orders.operations_user operations_user, orders.status order_status 
+from stop left outer join servicefail on servicefail.stop_id = stop.id and servicefail.status != 'V' and servicefail.company_id = 'TMS'  
+left outer join orders on orders.id = stop.order_id  and orders.company_id = 'TMS'  ,movement 
+left outer join equipment_item on equipment_item.equipment_group_id = movement.equipment_group_id and equipment_item.equipment_type_id = 'D' and equipment_item.type_sequence = 0 and equipment_item.company_id = 'TMS'  
+left outer join driver on driver.id = equipment_item.equipment_id and driver.company_id = 'TMS'  
+where stop.company_id = 'TMS' and stop.sched_arrive_early between {ts '%s 00:00:00'} and {ts '%s 23:59:59'} and stop.stop_type in ('PU', 'SO') and movement.loaded = 'L' and movement.id = stop.movement_id and movement.company_id = 'TMS' and driver.fleet_manager != 'NULL' and stop_id != 'NULL'
+order by driver.fleet_manager, servicefail.minutes_late`, yesterday, yesterday)
+
+	rows, err := conn.Query(query)
+	if err != nil {
+		fmt.Println("Error querying database: " + err.Error())
+		log.Println("Error querying database: " + err.Error())
+		return
+	}
+	defer rows.Close()
+
+	var dbData []*models.BadStop
+	for rows.Next() {
+		row := models.BadStop{}
+		err := rows.Scan(
+			&row.ID,
+			&row.OrderID,
+			&row.MovementID,
+			&row.ActualArrival,
+			&row.SchedArriveEarly,
+			&row.SchedArriveLate,
+			&row.MovementSequence,
+			&row.EquipmentGroupID,
+			&row.DispatcherUserID,
+			&row.EquipmentID,
+			&row.EquipmentTypeID,
+			&row.FleetManager,
+			&row.DriverID,
+			&row.StopID,
+			&row.MinutesLate,
+			&row.ApptRequired,
+			&row.StopType,
+			&row.EnteredUserID,
+			&row.EnteredDate,
+			&row.EDIStandardCode,
+			&row.DSPComment,
+			&row.SFFaultOfCarrierOrDriver,
+			&row.CustomerID,
+			&row.OperationsUser,
+			&row.OrderStatus,
+		)
+		if err != nil {
+			fmt.Println("Error scanning row: " + err.Error())
+			log.Println("Error scanning row: " + err.Error())
+			return
+		}
+
+		dbData = append(dbData, &row)
+	}
+
+	// add dbData to the database
+	err = database.AddBadStops(dbData)
+	if err != nil {
+		fmt.Println("Error adding data to database: " + err.Error())
+		log.Println("Error adding data to database: " + err.Error())
+		return
+	}
+
 	log.Printf("Added %d rows to the database\n", len(dbData))
 }

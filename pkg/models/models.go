@@ -62,6 +62,34 @@ type TractorRevenue struct {
 	StopCount        int
 }
 
+type BadStop struct {
+	OrderID                  string
+	MovementID               string
+	ActualArrival            time.Time
+	SchedArriveEarly         *time.Time
+	ID                       string
+	SchedArriveLate          time.Time
+	MovementSequence         int
+	EquipmentGroupID         string
+	DispatcherUserID         string
+	EquipmentID              string
+	EquipmentTypeID          string
+	FleetManager             string
+	DriverID                 string
+	StopID                   string
+	MinutesLate              int
+	ApptRequired             string
+	StopType                 string
+	EnteredUserID            string
+	EnteredDate              time.Time
+	EDIStandardCode          string
+	DSPComment               string
+	SFFaultOfCarrierOrDriver string
+	CustomerID               string
+	OperationsUser           string
+	OrderStatus              string
+}
+
 type DailyOpsData struct {
 	Manager  string  `json:"driverManager"`
 	Trucks   int     `json:"numberOfTrucks"`

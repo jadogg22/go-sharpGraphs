@@ -74,56 +74,72 @@ func GetDailyOpsData(company string) ([]models.DailyOpsData, error) {
 	query := `
 WITH filtered_movements AS (
     SELECT 
-        user_name AS dispatcher,
+        dispatcher,
         COUNT(DISTINCT tractor) AS unique_trucks,
         SUM(move_distance) AS total_miles,
         SUM(CASE WHEN loaded = 'E' THEN move_distance ELSE 0 END) AS empty_miles,
-        COUNT(DISTINCT order_id) AS total_orders,
-        COUNT(DISTINCT CASE WHEN service_fail_count > 0 THEN order_id END) AS orders_with_servicefail
+        COUNT(DISTINCT order_id) AS total_orders
     FROM 
         Transportation_Tractor_Revenue
     WHERE 
         del_date >= (current_date - extract(dow FROM current_date)::integer)
     GROUP BY 
-        user_name
+        dispatcher
 ),
 order_summary AS (
     SELECT 
-        user_name AS dispatcher,
-        order_id,
-        SUM(stop_count) AS total_stops_per_order,
-        SUM(service_fail_count) AS total_servicefail_per_order
+        dispatcher,
+        COUNT(DISTINCT order_id) AS unique_orders,
+        SUM(stop_count) AS total_stops_per_dispatcher
     FROM 
         Transportation_Tractor_Revenue
     WHERE 
         del_date >= (current_date - extract(dow FROM current_date)::integer)
     GROUP BY 
-        user_name, order_id
-),
-dispatcher_summary AS (
-    SELECT 
-        dispatcher,
-        COUNT(DISTINCT order_id) AS unique_orders,
-        SUM(total_stops_per_order) AS total_stops,
-        SUM(total_servicefail_per_order) AS total_servicefail
-    FROM 
-        order_summary
-    GROUP BY 
         dispatcher
+),
+bad_stops AS (
+    SELECT
+        fleet_manager AS dispatcher,
+        COUNT(DISTINCT order_id) AS BAD_orders,
+        COUNT(DISTINCT stop_id) AS BAD_stops
+    FROM 
+        bad_stops
+    WHERE 
+        sched_arrive_early >= (current_date - extract(dow FROM current_date)::integer)
+    GROUP BY
+        fleet_manager
+),
+date_range AS (
+    SELECT
+        CURRENT_DATE - EXTRACT(DOW FROM CURRENT_DATE)::integer AS start_date,  -- Most recent Sunday
+        CURRENT_DATE AS end_date
+),
+date_diff AS (
+    SELECT
+        (end_date - start_date) AS days_in_range
+    FROM
+        date_range
 )
 SELECT 
     f.dispatcher,
     f.unique_trucks,
-    f.total_miles / NULLIF(f.unique_trucks, 0) AS miles_per_truck,  -- Average miles per truck
-    (f.empty_miles / NULLIF(f.total_miles, 0)) * 100 AS deadhead_percentage,
-    ((f.total_orders - f.orders_with_servicefail) * 1.0 / NULLIF(f.total_orders, 0)) * 100 AS order_percentage,
-    ((s.total_stops - s.total_servicefail) / NULLIF(s.total_stops, 0)) * 100 AS stop_percentage
+    --(f.total_miles / NULLIF(f.unique_trucks, 0)) AS miles_per_truck,  -- Average miles per truck
+    (f.total_miles / NULLIF(f.unique_trucks, 0) / NULLIF(d.days_in_range, 0)) AS miles_per_truck_per_day,  -- Miles per truck per day
+    (f.empty_miles / NULLIF(f.total_miles, 0)) * 100 AS deadhead_percentage,  -- Deadhead percentage
+    ((f.total_orders - COALESCE(b.BAD_orders, 0)) * 1.0 / NULLIF(f.total_orders, 0)) * 100 AS order_percentage,
+    ((s.total_stops_per_dispatcher - COALESCE(b.BAD_stops, 0)) * 1.0 / NULLIF(s.total_stops_per_dispatcher, 0)) * 100 AS stop_percentage  
+    --COALESCE(b.BAD_orders, 0) AS BAD_orders,
+    --COALESCE(b.BAD_stops, 0) AS BAD_stops
 FROM 
     filtered_movements f
-    LEFT JOIN dispatcher_summary s ON f.dispatcher = s.dispatcher
+    LEFT JOIN order_summary s ON f.dispatcher = s.dispatcher
+    LEFT JOIN bad_stops b ON f.dispatcher = b.dispatcher
+    CROSS JOIN date_diff d
 ORDER BY 
     f.dispatcher;
 `
+
 	rows, err := DB.Query(query)
 	if err != nil {
 		return nil, fmt.Errorf("error querying database: %v", err)
@@ -262,4 +278,73 @@ func Add_OTWTDStats(db *sql.DB, data models.OTWTDStats) error {
 	}
 
 	return nil
+}
+
+func AddBadStops(badStops []*models.BadStop) error {
+	query := `
+        INSERT INTO bad_stops (
+            order_id, movement_id, actual_arrival, sched_arrive_early, id, sched_arrive_late,
+            movement_sequence, equipment_group_id, dispatcher_user_id, equipment_id, equipment_type_id,
+            fleet_manager, driver_id, stop_id, minutes_late, appt_required, stop_type, entered_user_id,
+            entered_date, edi_standard_code, dsp_comment, sf_fault_of_carrier_or_driver, customer_id,
+            operations_user, order_status
+        ) VALUES (
+            $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25
+        )
+ON CONFLICT (id) DO UPDATE
+        SET
+            order_id = EXCLUDED.order_id,
+            movement_id = EXCLUDED.movement_id,
+            actual_arrival = EXCLUDED.actual_arrival,
+            sched_arrive_early = EXCLUDED.sched_arrive_early,
+            sched_arrive_late = EXCLUDED.sched_arrive_late,
+            movement_sequence = EXCLUDED.movement_sequence,
+            equipment_group_id = EXCLUDED.equipment_group_id,
+            dispatcher_user_id = EXCLUDED.dispatcher_user_id,
+            equipment_id = EXCLUDED.equipment_id,
+            equipment_type_id = EXCLUDED.equipment_type_id,
+            fleet_manager = EXCLUDED.fleet_manager,
+            driver_id = EXCLUDED.driver_id,
+            stop_id = EXCLUDED.stop_id,
+            minutes_late = EXCLUDED.minutes_late,
+            appt_required = EXCLUDED.appt_required,
+            stop_type = EXCLUDED.stop_type,
+            entered_user_id = EXCLUDED.entered_user_id,
+            entered_date = EXCLUDED.entered_date,
+            edi_standard_code = EXCLUDED.edi_standard_code,
+            dsp_comment = EXCLUDED.dsp_comment,
+            sf_fault_of_carrier_or_driver = EXCLUDED.sf_fault_of_carrier_or_driver,
+            customer_id = EXCLUDED.customer_id,
+            operations_user = EXCLUDED.operations_user,
+            order_status = EXCLUDED.order_status
+    `
+
+	tx, err := DB.Begin()
+	if err != nil {
+		return err
+	}
+
+	stmt, err := tx.Prepare(query)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+	defer stmt.Close()
+
+	for _, stop := range badStops {
+		_, err := stmt.Exec(
+			stop.OrderID, stop.MovementID, stop.ActualArrival, stop.SchedArriveEarly, stop.ID,
+			stop.SchedArriveLate, stop.MovementSequence, stop.EquipmentGroupID, stop.DispatcherUserID,
+			stop.EquipmentID, stop.EquipmentTypeID, stop.FleetManager, stop.DriverID, stop.StopID,
+			stop.MinutesLate, stop.ApptRequired, stop.StopType, stop.EnteredUserID, stop.EnteredDate,
+			stop.EDIStandardCode, stop.DSPComment, stop.SFFaultOfCarrierOrDriver, stop.CustomerID,
+			stop.OperationsUser, stop.OrderStatus,
+		)
+		if err != nil {
+			tx.Rollback()
+			return err
+		}
+	}
+
+	return tx.Commit()
 }
