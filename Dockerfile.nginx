@@ -1,9 +1,9 @@
-# Dockerfile for Nginx
 
+# Stage 1: Use the frontend build to copy static assets
 FROM nginx:alpine
 
-# Copy the built frontend
-COPY frontend/dist /usr/share/nginx/html
+# Copy the built frontend assets from the frontend build stage
+COPY --from=frontend-builder /app/frontend/dist /usr/share/nginx/html
 
 # Copy Nginx configuration
 COPY nginx.conf /etc/nginx/nginx.conf

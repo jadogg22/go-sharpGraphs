@@ -1,11 +1,9 @@
-# Dockerfile for Go backend
-
-# Stage 1: Build Go server
+# Stage 1: Build Go application
 FROM golang:1.21.6 AS go-builder
 
 WORKDIR /app
 
-# Copy go source code to working directory
+# Copy Go source code and dependencies
 COPY go.mod go.sum ./
 RUN go mod download
 
@@ -14,17 +12,19 @@ COPY . .
 # Build the Go application
 RUN go build -o /app/server .
 
-# Stage 2: Final image
-FROM alpine:latest
+# Stage 2: Final image for the Go server
+FROM golang:1.21.6
 
 WORKDIR /app
 
-# Copy the built Go executable from the previous stage
+# Copy the built Go executable
 COPY --from=go-builder /app/server .
 
-# Expose port 8080 for the Go backend
+# Copy environment variables
+COPY .env ./.env
+
+# Expose port 8080 for the Go server
 EXPOSE 8080
 
 # Command to run the executable
 CMD ["./server"]
-

@@ -1,13 +1,12 @@
 version: '3.8'
 
 services:
-  go-backend:
+  frontend:
     build:
       context: .
-      dockerfile: Dockerfile.go-backend
-    container_name: go-backend
-    ports:
-      - "8080:5000"
+      dockerfile: Dockerfile.frontend
+    container_name: frontend
+    # This service is not exposed as a separate container, but its build is used by nginx
 
   nginx:
     build:
@@ -17,4 +16,13 @@ services:
     ports:
       - "80:80"
     depends_on:
-      - go-backend
+      - frontend
+
+  go-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.go-backend
+    container_name: go-backend
+    ports:
+      - "8080:8080"
+    # No dependency on frontend since it's served by Nginx, not directly involvedbackend
