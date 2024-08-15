@@ -159,8 +159,22 @@ func Daily_Ops(c *gin.Context) {
 		return
 	}
 
+	data = filterOutManager(data, "kevin")
+
 	//Finally update the Response with the json data
 	c.JSON(200, data)
+}
+
+func filterOutManager(data []models.DailyOpsData, manager string) []models.DailyOpsData {
+	var filteredData []models.DailyOpsData
+
+	for _, item := range data {
+		if item.Manager != manager {
+			filteredData = append(filteredData, item)
+		}
+	}
+
+	return filteredData
 }
 
 func Transportation_post(c *gin.Context) {

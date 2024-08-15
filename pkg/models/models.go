@@ -90,6 +90,41 @@ type BadStop struct {
 	OrderStatus              string
 }
 
+// This is every stop in the mcloud database and this should be enough ingo
+// to get the data that we need for the front end projects
+type LogisticsStops struct {
+	ID                       string     `json:"id"`
+	OrderID                  string     `json:"order_id"`
+	MovementID               string     `json:"movement_id"`
+	ActualArrival            *time.Time `json:"actual_arrival"`
+	SchedArriveEarly         *time.Time `json:"sched_arrive_early"`
+	SchedArriveLate          *time.Time `json:"sched_arrive_late"`
+	MovementSequence         int        `json:"movement_sequence"`
+	DispatcherUserID         *string    `json:"dispatcher_user_id"`
+	FleetManager             *string    `json:"fleet_manager"`
+	DriverID                 *string    `json:"driver_id"`
+	ServiceFailStopID        *string    `json:"servicefail_stop_id"`
+	MinutesLate              *float64   `json:"minutes_late"`
+	ApptRequired             *string    `json:"appt_required"`
+	StopType                 *string    `json:"stop_type"`
+	EnteredUserID            *string    `json:"entered_user_id"`
+	EnteredDate              *time.Time `json:"entered_date"`
+	EDIStandardCode          *string    `json:"edi_standard_code"`
+	DSPComment               *string    `json:"dsp_comment"`
+	SFFaultOfCarrierOrDriver *string    `json:"sf_fault_of_carrier_or_driver"`
+	OverridePayeeID          *string    `json:"override_payee_id"`
+	CustomerID               *string    `json:"customer_id"`
+	PayAmt                   *float64   `json:"pay_amt"`
+	OrdersID                 *string    `json:"orders_id"`
+	OperationsUser           *string    `json:"operations_user"`
+	TotalCharge              *float64   `json:"total_charge"`
+	OrderStatus              *string    `json:"order_status"`
+	BillDistance             *float64   `json:"bill_distance"`
+	AdditionalAmount         *float64   `json:"additional_amount"`
+	TruckHire                *float64   `json:"truck_hire"`
+	DeductCode               *string    `json:"deduct_code"`
+}
+
 type DailyOpsData struct {
 	Manager  string  `json:"driverManager"`
 	Trucks   int     `json:"numberOfTrucks"`

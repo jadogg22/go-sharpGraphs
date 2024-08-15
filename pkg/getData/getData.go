@@ -360,3 +360,93 @@ order by driver.fleet_manager, servicefail.minutes_late`, yesterday, yesterday)
 
 	log.Printf("Added %d rows to the database\n", len(dbData))
 }
+
+func getLogisticsData(conn *sql.DB, startDate time.Time, endDate time.Time) {
+	// format the dates to be used in the query "2024-08-11 00:00:00"
+	startDateStr := startDate.Format("2006-01-02 15:04:05")
+	endDateStr := endDate.Format("2006-01-02 15:04:05")
+
+	fmt.Println(startDateStr, endDateStr)
+
+	query := `WITH stop_data AS (
+    SELECT 
+        stop.id,
+        stop.order_id,
+        stop.movement_id,
+        stop.actual_arrival,
+        stop.sched_arrive_early,
+        stop.sched_arrive_late,
+        stop.movement_sequence,
+        movement.dispatcher_user_id AS dispatcher_user_id,
+
+        driver.fleet_manager AS fleet_manager,
+        driver.id AS driver_id,
+        servicefail.stop_id AS servicefail_stop_id,
+        servicefail.minutes_late AS minutes_late,
+        servicefail.appt_required AS appt_required,
+        servicefail.stop_type AS stop_type,
+        servicefail.entered_user_id AS entered_user_id,
+        servicefail.entered_date AS entered_date,
+        servicefail.edi_standard_code AS edi_standard_code,
+        servicefail.dsp_comment AS dsp_comment,
+        servicefail.fault_of_carrier_or_driver AS sf_fault_of_carrier_or_driver,
+        movement.override_payee_id AS override_payee_id,
+        orders.customer_id AS customer_id,
+        movement.override_pay_amt AS pay_amt,
+        orders.id AS orders_id,
+        orders.operations_user AS operations_user,
+        orders.total_charge AS total_charge,
+        orders.status AS order_status,
+		orders.bill_distance as bill_distance
+    FROM 
+        stop
+    LEFT OUTER JOIN servicefail ON servicefail.stop_id = stop.id AND servicefail.status != 'V' AND servicefail.company_id = 'TMS2'
+    LEFT OUTER JOIN orders ON orders.id = stop.order_id AND orders.company_id = 'TMS2'
+    LEFT OUTER JOIN movement ON movement.id = stop.movement_id AND movement.company_id = 'TMS2'
+    LEFT OUTER JOIN equipment_item ON equipment_item.equipment_group_id = movement.equipment_group_id AND equipment_item.equipment_type_id = 'D' AND equipment_item.type_sequence = 0 AND equipment_item.company_id = 'TMS2'
+    LEFT OUTER JOIN driver ON driver.id = equipment_item.equipment_id AND driver.company_id = 'TMS2'
+    WHERE 
+        stop.company_id = 'TMS2' 
+        AND stop.sched_arrive_early >= {ts '2024-08-11 00:00:00'}
+        AND stop.sched_arrive_early <= {ts '2024-08-12 23:59:59'}
+        AND stop.stop_type IN ('PU', 'SO')
+        AND movement.loaded = 'L'
+),
+driver_extra_data AS (
+    SELECT
+        driver_extra_pay.movement_id,
+        SUM(driver_extra_pay.amount) AS total_amount,
+        MAX(deduct_code.code_type) AS code_type 
+    FROM
+        driver_extra_pay
+    JOIN deduct_code ON deduct_code.id = driver_extra_pay.deduct_code_id
+    WHERE
+        driver_extra_pay.company_id = 'TMS2'
+        AND deduct_code.company_id = 'TMS2'
+    GROUP BY
+        driver_extra_pay.movement_id
+)
+SELECT
+    s.*,
+    COALESCE(d.total_amount, 0) AS additional_amount,
+    (s.pay_amt + COALESCE(d.total_amount, 0)) AS truck_hire,
+    d.code_type AS deduct_code
+FROM
+    stop_data s
+LEFT JOIN driver_extra_data d ON s.movement_id = d.movement_id
+ORDER BY
+    s.dispatcher_user_id,
+    s.minutes_late;`
+
+	fmt.Println(query)
+
+	rows, err := conn.Query(query)
+	if err != nil {
+		fmt.Println("Error querying database: " + err.Error())
+		log.Println("Error querying database: " + err.Error())
+		return
+	}
+
+	defer rows.Close()
+
+}
