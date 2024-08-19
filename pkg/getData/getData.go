@@ -92,36 +92,6 @@ func RunUpdater() {
 	return
 }
 
-func TestConnection() (string, error) {
-	conn, err := sql.Open("mssql", URL)
-	if err != nil {
-		return "Error creating connection pool: " + err.Error(), err
-	}
-	defer conn.Close()
-
-	err = conn.Ping()
-	if err != nil {
-		return "Error pinging database: " + err.Error(), err
-	}
-
-	queary := "select top 10 customer_id from orders"
-	rows, err := conn.Query(queary)
-	if err != nil {
-		return "Error querying database: " + err.Error(), err
-	}
-	defer rows.Close()
-
-	rows.Next()
-	var customerID string
-	err = rows.Scan(&customerID)
-	if err != nil {
-		return "Error scanning row: " + err.Error(), err
-	}
-
-	conn.Close()
-	return fmt.Sprintf("We did it boys: %s", customerID), nil
-}
-
 func getTransportationTractorRevenue(conn *sql.DB) {
 	// first query the sql server to get the data from mcloud
 
@@ -439,6 +409,51 @@ ORDER BY
     s.minutes_late;`
 
 	fmt.Println(query)
+
+	rows, err := conn.Query(query)
+	if err != nil {
+		fmt.Println("Error querying database: " + err.Error())
+		log.Println("Error querying database: " + err.Error())
+		return
+	}
+
+	defer rows.Close()
+
+}
+
+func getTransportationOrders(conn *sql.DB, startDate, endDate time.Time) {
+	// format start and endDates to be "2024-08-11"
+	startDateStr := startDate.Format("2006-01-02")
+	endDateStr := endDate.Format("2006-01-02")
+
+	query := fmt.Sprintf(`
+
+select 
+	orders.id order_id, orders.operations_user operations_user, orders.revenue_code_id revenue_code_id,
+	orders.freight_charge freight_charge, orders.bill_distance bill_miles, orders.bill_date bill_date,
+	orders.ctrl_party_id controlling_party, orders.commodity_id commodity, orders.order_type_id order_type,
+	orders.equipment_type_id order_trailer_type, origin.state origin_value, dest.state destination_value, customer.id customer_id,
+	customer.name customer_name, customer.category customer_category, category.descr category_descr, movement.id movement_id,
+	loaded, move_distance, movement.brokerage, trailer.trailer_type trailer_type, origin.city_name origin_city, origin.state origin_state,
+	dest.city_name dest_city, dest.state dest_state, other_charge.amount oc_amount, charge_code.is_fuel_surcharge is_fuel_surcharge,
+	dest.sched_arrive_early report_date, dest.actual_arrival actual_date, prorated_orderdist.empty_distance empty_miles,
+	prorated_orderdist.loaded_distance loaded_miles, (prorated_orderdist.empty_distance+prorated_orderdist.loaded_distance) total_miles,
+	orders.id record_count, orders.id fuel_surcharge, orders.id remaining_charges, orders.id total_revenue, orders.id empty_pct,
+	orders.id rev_loaded_mile, orders.id rev_total_mile, orders.id billed, orders.id week_value, orders.id month_value,
+	orders.id quarter_value, revenue_code_id detail_id 
+from 
+	orders left outer join customer on customer.id = orders.customer_id and customer.company_id = 'TMS'  
+	left outer join category on category.id = customer.category and category.company_id = 'TMS'  
+	left outer join movement_order on movement_order.order_id = orders.id and movement_order.company_id = 'TMS'  
+	left outer join movement on movement.id = movement_order.movement_id and movement.company_id = 'TMS'  
+	left outer join continuity trailercont on (movement.id = trailercont.movement_id)and(trailercont.equipment_type_id='L') and  trailercont.company_id = 'TMS'  
+	left outer join trailer on trailer.id = trailercont.equipment_id and trailer.company_id = 'TMS'  left outer join other_charge on other_charge.order_id = orders.id and other_charge.company_id = 'TMS'  
+	left outer join charge_code on charge_code.id = other_charge.charge_id  
+	left outer join prorated_orderdist on prorated_orderdist.order_id = orders.id and prorated_orderdist.company_id = 'TMS'  ,stop origin ,stop dest 
+where 
+	orders.company_id = 'TMS' and orders.status <> 'Q' and orders.status <> 'V' and (orders.subject_order_status is null or orders.subject_order_status <> 'S') and loaded = 'L' 
+	and ((dest.actual_arrival is not null and dest.actual_arrival >= {ts '2024-08-11 00:00:00'}) or dest.actual_arrival is null and dest.sched_arrive_early >= {ts '%s 00:00:00'}) and ((dest.actual_arrival is not null and dest.actual_arrival <= {ts '%s 23:59:59'}) 
+	or dest.actual_arrival is null and dest.sched_arrive_early <= {ts '2024-08-15 23:59:59'}) and origin.id = orders.shipper_stop_id  and  origin.company_id = 'TMS' and dest.id = orders.consignee_stop_id  and  dest.company_id = 'TMS' order by revenue_code_id, order_id, movement_id`, startDateStr, endDateStr)
 
 	rows, err := conn.Query(query)
 	if err != nil {

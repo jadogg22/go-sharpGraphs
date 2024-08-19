@@ -3,7 +3,9 @@ package handlers
 import (
 	"fmt"
 	"net/http"
+	"time"
 
+	"github.com/jadogg22/go-sharpGraphs/pkg/cache"
 	"github.com/jadogg22/go-sharpGraphs/pkg/database"
 	"github.com/jadogg22/go-sharpGraphs/pkg/models"
 
@@ -49,12 +51,24 @@ func Test_db(c *gin.Context) {
 }
 
 // ---------- Transportation Handlers ----------
+//
+//	This is the handler function for the transportation yearly revenue data, this function will return
+//	52 weeks per year of the revenue earned to compair and contrast.
 func Trans_year_by_year(c *gin.Context) {
 
-	//For now we're going to just get all data from the database
-	//This data only includes finished weeks.
-	fmt.Println("Getting the first data")
-	// change to fectch data and use the new struct
+	// Now that we have the cache lets use it and not hit the db everytime
+	cacheKey := "transportationYearByYear"
+	cachedData, typeID, found := cache.MyCache.Get(cacheKey)
+	if found {
+		if typeID == "[]models.WeeklyRevenue" {
+			if cachedData, ok := cachedData.([]models.WeeklyRevenue); ok {
+				c.JSON(200, cachedData)
+				return
+			}
+		}
+		fmt.Println("Error casting the data")
+	}
+
 	data, err := database.GetCachedData("transportation")
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -64,7 +78,6 @@ func Trans_year_by_year(c *gin.Context) {
 		return
 	}
 
-	fmt.Println("finished getting the first data")
 	// Because its not very likly that we are at the end of the week
 	// and we want to show the most recent data we need to check the
 	// Transportation table and get the most recent data
@@ -77,6 +90,9 @@ func Trans_year_by_year(c *gin.Context) {
 		})
 		return
 	}
+
+	// Set the cache
+	cache.MyCache.Set(cacheKey, newData, "[]models.WeeklyRevenue", time.Hour*2)
 
 	c.JSON(200, gin.H{
 		"Data": newData,
@@ -135,46 +151,35 @@ func Trans_coded_revenue(c *gin.Context) {
 	})
 }
 
-// This function returns the daily operations data
-// for the transportation department
-
-// Daily ops page includes two tables of data.
-// I'm not really super worried about bandwidth so for now I'm going to just send two arays of maps
-
-// first table is | Manager | # trucks | Miles | Deadhead | order | stop |
-// secound table is | manager | Average MPTPD | Average RPTPD | DH% | ORDER OTP |STOP OTP | AVG MPTPD Needed to Make Goal
-
-// I think for the second table we're just going to include the color of the data like item.AverageMPTPDCOlOR: "Green"
-
-// then on the front end we're going to be able to use the correct colors with a simple funtion.
-
 func Daily_Ops(c *gin.Context) {
+	cacheKey := "dailyOpsData"
+	cachedData, typeID, found := cache.MyCache.Get(cacheKey)
+	if found {
+		if typeID == "[]models.DailyOpsData" {
+			if cachedData, ok := cachedData.([]models.DailyOpsData); ok {
+				c.JSON(200, cachedData)
+				return
+			}
+		} else {
+			fmt.Println("Error casting the data")
+		}
+	}
+	// cache miss, get the data from the database.
+
 	data, err := database.GetDailyOpsData("transportation")
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"Message": "Error getting data from the database",
-			"test":    err,
 			"error":   fmt.Sprintf("%s", err),
 		})
 		return
 	}
 
-	data = filterOutManager(data, "kevin")
+	// Set the cache
+	cache.MyCache.Set(cacheKey, data, "[]models.DailyOpsData", time.Minute*45)
 
 	//Finally update the Response with the json data
 	c.JSON(200, data)
-}
-
-func filterOutManager(data []models.DailyOpsData, manager string) []models.DailyOpsData {
-	var filteredData []models.DailyOpsData
-
-	for _, item := range data {
-		if item.Manager != manager {
-			filteredData = append(filteredData, item)
-		}
-	}
-
-	return filteredData
 }
 
 func Transportation_post(c *gin.Context) {
