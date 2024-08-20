@@ -5,6 +5,7 @@ import LogisticsWeekly from './LogisticsWeekly';
 import GraphYearlyRevenue from './GraphYearlyRevenue';
 import LogYearlyRevenue from './LogYearlyRevenue.jsx';
 import EmptyMilesWrapper from './EmptyMilesWrapper';
+import LogisticsMTD from './LogisticsMTD';
 
 const App = () => {
   return (
@@ -39,7 +40,16 @@ const App = () => {
                   activeClassName="bg-gray-700"
                   className="block py-2 px-4 hover:bg-gray-700"
                 >
-                  Daily
+                  Daily Ops
+                </NavLink>
+              </li>
+              <li>
+                <NavLink
+                  to="/LogisticsMTD"
+                  activeClassName="bg-gray-700"
+                  className="block py-2 px-4 hover:bg-gray-700"
+                >
+                  Logistics Month to Date
                 </NavLink>
               </li>
               <li>
