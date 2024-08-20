@@ -447,12 +447,16 @@ func AgregateLogisticMTDStats(ordersData []models.LogisticsOrdersData, stopOrder
 		TotalOrderFaults += thisOrderFaults
 		TotalStopFaults += thisStopFaults
 
+		thisTruck_hire = 0.0
+		thisCharges = 0.0
+		thisMiles = 0.0
+
 		// inner loop to go through the orders data
 		if order, ok := ordersMap[stop.Dispacher.String]; ok {
 			thisDispacher = order.Dispacher
-			thisTruck_hire += order.Truck_hire
-			thisCharges += order.Charges
-			thisMiles += order.Miles
+			thisTruck_hire = order.Truck_hire
+			thisCharges = order.Charges
+			thisMiles = order.Miles
 
 			// Add for the totals data
 			TotalTruckHire += thisTruck_hire

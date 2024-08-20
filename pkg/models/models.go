@@ -190,7 +190,7 @@ func NewLogisticsMTDStats(dispacher string, truck_hire, charges, miles float64, 
 	} else if stop_faults == 0 {
 		stop_percentage = 100.0
 	} else {
-		stop_percentage = (float64(stop_faults) / float64(total_stops) * 100)
+		stop_percentage = ((float64(total_stops) - float64(stop_faults)) / float64(total_stops) * 100)
 	}
 
 	var order_percentage float64
@@ -199,7 +199,7 @@ func NewLogisticsMTDStats(dispacher string, truck_hire, charges, miles float64, 
 	} else if Order_faults == 0 {
 		order_percentage = 100.0
 	} else {
-		order_percentage = (float64(Order_faults) / float64(total_orders) * 100)
+		order_percentage = ((float64(total_orders) - float64(Order_faults)) / float64(total_orders) * 100)
 	}
 
 	return &LogisticsMTDStats{

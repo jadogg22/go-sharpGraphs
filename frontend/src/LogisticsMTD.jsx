@@ -36,7 +36,7 @@ const LogisticsMTD = () => {
 
     return (
         <div className="p-6 bg-gray-100 min-h-screen flex flex-col items-center">
-            <h1 className="text-4xl font-extrabold mb-8">Daily Operations Summary</h1>
+            <h1 className="text-4xl font-extrabold mb-8">Logistics Month to date stats</h1>
             <div className="w-full max-w-6xl overflow-x-auto">
                 <table className="min-w-full bg-white border border-gray-200 rounded-lg shadow-lg">
                     <thead className="bg-gray-800 text-white">
