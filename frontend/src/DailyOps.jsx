@@ -8,7 +8,7 @@ const DailyOps = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    useEffect(() => {
+    const fetchData = async () => {
         setLoading(true);
         setError(null); // Reset error state before fetching
         fetch('http://192.168.0.62:5000/api/Transportation/Daily_Ops/')
@@ -26,6 +26,17 @@ const DailyOps = () => {
                 setError(err.message);
                 setLoading(false);
             });
+        };
+
+        
+    useEffect(() => {
+        fetchData();
+
+        const interval = setInterval(() => {
+            fetchData();
+        }, 45 * 60 * 1000);
+
+        return () => clearInterval(interval);
     }, []);
 
     if (loading) {
