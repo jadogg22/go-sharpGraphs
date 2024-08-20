@@ -265,6 +265,12 @@ func LogisticsMTD(c *gin.Context) {
 	today := time.Now()
 	data := getdata.GetLogisticsMTDData(startOfTheMonth, today)
 	// need to add error handling here
+	if data == nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"Message": "Error getting data from the database",
+		})
+		return
+	}
 
 	// Set the cache
 	cache.MyCache.Set(cacheKey, data, "[]models.LogisticsMTDStats", time.Minute*45)

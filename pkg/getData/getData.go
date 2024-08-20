@@ -530,9 +530,9 @@ ORDER BY
 		err := stopsRows.Scan(
 			&d.Dispacher,
 			&d.Total_stops,
-			&d.Total_orders,
-			&d.Order_faults,
 			&d.Stop_faults,
+			&d.Order_faults,
+			&d.Total_orders,
 		)
 		if err != nil {
 			fmt.Println("Error scanning row: " + err.Error())

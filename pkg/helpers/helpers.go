@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/jadogg22/go-sharpGraphs/pkg/models"
@@ -383,7 +384,22 @@ func FilterRevenueArray(revenueArray []map[string]interface{}, totalrevenue floa
 
 // Because its easier to query twice and get the totals and then combine them into a different struct here instead of a giant query that would be hard to read
 // harder to debug im going to do it this way for now.
+
 func AgregateLogisticMTDStats(ordersData []models.LogisticsOrdersData, stopOrdersData []models.LogisticsStopOrdersData) []models.LogisticsMTDStats {
+
+	ordersMap := make(map[string]models.LogisticsOrdersData)
+
+	for _, order := range ordersData {
+		if exist, ok := ordersMap[order.Dispacher]; ok {
+			exist.Charges += order.Charges
+			exist.Miles += order.Miles
+			exist.Truck_hire += order.Truck_hire
+			ordersMap[order.Dispacher] = exist
+		} else {
+			ordersMap[order.Dispacher] = order
+		}
+	}
+
 	var (
 		// totals for the summation of all the data
 
@@ -409,55 +425,44 @@ func AgregateLogisticMTDStats(ordersData []models.LogisticsOrdersData, stopOrder
 		agregateData = make([]models.LogisticsMTDStats, 0)
 	)
 
-	// outer loop to go through the orders data
-	for _, order := range ordersData {
-		thisDispacher = order.Dispacher.String
-		thisTruck_hire = order.Truck_hire.Float64
-		thisCharges = order.Charges.Float64
-		thisMiles = order.Miles.Float64
+	// outer loop to go through the stop data
+	for _, stop := range stopOrdersData {
+		if stop.Dispacher.String == "NULL" {
+			// just add the stop data to the totals
+			TotalStops += stop.Total_stops
+			TotalOrders += stop.Total_orders
+			TotalOrderFaults += stop.Order_faults
+			TotalStopFaults += stop.Stop_faults
+			break
+		}
 
-		// Add for the totals data
+		thisDispacher = stop.Dispacher.String
+		thisTotalStops = stop.Total_stops
+		thisTotalOrders = stop.Total_orders
+		thisOrderFaults = stop.Order_faults
+		thisStopFaults = stop.Stop_faults
 
-		TotalTruckHire += thisTruck_hire
-		TotalCharges += thisCharges
-		TotalMiles += thisMiles
+		TotalOrders += thisTotalOrders
+		TotalStops += thisTotalStops
+		TotalOrderFaults += thisOrderFaults
+		TotalStopFaults += thisStopFaults
 
-		// inner loop to go through the stop data
-		for _, stop := range stopOrdersData {
-			if stop.Dispacher.String == thisDispacher {
-				thisTotalStops = stop.Total_stops
-				thisTotalOrders = stop.Total_orders
-				thisOrderFaults = stop.Order_faults
-				thisStopFaults = stop.Stop_faults
+		// inner loop to go through the orders data
+		if order, ok := ordersMap[stop.Dispacher.String]; ok {
+			thisDispacher = order.Dispacher
+			thisTruck_hire += order.Truck_hire
+			thisCharges += order.Charges
+			thisMiles += order.Miles
 
-				// Add for the totals data
-				TotalOrders += thisTotalOrders
-				TotalStops += thisTotalStops
-				TotalOrderFaults += thisOrderFaults
-				TotalStopFaults += thisStopFaults
+			// Add for the totals data
+			TotalTruckHire += thisTruck_hire
+			TotalCharges += thisCharges
+			TotalMiles += thisMiles
 
-				// Add to the agregate data
-				agregateData = append(agregateData, models.LogisticsMTDStats{
-					Dispacher:       thisDispacher,
-					TotalOrders:     thisTotalOrders,
-					Revenue:         thisCharges,
-					TruckHire:       thisTruck_hire,
-					NetRevenue:      thisCharges - thisTruck_hire,
-					Margins:         ((thisCharges - thisTruck_hire) / thisCharges) * 100,
-					TotalMiles:      thisMiles,
-					RevPerMile:      (thisCharges - thisTruck_hire) / thisMiles,
-					StopPercentage:  (float64(thisStopFaults) / float64(thisTotalStops)) * 100,
-					OrderPercentage: (float64(thisOrderFaults) / float64(thisTotalOrders)) * 100,
-				})
-			}
-			if stop.Dispacher.String == "NULL" {
-				// just add the stop data to the totals
-				TotalStops += stop.Total_stops
-				TotalOrders += stop.Total_orders
-				TotalOrderFaults += stop.Order_faults
-				TotalStopFaults += stop.Stop_faults
-			}
+			// create a new data struct
+			newData := models.NewLogisticsMTDStats(thisDispacher, thisTruck_hire, thisCharges, thisMiles, thisTotalStops, thisTotalOrders, thisOrderFaults, thisStopFaults)
 
+			agregateData = append(agregateData, *newData)
 		}
 	}
 
@@ -475,4 +480,21 @@ func AgregateLogisticMTDStats(ordersData []models.LogisticsOrdersData, stopOrder
 		OrderPercentage: (float64(TotalOrderFaults) / float64(TotalOrders)) * 100,
 	})
 	return agregateData
+
+}
+
+func removeSpacesToLower(s string) string {
+	// Remove all spaces
+	noSpaces := strings.ReplaceAll(s, " ", "")
+	// Convert to lowercase
+	lowerCase := strings.ToLower(noSpaces)
+	return lowerCase
+}
+
+func SameName(s1, s2 string) bool {
+	// Remove spaces and convert to lowercase
+	s1 = removeSpacesToLower(s1)
+	s2 = removeSpacesToLower(s2)
+	// Check if the strings are the same
+	return s1 == s2
 }

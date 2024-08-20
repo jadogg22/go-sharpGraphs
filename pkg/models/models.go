@@ -126,10 +126,10 @@ type LogisticsStops struct {
 }
 
 type LogisticsOrdersData struct {
-	Dispacher  sql.NullString
-	Truck_hire sql.NullFloat64
-	Charges    sql.NullFloat64
-	Miles      sql.NullFloat64
+	Dispacher  string
+	Truck_hire float64
+	Charges    float64
+	Miles      float64
 }
 
 type LogisticsStopOrdersData struct {
@@ -151,6 +151,70 @@ type LogisticsMTDStats struct {
 	RevPerMile      float64 `json:"rev_per_mile"`
 	StopPercentage  float64 `json:"stop_percentage"`
 	OrderPercentage float64 `json:"order_percentage"`
+}
+
+func NewLogisticsMTDStats(dispacher string, truck_hire, charges, miles float64, total_stops, total_orders, Order_faults, stop_faults int) *LogisticsMTDStats {
+	if total_orders == 0 {
+		total_orders = 1
+	}
+
+	if total_stops == 0 {
+		total_stops = 1
+	}
+
+	if charges == 0 {
+		charges = 1
+	}
+
+	if miles == 0 {
+		miles = 1
+	}
+
+	var margins float64
+	if charges-truck_hire == 0 {
+		margins = 1
+	} else {
+		margins = (charges - truck_hire) / charges
+	}
+
+	var rev_per_mile float64
+	if miles == 0 {
+		rev_per_mile = 0
+	} else {
+		rev_per_mile = charges / miles
+	}
+
+	var stop_percentage float64
+	if total_stops == 0 {
+		stop_percentage = 100.0
+	} else if stop_faults == 0 {
+		stop_percentage = 100.0
+	} else {
+		stop_percentage = (float64(stop_faults) / float64(total_stops) * 100)
+	}
+
+	var order_percentage float64
+	if total_orders == 0 {
+		order_percentage = 100.0
+	} else if Order_faults == 0 {
+		order_percentage = 100.0
+	} else {
+		order_percentage = (float64(Order_faults) / float64(total_orders) * 100)
+	}
+
+	return &LogisticsMTDStats{
+		Dispacher:       dispacher,
+		TotalOrders:     total_orders,
+		Revenue:         charges,
+		TruckHire:       truck_hire,
+		NetRevenue:      charges - truck_hire,
+		Margins:         margins,
+		TotalMiles:      miles,
+		RevPerMile:      rev_per_mile,
+		StopPercentage:  stop_percentage,
+		OrderPercentage: order_percentage,
+	}
+
 }
 
 type DailyOpsData struct {
