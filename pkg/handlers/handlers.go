@@ -7,6 +7,7 @@ import (
 
 	"github.com/jadogg22/go-sharpGraphs/pkg/cache"
 	"github.com/jadogg22/go-sharpGraphs/pkg/database"
+	"github.com/jadogg22/go-sharpGraphs/pkg/getData"
 	"github.com/jadogg22/go-sharpGraphs/pkg/models"
 
 	"github.com/gin-gonic/gin"
@@ -182,25 +183,36 @@ func Daily_Ops(c *gin.Context) {
 	c.JSON(200, data)
 }
 
-func Transportation_post(c *gin.Context) {
-	var data []models.LoadData
+//func Transportation_post(c *gin.Context) {
+//	var data []models.LoadData
 
-	if err := c.ShouldBindJSON(&data); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
+//	if err := c.ShouldBindJSON(&data); err != nil {
+//		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+//c		return
+//	}
 
-	fmt.Println("Adding data to the database")
+//	fmt.Println("Adding data to the database")
 
-	var err error
-	err = database.AddOrderToDB(&data, "transportation")
-	if err != nil {
-		fmt.Printf("error %v \n", err)
-	}
-}
+//	var err error
+//	err = database.AddOrderToDB(&data, "transportation")
+//	if err != nil {
+//		fmt.Printf("error %v \n", err)
+//	}
 
 // ---------- Logisitics Handlers ----------
 func Log_year_by_year(c *gin.Context) {
+
+	cacheKey := "logisticsYearByYear"
+	cachedData, typeID, found := cache.MyCache.Get(cacheKey)
+	if found {
+		if typeID == "[]models.WeeklyRevenue" {
+			if cachedData, ok := cachedData.([]models.WeeklyRevenue); ok {
+				c.JSON(200, cachedData)
+				return
+			}
+		}
+		fmt.Println("Error casting the data")
+	}
 
 	//For now we're going to just get all data from the database
 	//This data only includes finished weeks.
@@ -210,7 +222,7 @@ func Log_year_by_year(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"Message": "Error getting data from the database",
-			"Error":   err,
+			"Error":   fmt.Sprintf("%s", err),
 		})
 		return
 	}
@@ -234,10 +246,29 @@ func Log_year_by_year(c *gin.Context) {
 	})
 }
 
-func Log_stacked_miles(c *gin.Context) {
-	c.JSON(200, gin.H{
-		"Message": "Woring on it",
-	})
+func LogisticsMTD(c *gin.Context) {
+	// check the cache
+	cacheKey := "logisticsMTD"
+	cachedData, typeID, found := cache.MyCache.Get(cacheKey)
+	if found {
+		if typeID == "[]models.LogisticsMTDStats" {
+			if cachedData, ok := cachedData.([]models.LogisticsMTDStats); ok {
+				c.JSON(200, cachedData)
+				return
+			}
+		}
+		fmt.Println("Error casting the data")
+	}
+
+	// cache miss, get the data from the database.
+	startOfTheMonth := time.Now().AddDate(0, 0, -time.Now().Day()+1)
+	today := time.Now()
+	data := getdata.GetLogisticsMTDData(startOfTheMonth, today)
+	// need to add error handling here
+
+	// Set the cache
+	cache.MyCache.Set(cacheKey, data, "[]models.LogisticsMTDStats", time.Minute*45)
+	c.JSON(200, data)
 }
 
 func Logistics_post(c *gin.Context) {

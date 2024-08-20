@@ -125,6 +125,34 @@ type LogisticsStops struct {
 	DeductCode               *string    `json:"deduct_code"`
 }
 
+type LogisticsOrdersData struct {
+	Dispacher  sql.NullString
+	Truck_hire sql.NullFloat64
+	Charges    sql.NullFloat64
+	Miles      sql.NullFloat64
+}
+
+type LogisticsStopOrdersData struct {
+	Dispacher    sql.NullString
+	Total_stops  int
+	Total_orders int
+	Order_faults int
+	Stop_faults  int
+}
+
+type LogisticsMTDStats struct {
+	Dispacher       string  `json:"dispacher"`
+	TotalOrders     int     `json:"total_orders"`
+	Revenue         float64 `json:"revenue"`
+	TruckHire       float64 `json:"truck_hire"`
+	NetRevenue      float64 `json:"net_revenue"`
+	Margins         float64 `json:"margins"`
+	TotalMiles      float64 `json:"total_miles"`
+	RevPerMile      float64 `json:"rev_per_mile"`
+	StopPercentage  float64 `json:"stop_percentage"`
+	OrderPercentage float64 `json:"order_percentage"`
+}
+
 type DailyOpsData struct {
 	Manager  string  `json:"driverManager"`
 	Trucks   int     `json:"numberOfTrucks"`
