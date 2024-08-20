@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/jadogg22/go-sharpGraphs/pkg/database"
+	"github.com/jadogg22/go-sharpGraphs/pkg/helpers"
 	"github.com/jadogg22/go-sharpGraphs/pkg/models"
 	"github.com/joho/godotenv"
 
@@ -126,7 +127,7 @@ FROM
     JOIN orders ON orders.id = movement_order.order_id AND orders.company_id = 'TMS'
     JOIN stop origin ON origin.movement_id = movement.id AND origin.movement_sequence = 1 AND origin.company_id = 'TMS'
     JOIN stop dest ON dest.id = movement.dest_stop_id AND dest.company_id = 'TMS'
-    JOIN continuity ON movement.id = continuity.movement_id AND continuity.equipment_type_id = 'T' AND continuity.company_id = 'TMS'
+ JOIN continuity ON movement.id = continuity.movement_id AND continuity.equipment_type_id = 'T' AND continuity.company_id = 'TMS'
     JOIN tractor ON tractor.id = continuity.equipment_id AND tractor.company_id = 'TMS'
     LEFT JOIN fleet ON fleet.id = tractor.fleet_id AND fleet.company_id = 'TMS'
     LEFT JOIN users ON users.id = tractor.dispatcher AND users.company_id = 'TMS'
@@ -331,94 +332,222 @@ order by driver.fleet_manager, servicefail.minutes_late`, yesterday, yesterday)
 	log.Printf("Added %d rows to the database\n", len(dbData))
 }
 
-func getLogisticsData(conn *sql.DB, startDate time.Time, endDate time.Time) {
+// With access to the db, we can now grab the data from the production database and dont need
+// to replicate the data in our own database. This will save time and space and provide greater accuracy
+func NoDBDailyOpsCacheGrab() {
+	// make a connection to the database
+	conn, err := sql.Open("mssql", URL)
+	if err != nil {
+		fmt.Println("Error creating connection pool: " + err.Error())
+		log.Println("Error creating connection pool: " + err.Error())
+		return
+	}
+
+	defer conn.Close()
+
+	err = conn.Ping()
+	if err != nil {
+		fmt.Println("Error pinging database: " + err.Error())
+		log.Println("Error pinging database: " + err.Error())
+		return
+	}
+
+	// get all the data from the database
+}
+
+func GetLogisticsMTDData(startDate, endDate time.Time) []models.LogisticsMTDStats {
+
+	conn, err := sql.Open("mssql", URL)
+	if err != nil {
+		fmt.Println("Error creating connection pool: " + err.Error())
+		return nil
+	}
+
+	defer conn.Close()
+
+	err = conn.Ping()
+	if err != nil {
+		fmt.Println("Error pinging database: " + err.Error())
+		return nil
+	}
+
 	// format the dates to be used in the query "2024-08-11 00:00:00"
 	startDateStr := startDate.Format("2006-01-02 15:04:05")
 	endDateStr := endDate.Format("2006-01-02 15:04:05")
 
 	fmt.Println(startDateStr, endDateStr)
 
-	query := `WITH stop_data AS (
-    SELECT 
-        stop.id,
-        stop.order_id,
-        stop.movement_id,
-        stop.actual_arrival,
-        stop.sched_arrive_early,
-        stop.sched_arrive_late,
-        stop.movement_sequence,
-        movement.dispatcher_user_id AS dispatcher_user_id,
+	orderQuery := `SELECT 
+    users.name AS dispatcher,
+    movement.override_pay_amt AS truck_hire,
+    orders.total_charge AS charges,
+	movement.move_distance AS miles
+FROM 
+    movement
+    LEFT OUTER JOIN payee 
+        ON payee.id = movement.override_payee_id 
+        AND payee.company_id = 'TMS2'
+    LEFT OUTER JOIN users 
+        ON users.id = movement.dispatcher_user_id 
+        AND users.company_id = 'TMS2'
+    INNER JOIN movement_order 
+        ON movement.id = movement_order.movement_id 
+        AND movement_order.company_id = 'TMS2'
+    INNER JOIN orders 
+        ON orders.id = movement_order.order_id 
+        AND orders.company_id = 'TMS2'
+    INNER JOIN stop 
+        ON stop.id = orders.shipper_stop_id 
+        AND stop.company_id = 'TMS2'
+WHERE 
+    movement.company_id = 'TMS2'
+    AND movement.status <> 'V'
+    AND movement.loaded = 'L'
+    AND stop.actual_arrival BETWEEN {ts '2024-08-18 00:00:00'} AND {ts '2024-08-18 23:59:59'}
+ORDER BY 
+    dispatcher, 
+    orders.revenue_code_id, 
+    orders.id;`
 
-        driver.fleet_manager AS fleet_manager,
-        driver.id AS driver_id,
-        servicefail.stop_id AS servicefail_stop_id,
-        servicefail.minutes_late AS minutes_late,
-        servicefail.appt_required AS appt_required,
-        servicefail.stop_type AS stop_type,
-        servicefail.entered_user_id AS entered_user_id,
-        servicefail.entered_date AS entered_date,
-        servicefail.edi_standard_code AS edi_standard_code,
-        servicefail.dsp_comment AS dsp_comment,
-        servicefail.fault_of_carrier_or_driver AS sf_fault_of_carrier_or_driver,
-        movement.override_payee_id AS override_payee_id,
-        orders.customer_id AS customer_id,
-        movement.override_pay_amt AS pay_amt,
-        orders.id AS orders_id,
-        orders.operations_user AS operations_user,
-        orders.total_charge AS total_charge,
-        orders.status AS order_status,
-		orders.bill_distance as bill_distance
-    FROM 
-        stop
-    LEFT OUTER JOIN servicefail ON servicefail.stop_id = stop.id AND servicefail.status != 'V' AND servicefail.company_id = 'TMS2'
-    LEFT OUTER JOIN orders ON orders.id = stop.order_id AND orders.company_id = 'TMS2'
-    LEFT OUTER JOIN movement ON movement.id = stop.movement_id AND movement.company_id = 'TMS2'
-    LEFT OUTER JOIN equipment_item ON equipment_item.equipment_group_id = movement.equipment_group_id AND equipment_item.equipment_type_id = 'D' AND equipment_item.type_sequence = 0 AND equipment_item.company_id = 'TMS2'
-    LEFT OUTER JOIN driver ON driver.id = equipment_item.equipment_id AND driver.company_id = 'TMS2'
-    WHERE 
-        stop.company_id = 'TMS2' 
-        AND stop.sched_arrive_early >= {ts '2024-08-11 00:00:00'}
-        AND stop.sched_arrive_early <= {ts '2024-08-12 23:59:59'}
-        AND stop.stop_type IN ('PU', 'SO')
-        AND movement.loaded = 'L'
-),
-driver_extra_data AS (
-    SELECT
-        driver_extra_pay.movement_id,
-        SUM(driver_extra_pay.amount) AS total_amount,
-        MAX(deduct_code.code_type) AS code_type 
-    FROM
-        driver_extra_pay
-    JOIN deduct_code ON deduct_code.id = driver_extra_pay.deduct_code_id
-    WHERE
-        driver_extra_pay.company_id = 'TMS2'
-        AND deduct_code.company_id = 'TMS2'
-    GROUP BY
-        driver_extra_pay.movement_id
-)
-SELECT
-    s.*,
-    COALESCE(d.total_amount, 0) AS additional_amount,
-    (s.pay_amt + COALESCE(d.total_amount, 0)) AS truck_hire,
-    d.code_type AS deduct_code
-FROM
-    stop_data s
-LEFT JOIN driver_extra_data d ON s.movement_id = d.movement_id
-ORDER BY
-    s.dispatcher_user_id,
-    s.minutes_late;`
-
-	fmt.Println(query)
-
-	rows, err := conn.Query(query)
+	rows, err := conn.Query(orderQuery)
 	if err != nil {
 		fmt.Println("Error querying database: " + err.Error())
 		log.Println("Error querying database: " + err.Error())
-		return
+		return nil
 	}
 
 	defer rows.Close()
 
+	var OrdersData []models.LogisticsOrdersData
+	for rows.Next() {
+		var d models.LogisticsOrdersData
+		err := rows.Scan(
+			&d.Dispacher,
+			&d.Truck_hire,
+			&d.Charges,
+			&d.Miles,
+		)
+		if err != nil {
+			fmt.Println("Error scanning row: " + err.Error())
+			log.Println("Error scanning row: " + err.Error())
+			return nil
+		}
+
+		OrdersData = append(OrdersData, d)
+	}
+
+	stopsQuery := `
+WITH FaultyStops AS (
+    SELECT DISTINCT
+        stop.order_id,
+        movement.dispatcher_user_id
+    FROM
+        stop
+        LEFT JOIN servicefail 
+            ON servicefail.stop_id = stop.id 
+            AND servicefail.status != 'V' 
+            AND servicefail.company_id = 'TMS2'
+        LEFT JOIN movement 
+            ON movement.id = stop.movement_id
+            AND movement.company_id = 'TMS2'
+    WHERE
+        stop.company_id = 'TMS2'
+        AND stop.sched_arrive_early BETWEEN {ts '2024-08-18 00:00:00'} AND {ts '2024-08-18 23:59:59'}
+        AND stop.stop_type IN ('PU', 'SO')
+        AND servicefail.minutes_late IS NOT NULL
+),
+OrderFaults AS (
+    SELECT
+        dispatcher_user_id,
+        COUNT(DISTINCT order_id) AS order_faults
+    FROM
+        FaultyStops
+    GROUP BY
+        dispatcher_user_id
+),
+TotalOrders AS (
+    SELECT
+        movement.dispatcher_user_id,
+        COUNT(DISTINCT stop.order_id) AS total_orders
+    FROM
+        stop
+        LEFT JOIN movement 
+            ON movement.id = stop.movement_id
+            AND movement.company_id = 'TMS2'
+    WHERE
+        stop.company_id = 'TMS2'
+        AND stop.sched_arrive_early BETWEEN {ts '2024-08-18 00:00:00'} AND {ts '2024-08-18 23:59:59'}
+        AND stop.stop_type IN ('PU', 'SO')
+    GROUP BY
+        movement.dispatcher_user_id
+)
+SELECT
+    users.name AS dispatcher,
+    COUNT(DISTINCT stop.id) AS total_stops,
+    COUNT(DISTINCT CASE WHEN servicefail.minutes_late IS NOT NULL THEN stop.id END) AS stop_faults,
+    COALESCE(OrderFaults.order_faults, 0) AS order_faults,
+    COALESCE(TotalOrders.total_orders, 0) AS total_orders
+FROM
+    stop
+    LEFT JOIN servicefail 
+        ON servicefail.stop_id = stop.id 
+        AND servicefail.status != 'V'
+        AND servicefail.company_id = 'TMS2'
+    LEFT JOIN movement 
+        ON movement.id = stop.movement_id 
+        AND movement.company_id = 'TMS2'
+    LEFT JOIN OrderFaults 
+        ON OrderFaults.dispatcher_user_id = movement.dispatcher_user_id
+    LEFT JOIN TotalOrders 
+        ON TotalOrders.dispatcher_user_id = movement.dispatcher_user_id
+    LEFT JOIN users 
+        ON users.id = movement.dispatcher_user_id 
+        AND users.company_id = 'TMS2'
+WHERE
+    stop.company_id = 'TMS2'
+    AND stop.sched_arrive_early BETWEEN {ts '2024-08-18 00:00:00'} AND {ts '2024-08-18 23:59:59'}
+    AND stop.stop_type IN ('PU', 'SO')
+    AND movement.loaded = 'L'
+GROUP BY
+    users.name,
+    OrderFaults.order_faults,
+    TotalOrders.total_orders
+ORDER BY
+    dispatcher;`
+
+	stopsRows, err := conn.Query(stopsQuery)
+	if err != nil {
+		fmt.Println("Error querying database: " + err.Error())
+		log.Println("Error querying database: " + err.Error())
+		return nil
+	}
+
+	defer stopsRows.Close()
+
+	var StopsData []models.LogisticsStopOrdersData
+	for stopsRows.Next() {
+		var d models.LogisticsStopOrdersData
+		err := stopsRows.Scan(
+			&d.Dispacher,
+			&d.Total_stops,
+			&d.Total_orders,
+			&d.Order_faults,
+			&d.Stop_faults,
+		)
+		if err != nil {
+			fmt.Println("Error scanning row: " + err.Error())
+			log.Println("Error scanning row: " + err.Error())
+			return nil
+		}
+
+		StopsData = append(StopsData, d)
+	}
+
+	//agrigate data
+	agregedData := helpers.AgregateLogisticMTDStats(OrdersData, StopsData)
+	conn.Close()
+
+	return agregedData
 }
 
 func getTransportationOrders(conn *sql.DB, startDate, endDate time.Time) {
