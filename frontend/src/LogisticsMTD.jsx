@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { PropagateLoader } from 'react-spinners';
 
+const formatNumber = (number) => {
+    if (number === null || number === undefined) return '';
+    return new Intl.NumberFormat().format(number);
+};
+
 const LogisticsMTD = () => {
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -57,13 +62,13 @@ const LogisticsMTD = () => {
                         {data.map((row, index) => (
                             <tr key={index} className="border-t hover:bg-gray-100">
                                 <td className="py-4 px-6 text-gray-900 text-lg font-semibold">{row.dispacher}</td>
-                                <td className="py-4 px-6 text-gray-900 text-lg font-semibold">{row.total_orders}</td>
-                                <td className="py-4 px-6 text-gray-900 text-lg font-semibold">{row.revenue.toFixed(2)}</td>
-                                <td className="py-4 px-6 text-gray-900 text-lg font-semibold">{row.truck_hire.toFixed(2)}</td>
-                                <td className="py-4 px-6 text-gray-900 text-lg font-semibold">{row.net_revenue.toFixed(2)}</td>
+                                <td className="py-4 px-6 text-gray-900 text-lg font-semibold">{formatNumber(row.total_orders)}</td>
+                                <td className="py-4 px-6 text-gray-900 text-lg font-semibold">{formatNumber(row.revenue.toFixed(2))}</td>
+                                <td className="py-4 px-6 text-gray-900 text-lg font-semibold">{formatNumber(row.truck_hire.toFixed(2))}</td>
+                                <td className="py-4 px-6 text-gray-900 text-lg font-semibold">{formatNumber(row.net_revenue.toFixed(2))}</td>
                                 <td className="py-4 px-6 text-gray-900 text-lg font-semibold">{(row.margins * 100).toFixed(2)}%</td>
-                                <td className="py-4 px-6 text-gray-900 text-lg font-semibold">{row.total_miles}</td>
-                                <td className="py-4 px-6 text-gray-900 text-lg font-semibold">{row.rev_per_mile.toFixed(2)}</td>
+                                <td className="py-4 px-6 text-gray-900 text-lg font-semibold">{formatNumber(row.total_miles)}</td>
+                                <td className="py-4 px-6 text-gray-900 text-lg font-semibold">{formatNumber(row.rev_per_mile.toFixed(2))}</td>
                                 <td className="py-4 px-6 text-gray-900 text-lg font-semibold">{row.stop_percentage.toFixed(2)}%</td>
                                 <td className="py-4 px-6 text-gray-900 text-lg font-semibold">{row.order_percentage.toFixed(2)}%</td>
                             </tr>
