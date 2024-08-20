@@ -78,6 +78,7 @@ const App = () => {
             <Route path="/" element={<GraphYearlyRevenue />} />
             <Route path="/LogisticsYearly" element={<LogYearlyRevenue />} />
             <Route path="/dailyOps" element={<DailyOps />} />
+            <Route path="/LogisticsMTD" element={<LogisticsMTD />} />
             <Route path="/EmptyMiles" element={<EmptyMilesWrapper />} />
             <Route path="/logisticsWeekly" element={<LogisticsWeekly />} />
           </Routes>
