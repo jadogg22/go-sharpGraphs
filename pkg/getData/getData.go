@@ -371,13 +371,11 @@ func GetLogisticsMTDData(startDate, endDate time.Time) []models.LogisticsMTDStat
 		return nil
 	}
 
-	// format the dates to be used in the query "2024-08-11 00:00:00"
-	startDateStr := startDate.Format("2006-01-02 15:04:05")
-	endDateStr := endDate.Format("2006-01-02 15:04:05")
+	// format the dates to be used in the query "2024-08-11"
+	startDateStr := startDate.Format("2006-01-02")
+	endDateStr := endDate.Format("2006-01-02")
 
-	fmt.Println(startDateStr, endDateStr)
-
-	orderQuery := `SELECT 
+	orderQuery := fmt.Sprintf(`SELECT 
     users.name AS dispatcher,
     movement.override_pay_amt AS truck_hire,
     orders.total_charge AS charges,
@@ -403,11 +401,11 @@ WHERE
     movement.company_id = 'TMS2'
     AND movement.status <> 'V'
     AND movement.loaded = 'L'
-    AND stop.actual_arrival BETWEEN {ts '2024-08-18 00:00:00'} AND {ts '2024-08-18 23:59:59'}
+    AND stop.actual_arrival BETWEEN {ts '%s 00:00:00'} AND {ts '%s 23:59:59'}
 ORDER BY 
     dispatcher, 
     orders.revenue_code_id, 
-    orders.id;`
+    orders.id;`, startDateStr, endDateStr)
 
 	rows, err := conn.Query(orderQuery)
 	if err != nil {
@@ -436,7 +434,7 @@ ORDER BY
 		OrdersData = append(OrdersData, d)
 	}
 
-	stopsQuery := `
+	stopsQuery := fmt.Sprintf(`
 WITH FaultyStops AS (
     SELECT DISTINCT
         stop.order_id,
@@ -452,7 +450,7 @@ WITH FaultyStops AS (
             AND movement.company_id = 'TMS2'
     WHERE
         stop.company_id = 'TMS2'
-        AND stop.sched_arrive_early BETWEEN {ts '2024-08-18 00:00:00'} AND {ts '2024-08-18 23:59:59'}
+        AND stop.sched_arrive_early BETWEEN {ts '%s 00:00:00'} AND {ts '%s 23:59:59'}
         AND stop.stop_type IN ('PU', 'SO')
         AND servicefail.minutes_late IS NOT NULL
 ),
@@ -476,7 +474,7 @@ TotalOrders AS (
             AND movement.company_id = 'TMS2'
     WHERE
         stop.company_id = 'TMS2'
-        AND stop.sched_arrive_early BETWEEN {ts '2024-08-18 00:00:00'} AND {ts '2024-08-18 23:59:59'}
+        AND stop.sched_arrive_early BETWEEN {ts '%s 00:00:00'} AND {ts '%s 23:59:59'}
         AND stop.stop_type IN ('PU', 'SO')
     GROUP BY
         movement.dispatcher_user_id
@@ -505,7 +503,7 @@ FROM
         AND users.company_id = 'TMS2'
 WHERE
     stop.company_id = 'TMS2'
-    AND stop.sched_arrive_early BETWEEN {ts '2024-08-18 00:00:00'} AND {ts '2024-08-18 23:59:59'}
+    AND stop.sched_arrive_early BETWEEN {ts '%s 00:00:00'} AND {ts '%s 23:59:59'}
     AND stop.stop_type IN ('PU', 'SO')
     AND movement.loaded = 'L'
 GROUP BY
@@ -513,7 +511,8 @@ GROUP BY
     OrderFaults.order_faults,
     TotalOrders.total_orders
 ORDER BY
-    dispatcher;`
+    dispatcher;`, startDateStr, endDateStr, startDateStr, endDateStr, startDateStr, endDateStr)
+	// that was silly
 
 	stopsRows, err := conn.Query(stopsQuery)
 	if err != nil {
@@ -556,7 +555,6 @@ func getTransportationOrders(conn *sql.DB, startDate, endDate time.Time) {
 	endDateStr := endDate.Format("2006-01-02")
 
 	query := fmt.Sprintf(`
-
 select 
 	orders.id order_id, orders.operations_user operations_user, orders.revenue_code_id revenue_code_id,
 	orders.freight_charge freight_charge, orders.bill_distance bill_miles, orders.bill_date bill_date,
