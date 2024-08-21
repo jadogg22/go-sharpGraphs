@@ -1,14 +1,12 @@
 package main
 
 import (
-	"github.com/gin-gonic/contrib/static"
 	"github.com/gin-gonic/gin"
 	"github.com/jadogg22/go-sharpGraphs/pkg/getData"
 	"github.com/jadogg22/go-sharpGraphs/pkg/handlers"
 	"github.com/robfig/cron/v3"
 	"log"
 	"net/http"
-	"strings"
 )
 
 // main function to display different endpoints for ease of use.
@@ -32,16 +30,12 @@ func main() {
 
 	// setup cors middleware
 	r.Use(CORSMiddleware())
-	r.Use(staticFileMiddleware())
 
 	r.GET("/ping", func(c *gin.Context) {
 		c.JSON(200, gin.H{
 			"message": "pong",
 		})
 	})
-
-	// Serve static files from the embedded frontend/dist directory
-	r.Use(static.Serve("/", static.LocalFile("./frontend/dist", true)))
 
 	// // ---------- Transportation Handlers ----------
 	r.GET("/api/Transportation/get_yearly_revenue", handlers.Trans_year_by_year)
@@ -77,8 +71,10 @@ func main() {
 // CORSMiddleware is a custom CORS middleware that takes a pointer to gin.Context
 func CORSMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// Set headers to allow all origins
-		c.Header("Access-Control-Allow-Origin", "*")
+		// Allow cors from my proxy
+		allowedOrigins := "http://192.168.0.62"
+
+		c.Header("Access-Control-Allow-Origin", allowedOrigins)
 		c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 		c.Header("Access-Control-Allow-Headers", "Origin, Content-Type")
 		c.Header("Access-Control-Allow-Credentials", "True")
@@ -90,17 +86,6 @@ func CORSMiddleware() gin.HandlerFunc {
 		}
 
 		// Continue processing request
-		c.Next()
-	}
-}
-
-func staticFileMiddleware() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		if strings.HasSuffix(c.Request.URL.Path, ".js") {
-			c.Writer.Header().Set("Content-Type", "application/javascript")
-		} else if strings.HasSuffix(c.Request.URL.Path, ".css") {
-			c.Writer.Header().Set("Content-Type", "text/css")
-		}
 		c.Next()
 	}
 }
