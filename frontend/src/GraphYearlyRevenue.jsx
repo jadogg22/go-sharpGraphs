@@ -71,7 +71,7 @@ import {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const response = await fetch('http://192.168.0.62:5000/api/Transportation/get_yearly_revenue/');
+        const response = await fetch('http://192.168.0.62:5000/api/Transportation/get_yearly_revenue');
         if (!response.ok) {
           throw new Error('Network response was not ok');
         }

@@ -47,7 +47,7 @@ func main() {
 	r.GET("/api/Transportation/get_yearly_revenue", handlers.Trans_year_by_year)
 	r.GET("/api/Transportation/Stacked_miles/:when", handlers.Trans_stacked_miles)
 	r.GET("/api/Transportation/get_coded_revenue/:when", handlers.Trans_coded_revenue)
-	r.GET("/api/Transportation/Daily_Ops/", handlers.Daily_Ops)
+	r.GET("/api/Transportation/Daily_Ops", handlers.Daily_Ops)
 
 	//r.POST("/api/Transportation/add/", handlers.Transportation_post)
 
@@ -57,10 +57,10 @@ func main() {
 	r.GET("/api/Logistics/MTD", handlers.LogisticsMTD)
 	//r.GET("/Logistics/Stacked_miles/", Log_stacked_miles)
 
-	r.POST("/api/Logistics/add/", handlers.Logistics_post)
+	r.POST("/api/Logistics/add", handlers.Logistics_post)
 
 	// ---------- Dispatch Handlers ----------------
-	r.GET("/api/Dispatch/Week_to_date/", handlers.Dispach_week_to_date)
+	r.GET("/api/Dispatch/Week_to_date", handlers.Dispach_week_to_date)
 
 	// ---------- receive data ----------
 	// Define a POST endpoint to receive DispatcherStats data
