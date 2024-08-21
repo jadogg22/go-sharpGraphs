@@ -11,7 +11,7 @@ const DailyOps = () => {
     const fetchData = async () => {
         setLoading(true);
         setError(null); // Reset error state before fetching
-        fetch('http://192.168.0.62:5000/api/Transportation/Daily_Ops/')
+        fetch('http://192.168.0.62:5000/api/Transportation/Daily_Ops')
             .then(response => {
                 if (!response.ok) {
                     throw new Error(`Error: ${response.statusText}`);

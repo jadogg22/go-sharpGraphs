@@ -6,6 +6,20 @@ const formatNumber = (number) => {
     return new Intl.NumberFormat().format(number);
 };
 
+const locationGroups = {
+    "Wellsvile": ["CAMI HANSEN", "LIZ SWENSON", "SAM SWENSON", "LENORA SMITH" ],
+    "SLC": ["JOY LYNN", "MIJKEN CASSIDY"],
+    "Ashton": ["JERRAMI MAROTZ", "RIKI MAROTZ"]
+
+};
+
+const groupByLocation = (data, groups) => {
+    return Object.keys(groups).reduce((acc, location) => {
+        acc[location] = data.filter(row => groups[location].includes(row.dispatcher));
+        return acc;
+    }, {});
+};
+
 const LogisticsMTD = () => {
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(true);
