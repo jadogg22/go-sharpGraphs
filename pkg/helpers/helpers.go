@@ -471,18 +471,10 @@ func AgregateLogisticMTDStats(ordersData []models.LogisticsOrdersData, stopOrder
 	}
 
 	// Add the totals to the agregate data
-	agregateData = append(agregateData, models.LogisticsMTDStats{
-		Dispacher:       "Total",
-		TotalOrders:     TotalOrders,
-		Revenue:         TotalCharges,
-		TruckHire:       TotalTruckHire,
-		NetRevenue:      TotalCharges - TotalTruckHire,
-		Margins:         ((TotalCharges - TotalTruckHire) / TotalCharges) * 100,
-		TotalMiles:      TotalMiles,
-		RevPerMile:      (TotalCharges - TotalTruckHire) / TotalMiles,
-		StopPercentage:  (float64(TotalStopFaults) / float64(TotalStops)) * 100,
-		OrderPercentage: (float64(TotalOrderFaults) / float64(TotalOrders)) * 100,
-	})
+
+	totalsData := models.NewLogisticsMTDStats("Total", TotalTruckHire, TotalCharges, TotalMiles, TotalStops, TotalOrders, TotalOrderFaults, TotalStopFaults)
+
+	agregateData = append(agregateData, *totalsData)
 	return agregateData
 
 }

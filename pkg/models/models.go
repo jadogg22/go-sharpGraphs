@@ -181,7 +181,7 @@ func NewLogisticsMTDStats(dispacher string, truck_hire, charges, miles float64, 
 	if miles == 0 {
 		rev_per_mile = 0
 	} else {
-		rev_per_mile = charges / miles
+		rev_per_mile = (charges - truck_hire) / miles
 	}
 
 	var stop_percentage float64
