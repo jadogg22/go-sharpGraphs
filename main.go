@@ -44,7 +44,7 @@ func main() {
 	r.Use(static.Serve("/", static.LocalFile("./frontend/dist", true)))
 
 	// // ---------- Transportation Handlers ----------
-	r.GET("/api/Transportation/get_yearly_revenue/", handlers.Trans_year_by_year)
+	r.GET("/api/Transportation/get_yearly_revenue", handlers.Trans_year_by_year)
 	r.GET("/api/Transportation/Stacked_miles/:when", handlers.Trans_stacked_miles)
 	r.GET("/api/Transportation/get_coded_revenue/:when", handlers.Trans_coded_revenue)
 	r.GET("/api/Transportation/Daily_Ops/", handlers.Daily_Ops)
