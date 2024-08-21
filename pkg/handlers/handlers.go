@@ -63,7 +63,8 @@ func Trans_year_by_year(c *gin.Context) {
 	if found {
 		if typeID == "[]models.WeeklyRevenue" {
 			if cachedData, ok := cachedData.([]models.WeeklyRevenue); ok {
-				c.JSON(200, cachedData)
+				c.JSON(200, gin.H{"Data": cachedData, "Message": "Data from the cache"})
+
 				return
 			}
 		}
