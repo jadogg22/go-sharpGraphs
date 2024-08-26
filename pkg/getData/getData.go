@@ -407,6 +407,9 @@ func GetLogisticsMTDData(startDate, endDate time.Time) []models.LogisticsMTDStat
 			return nil
 		}
 
+		// remove all spaces and make the dispatcher name lowercase
+		dispatcher = strings.ReplaceAll(strings.ToLower(dispatcher), " ", "")
+
 		if name, exists := dispacherNames[dispatcher]; exists {
 			dispatcher = name
 		}
