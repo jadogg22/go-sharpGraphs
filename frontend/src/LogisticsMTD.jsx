@@ -9,9 +9,10 @@ const formatNumber = (number) => {
 
 // Define dispatcher groups by location
 const locationGroups = {
-    "Wellsvile": ["CAMI HANSEN", "LIZ SWENSON", "SAM SWENSON", "LENORA SMITH"],
-    "SLC": ["JOY LYNN", "MIJKEN CASSIDY"],
-    "Ashton": ["JERRAMI MAROTZ", "RIKI MAROTZ"]
+    "Wellsvile": ["Cami Hansen", "Liz Swenson", "Sam Swenson", "Lenora Smith" ],
+    "SLC": ["Joy Lynn", "Mijken Cassidy"],
+    "Ashton": ["Jerrami Marotz", "Riki Marotz"]
+
 };
 
 // Function to group and aggregate data by location
