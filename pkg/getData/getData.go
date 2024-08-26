@@ -356,6 +356,17 @@ func NoDBDailyOpsCacheGrab() {
 
 func GetLogisticsMTDData(startDate, endDate time.Time) []models.LogisticsMTDStats {
 
+	var dispacherNames = map[string]string{
+		"cami":     "Cami Hansen",
+		"jerrami":  "Jerrami Marotz",
+		"joylynn":  "Joy Lynn",
+		"lenora":   "Lenora Smith",
+		"liz":      "Liz Swenson",
+		"mijken":   "Mijken Cassidy",
+		"riki":     "Riki Marotz",
+		"samswens": "Sam Swenson",
+	}
+
 	conn, err := sql.Open("mssql", URL)
 	if err != nil {
 		fmt.Println("Error creating connection pool: " + err.Error())
@@ -394,6 +405,10 @@ func GetLogisticsMTDData(startDate, endDate time.Time) []models.LogisticsMTDStat
 		if err != nil {
 			fmt.Println("Error scanning row: " + err.Error())
 			return nil
+		}
+
+		if name, exists := dispacherNames[dispatcher]; exists {
+			dispatcher = name
 		}
 
 		myData := models.NewLogisticsMTDStats(dispatcher, truckHire, revenue, miles, totalStops, totalOrders, ordersWithServiceFail, totalServiceFailCount)

@@ -2,9 +2,9 @@ let data = [{"dispacher":"CAMI HANSEN","total_orders":162,"revenue":313371.20000
 
 
 const locationGroups = {
-    "Wellsvile": ["CAMI HANSEN", "LIZ SWENSON", "SAM SWENSON", "LENORA SMITH" ],
-    "SLC": ["JOY LYNN", "MIJKEN CASSIDY"],
-    "Ashton": ["JERRAMI MAROTZ", "RIKI MAROTZ"]
+    "Wellsvile": ["Cami Hansen", "Liz Swenson", "Sam Swenson", "Lenora Smith" ],
+    "SLC": ["Joy Lynn", "Mijken Cassidy"],
+    "Ashton": ["Jerrami Marotz", "Riki Marotz"]
 
 };
 
