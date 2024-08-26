@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/jadogg22/go-sharpGraphs/pkg/database"
-	"github.com/jadogg22/go-sharpGraphs/pkg/helpers"
 	"github.com/jadogg22/go-sharpGraphs/pkg/models"
 	"github.com/joho/godotenv"
 
@@ -371,216 +370,73 @@ func GetLogisticsMTDData(startDate, endDate time.Time) []models.LogisticsMTDStat
 		return nil
 	}
 
-	// format the dates to be used in the query "2024-08-11"
-	startDateStr := startDate.Format("2006-01-02")
-	endDateStr := endDate.Format("2006-01-02")
-
-	orderQuery := fmt.Sprintf(`SELECT 
-    users.name AS dispatcher,
-    movement.override_pay_amt AS truck_hire,
-    orders.total_charge AS charges,
-	movement.move_distance AS miles
-FROM 
-    movement
-    LEFT OUTER JOIN payee 
-        ON payee.id = movement.override_payee_id 
-        AND payee.company_id = 'TMS2'
-    LEFT OUTER JOIN users 
-        ON users.id = movement.dispatcher_user_id 
-        AND users.company_id = 'TMS2'
-    INNER JOIN movement_order 
-        ON movement.id = movement_order.movement_id 
-        AND movement_order.company_id = 'TMS2'
-    INNER JOIN orders 
-        ON orders.id = movement_order.order_id 
-        AND orders.company_id = 'TMS2'
-    INNER JOIN stop 
-        ON stop.id = orders.shipper_stop_id 
-        AND stop.company_id = 'TMS2'
-WHERE 
-    movement.company_id = 'TMS2'
-    AND movement.status <> 'V'
-    AND movement.loaded = 'L'
-    AND stop.actual_arrival BETWEEN {ts '%s 00:00:00'} AND {ts '%s 23:59:59'}
-ORDER BY 
-    dispatcher, 
-    orders.revenue_code_id, 
-    orders.id;`, startDateStr, endDateStr)
-
-	rows, err := conn.Query(orderQuery)
+	query := getLogisticsMTDQuery(startDate, endDate) // Helperfunction to get the long query string
+	rows, err := conn.Query(query)
 	if err != nil {
 		fmt.Println("Error querying database: " + err.Error())
-		log.Println("Error querying database: " + err.Error())
 		return nil
 	}
 
 	defer rows.Close()
 
-	var OrdersData []models.LogisticsOrdersData
+	// Rows returns
+	//dispatcher_user_id	revenue	override_pay_amt	truck_hire	total_stops	total_servicefail_count	orders_with_service_fail	total_orders
+	//cami      	313240.22	251552.70	256503.35	307	63	51	135	69430.00
+	var data []models.LogisticsMTDStats
+	var dispatcher string
+	var revenue, overridePayAmt, truckHire, miles float64
+	var totalStops, totalServiceFailCount, ordersWithServiceFail, totalOrders int
+
 	for rows.Next() {
-		var d models.LogisticsOrdersData
-		err := rows.Scan(
-			&d.Dispacher,
-			&d.Truck_hire,
-			&d.Charges,
-			&d.Miles,
-		)
+		err := rows.Scan(&dispatcher, &revenue, &overridePayAmt,
+			&truckHire, &totalStops, &totalServiceFailCount,
+			&ordersWithServiceFail, &totalOrders, &miles)
 		if err != nil {
 			fmt.Println("Error scanning row: " + err.Error())
-			log.Println("Error scanning row: " + err.Error())
 			return nil
 		}
 
-		OrdersData = append(OrdersData, d)
+		myData := models.NewLogisticsMTDStats(dispatcher, truckHire, revenue, miles, totalStops, totalOrders, ordersWithServiceFail, totalServiceFailCount)
+
+		data = append(data, *myData)
 	}
 
-	stopsQuery := fmt.Sprintf(`
-WITH FaultyStops AS (
-    SELECT DISTINCT
-        stop.order_id,
-        movement.dispatcher_user_id
-    FROM
-        stop
-        LEFT JOIN servicefail 
-            ON servicefail.stop_id = stop.id 
-            AND servicefail.status != 'V' 
-            AND servicefail.company_id = 'TMS2'
-        LEFT JOIN movement 
-            ON movement.id = stop.movement_id
-            AND movement.company_id = 'TMS2'
-    WHERE
-        stop.company_id = 'TMS2'
-        AND stop.sched_arrive_early BETWEEN {ts '%s 00:00:00'} AND {ts '%s 23:59:59'}
-        AND stop.stop_type IN ('PU', 'SO')
-        AND servicefail.minutes_late IS NOT NULL
-),
-OrderFaults AS (
-    SELECT
-        dispatcher_user_id,
-        COUNT(DISTINCT order_id) AS order_faults
-    FROM
-        FaultyStops
-    GROUP BY
-        dispatcher_user_id
-),
-TotalOrders AS (
-    SELECT
-        movement.dispatcher_user_id,
-        COUNT(DISTINCT stop.order_id) AS total_orders
-    FROM
-        stop
-        LEFT JOIN movement 
-            ON movement.id = stop.movement_id
-            AND movement.company_id = 'TMS2'
-    WHERE
-        stop.company_id = 'TMS2'
-        AND stop.sched_arrive_early BETWEEN {ts '%s 00:00:00'} AND {ts '%s 23:59:59'}
-        AND stop.stop_type IN ('PU', 'SO')
-    GROUP BY
-        movement.dispatcher_user_id
-)
-SELECT
-    users.name AS dispatcher,
-    COUNT(DISTINCT stop.id) AS total_stops,
-    COUNT(DISTINCT CASE WHEN servicefail.minutes_late IS NOT NULL THEN stop.id END) AS stop_faults,
-    COALESCE(OrderFaults.order_faults, 0) AS order_faults,
-    COALESCE(TotalOrders.total_orders, 0) AS total_orders
-FROM
-    stop
-    LEFT JOIN servicefail 
-        ON servicefail.stop_id = stop.id 
-        AND servicefail.status != 'V'
-        AND servicefail.company_id = 'TMS2'
-    LEFT JOIN movement 
-        ON movement.id = stop.movement_id 
-        AND movement.company_id = 'TMS2'
-    LEFT JOIN OrderFaults 
-        ON OrderFaults.dispatcher_user_id = movement.dispatcher_user_id
-    LEFT JOIN TotalOrders 
-        ON TotalOrders.dispatcher_user_id = movement.dispatcher_user_id
-    LEFT JOIN users 
-        ON users.id = movement.dispatcher_user_id 
-        AND users.company_id = 'TMS2'
-WHERE
-    stop.company_id = 'TMS2'
-    AND stop.sched_arrive_early BETWEEN {ts '%s 00:00:00'} AND {ts '%s 23:59:59'}
-    AND stop.stop_type IN ('PU', 'SO')
-    AND movement.loaded = 'L'
-GROUP BY
-    users.name,
-    OrderFaults.order_faults,
-    TotalOrders.total_orders
-ORDER BY
-    dispatcher;`, startDateStr, endDateStr, startDateStr, endDateStr, startDateStr, endDateStr)
-	// that was silly
+	return data
 
-	stopsRows, err := conn.Query(stopsQuery)
-	if err != nil {
-		fmt.Println("Error querying database: " + err.Error())
-		log.Println("Error querying database: " + err.Error())
-		return nil
-	}
-
-	defer stopsRows.Close()
-
-	var StopsData []models.LogisticsStopOrdersData
-	for stopsRows.Next() {
-		var d models.LogisticsStopOrdersData
-		err := stopsRows.Scan(
-			&d.Dispacher,
-			&d.Total_stops,
-			&d.Stop_faults,
-			&d.Order_faults,
-			&d.Total_orders,
-		)
-		if err != nil {
-			fmt.Println("Error scanning row: " + err.Error())
-			log.Println("Error scanning row: " + err.Error())
-			return nil
-		}
-
-		StopsData = append(StopsData, d)
-	}
-
-	//agrigate data
-	agregedData := helpers.AgregateLogisticMTDStats(OrdersData, StopsData)
-	conn.Close()
-
-	return agregedData
 }
 
-func getTransportationOrders(conn *sql.DB, startDate, endDate time.Time) {
+func GetTransportationOrders(conn *sql.DB, startDate, endDate time.Time) {
 	// format start and endDates to be "2024-08-11"
 	startDateStr := startDate.Format("2006-01-02")
 	endDateStr := endDate.Format("2006-01-02")
 
 	query := fmt.Sprintf(`
-select 
-	orders.id order_id, orders.operations_user operations_user, orders.revenue_code_id revenue_code_id,
-	orders.freight_charge freight_charge, orders.bill_distance bill_miles, orders.bill_date bill_date,
-	orders.ctrl_party_id controlling_party, orders.commodity_id commodity, orders.order_type_id order_type,
-	orders.equipment_type_id order_trailer_type, origin.state origin_value, dest.state destination_value, customer.id customer_id,
-	customer.name customer_name, customer.category customer_category, category.descr category_descr, movement.id movement_id,
-	loaded, move_distance, movement.brokerage, trailer.trailer_type trailer_type, origin.city_name origin_city, origin.state origin_state,
-	dest.city_name dest_city, dest.state dest_state, other_charge.amount oc_amount, charge_code.is_fuel_surcharge is_fuel_surcharge,
-	dest.sched_arrive_early report_date, dest.actual_arrival actual_date, prorated_orderdist.empty_distance empty_miles,
-	prorated_orderdist.loaded_distance loaded_miles, (prorated_orderdist.empty_distance+prorated_orderdist.loaded_distance) total_miles,
-	orders.id record_count, orders.id fuel_surcharge, orders.id remaining_charges, orders.id total_revenue, orders.id empty_pct,
-	orders.id rev_loaded_mile, orders.id rev_total_mile, orders.id billed, orders.id week_value, orders.id month_value,
-	orders.id quarter_value, revenue_code_id detail_id 
-from 
-	orders left outer join customer on customer.id = orders.customer_id and customer.company_id = 'TMS'  
-	left outer join category on category.id = customer.category and category.company_id = 'TMS'  
-	left outer join movement_order on movement_order.order_id = orders.id and movement_order.company_id = 'TMS'  
-	left outer join movement on movement.id = movement_order.movement_id and movement.company_id = 'TMS'  
-	left outer join continuity trailercont on (movement.id = trailercont.movement_id)and(trailercont.equipment_type_id='L') and  trailercont.company_id = 'TMS'  
-	left outer join trailer on trailer.id = trailercont.equipment_id and trailer.company_id = 'TMS'  left outer join other_charge on other_charge.order_id = orders.id and other_charge.company_id = 'TMS'  
-	left outer join charge_code on charge_code.id = other_charge.charge_id  
-	left outer join prorated_orderdist on prorated_orderdist.order_id = orders.id and prorated_orderdist.company_id = 'TMS'  ,stop origin ,stop dest 
-where 
-	orders.company_id = 'TMS' and orders.status <> 'Q' and orders.status <> 'V' and (orders.subject_order_status is null or orders.subject_order_status <> 'S') and loaded = 'L' 
-	and ((dest.actual_arrival is not null and dest.actual_arrival >= {ts '2024-08-11 00:00:00'}) or dest.actual_arrival is null and dest.sched_arrive_early >= {ts '%s 00:00:00'}) and ((dest.actual_arrival is not null and dest.actual_arrival <= {ts '%s 23:59:59'}) 
-	or dest.actual_arrival is null and dest.sched_arrive_early <= {ts '2024-08-15 23:59:59'}) and origin.id = orders.shipper_stop_id  and  origin.company_id = 'TMS' and dest.id = orders.consignee_stop_id  and  dest.company_id = 'TMS' order by revenue_code_id, order_id, movement_id`, startDateStr, endDateStr)
+		select 
+			orders.id order_id, orders.operations_user operations_user, orders.revenue_code_id revenue_code_id,
+			orders.freight_charge freight_charge, orders.bill_distance bill_miles, orders.bill_date bill_date,
+			orders.ctrl_party_id controlling_party, orders.commodity_id commodity, orders.order_type_id order_type,
+			orders.equipment_type_id order_trailer_type, origin.state origin_value, dest.state destination_value, customer.id customer_id,
+			customer.name customer_name, customer.category customer_category, category.descr category_descr, movement.id movement_id,
+			loaded, move_distance, movement.brokerage, trailer.trailer_type trailer_type, origin.city_name origin_city, origin.state origin_state,
+			dest.city_name dest_city, dest.state dest_state, other_charge.amount oc_amount, charge_code.is_fuel_surcharge is_fuel_surcharge,
+			dest.sched_arrive_early report_date, dest.actual_arrival actual_date, prorated_orderdist.empty_distance empty_miles,
+			prorated_orderdist.loaded_distance loaded_miles, (prorated_orderdist.empty_distance+prorated_orderdist.loaded_distance) total_miles,
+			orders.id record_count, orders.id fuel_surcharge, orders.id remaining_charges, orders.id total_revenue, orders.id empty_pct,
+			orders.id rev_loaded_mile, orders.id rev_total_mile, orders.id billed, orders.id week_value, orders.id month_value,
+			orders.id quarter_value, revenue_code_id detail_id 
+		from 
+			orders left outer join customer on customer.id = orders.customer_id and customer.company_id = 'TMS'  
+			left outer join category on category.id = customer.category and category.company_id = 'TMS'  
+			left outer join movement_order on movement_order.order_id = orders.id and movement_order.company_id = 'TMS'  
+			left outer join movement on movement.id = movement_order.movement_id and movement.company_id = 'TMS'  
+			left outer join continuity trailercont on (movement.id = trailercont.movement_id)and(trailercont.equipment_type_id='L') and  trailercont.company_id = 'TMS'  
+			left outer join trailer on trailer.id = trailercont.equipment_id and trailer.company_id = 'TMS'  left outer join other_charge on other_charge.order_id = orders.id and other_charge.company_id = 'TMS'  
+			left outer join charge_code on charge_code.id = other_charge.charge_id  
+			left outer join prorated_orderdist on prorated_orderdist.order_id = orders.id and prorated_orderdist.company_id = 'TMS'  ,stop origin ,stop dest 
+		where 
+			orders.company_id = 'TMS' and orders.status <> 'Q' and orders.status <> 'V' and (orders.subject_order_status is null or orders.subject_order_status <> 'S') and loaded = 'L' 
+			and ((dest.actual_arrival is not null and dest.actual_arrival >= {ts '2024-08-11 00:00:00'}) or dest.actual_arrival is null and dest.sched_arrive_early >= {ts '%s 00:00:00'}) and ((dest.actual_arrival is not null and dest.actual_arrival <= {ts '%s 23:59:59'}) 
+			or dest.actual_arrival is null and dest.sched_arrive_early <= {ts '2024-08-15 23:59:59'}) and origin.id = orders.shipper_stop_id  and  origin.company_id = 'TMS' and dest.id = orders.consignee_stop_id  and  dest.company_id = 'TMS' order by revenue_code_id, order_id, movement_id`, startDateStr, endDateStr)
 
 	rows, err := conn.Query(query)
 	if err != nil {
@@ -591,4 +447,92 @@ where
 
 	defer rows.Close()
 
+}
+
+func getLogisticsMTDQuery(startDate, endDate time.Time) string {
+	startdateStr := startDate.Format("2006-01-02")
+	endDateStr := endDate.Format("2006-01-02")
+
+	query := fmt.Sprintf(`
+SELECT
+    move1.dispatcher_user_id,
+    SUM(orders.total_charge) AS revenue,           -- Total charges per dispatcher
+    SUM(move1.override_pay_amt) AS override_pay_amt,  -- Sum of override pay amounts
+    SUM(COALESCE(de_sum.amount, 0) + override_pay_amt) AS truck_hire,  -- Total truck hire (sum of driver_extra_pay amounts + override pay)
+    SUM(COALESCE(stop_counts.stop_count, 0)) AS total_stops,  -- Total stops per dispatcher
+    SUM(COALESCE(servicefail_counts.servicefail_count, 0)) AS total_servicefail_count,  -- Total service failures per dispatcher
+    COUNT(DISTINCT CASE WHEN servicefail_counts.servicefail_count > 0 THEN mo1.order_id END) AS orders_with_service_fail,  -- Count of orders with service fails
+    COUNT(DISTINCT mo1.order_id) AS total_orders,  -- Count of distinct orders per dispatcher
+	SUM(orders.bill_distance) AS total_bill_distance  -- Sum of bill distances per dispatcher
+
+
+FROM
+    movement move1
+    JOIN movement_order mo1 ON move1.id = mo1.movement_id AND mo1.company_id = 'TMS2'
+    JOIN orders ON orders.id = mo1.order_id AND orders.company_id = 'TMS2'
+    LEFT JOIN (
+        SELECT
+            de.movement_id,
+            SUM(de.amount) AS amount
+        FROM
+            driver_extra_pay de
+        WHERE
+            de.company_id = 'TMS2'
+        GROUP BY
+            de.movement_id
+    ) AS de_sum ON de_sum.movement_id = move1.id
+    LEFT JOIN (
+        SELECT
+            orders.id AS order_id,
+            COUNT(stop.id) AS stop_count
+        FROM
+            orders
+            JOIN stop ON stop.order_id = orders.id AND stop.company_id = 'TMS2' AND stop.status <> 'V'
+        WHERE
+            orders.company_id = 'TMS2' AND orders.status <> 'V'
+        GROUP BY
+            orders.id
+    ) AS stop_counts ON stop_counts.order_id = mo1.order_id
+    LEFT JOIN (
+        SELECT
+            servicefail.order_id,
+            COUNT(DISTINCT servicefail.id) AS servicefail_count
+        FROM
+            servicefail
+        WHERE
+            servicefail.company_id = 'TMS2'
+            AND servicefail.status <> 'V'
+        GROUP BY
+            servicefail.order_id
+    ) AS servicefail_counts ON servicefail_counts.order_id = mo1.order_id
+WHERE
+    move1.company_id = 'TMS2'
+    AND move1.loaded = 'L'
+    AND move1.status <> 'V'
+    AND move1.id IN (
+        SELECT
+            movement.id
+        FROM
+            movement
+            LEFT OUTER JOIN payee ON payee.id = movement.override_payee_id AND payee.company_id = 'TMS2'
+            LEFT OUTER JOIN users ON users.id = movement.dispatcher_user_id AND users.company_id = 'TMS2'
+            JOIN movement_order ON movement.id = movement_order.movement_id AND movement_order.company_id = 'TMS2'
+            JOIN orders ON orders.id = movement_order.order_id AND orders.company_id = 'TMS2'
+            LEFT OUTER JOIN customer ON customer.id = orders.customer_id AND customer.company_id = 'TMS2'
+            LEFT OUTER JOIN revenue_code ON revenue_code.id = orders.revenue_code_id AND revenue_code.company_id = 'TMS2'
+            JOIN stop ON stop.id = orders.shipper_stop_id AND stop.company_id = 'TMS2'
+            JOIN stop dest ON dest.id = orders.consignee_stop_id AND dest.company_id = 'TMS2'
+        WHERE
+            movement.company_id = 'TMS2'
+            AND stop.actual_arrival BETWEEN {ts '%s 00:00:00'} AND {ts '%s 23:59:59'}
+            AND movement.status <> 'V'
+            AND movement.loaded = 'L'
+    )
+GROUP BY
+    move1.dispatcher_user_id
+ORDER BY
+    move1.dispatcher_user_id;
+`, startdateStr, endDateStr)
+
+	return query
 }

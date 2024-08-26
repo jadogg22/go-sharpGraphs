@@ -74,6 +74,15 @@ func CORSMiddleware() gin.HandlerFunc {
 		// Allow cors from my proxy
 		allowedOrigins := "http://192.168.0.62"
 
+		origin := c.Request.Header.Get("Origin")
+
+		if origin != allowedOrigins {
+			c.AbortWithStatus(http.StatusForbidden)
+			return
+		} else {
+			c.Header("Access-Control-Allow-Origin", origin)
+		}
+
 		c.Header("Access-Control-Allow-Origin", allowedOrigins)
 		c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 		c.Header("Access-Control-Allow-Headers", "Origin, Content-Type")
