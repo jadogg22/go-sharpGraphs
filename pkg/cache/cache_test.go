@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jadogg22/go-sharpGraphs/pkg/database"
+	"github.com/jadogg22/go-sharpGraphs/pkg/getData"
 	"github.com/jadogg22/go-sharpGraphs/pkg/models"
 )
 
@@ -62,14 +62,14 @@ func TestCache(t *testing.T) {
 
 }
 
-func Daily_Ops_Test() ([]models.DailyOpsData, error, bool) {
+func Daily_Ops_Test() ([]*models.DailyOpsData, error, bool) {
 	cacheKey := "dailyOpsData"
 	usedCache := false
 
 	cachedData, typeID, found := MyCache.Get(cacheKey)
 	if found {
-		if typeID == "[]models.DailyOpsData" {
-			if cachedData, ok := cachedData.([]models.DailyOpsData); ok {
+		if typeID == "[]*models.DailyOpsData" {
+			if cachedData, ok := cachedData.([]*models.DailyOpsData); ok {
 				usedCache = true
 				return cachedData, nil, usedCache
 			}
@@ -79,13 +79,16 @@ func Daily_Ops_Test() ([]models.DailyOpsData, error, bool) {
 	}
 	// cache miss, get the data from the database.
 
-	data, err := database.GetDailyOpsData("transportation")
+	today := time.Now()
+	startDate := time.Date(today.Year(), today.Month(), today.Day(), 0, 0, 0, 0, today.Location())
+
+	data, err := getdata.GetTransportationDailyOps(startDate, today)
 	if err != nil {
 		return nil, err, usedCache
 	}
 
 	// Set the cache
-	MyCache.Set(cacheKey, data, "[]models.DailyOpsData", time.Second*2)
+	MyCache.Set(cacheKey, data, "[]*models.DailyOpsData", time.Second*2)
 
 	//Finally update the Response with the json data
 	return data, nil, usedCache

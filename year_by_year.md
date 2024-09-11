@@ -1,8 +1,9 @@
-# Current Year_by_year
+j# Current Year_by_year
 
 One of the nicest graphs to look at is going to be of your revenue growing, One of the best ways (and eaiest to implemenet) is going to be a a yearly compairison. This is exactly what Year_by_Year is. grabbing all of the orders by week and summing their revenue and putting that on a chart.
 
 I need to write down what I'm thinking about the best implement the year by year so I can improve my design.
+
 
 ## Previous implementations
 

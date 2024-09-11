@@ -10,7 +10,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jadogg22/go-sharpGraphs/pkg/database"
 	"github.com/jadogg22/go-sharpGraphs/pkg/models"
 	"github.com/joho/godotenv"
 
@@ -66,107 +65,13 @@ func init() {
 
 }
 
-func RunUpdater() {
-
-	conn, err := sql.Open("mssql", URL)
-	if err != nil {
-		fmt.Println("Error creating connection pool: " + err.Error())
-		log.Println("Error creating connection pool: " + err.Error())
-		return
-	}
-	defer conn.Close()
-
-	err = conn.Ping()
-	if err != nil {
-		fmt.Println("Error pinging database: " + err.Error())
-		log.Println("Error pinging database: " + err.Error())
-		return
-	}
-
-	// helper functions to grab data from the database
-	getTransportationTractorRevenue(conn)
-	addTransportationBadStops(conn)
-
-	conn.Close()
-
-	return
-}
-
 func getTransportationTractorRevenue(conn *sql.DB) {
 	// first query the sql server to get the data from mcloud
 
 	yesterday := time.Now().AddDate(0, 0, -1).Format("2006-01-02")
 	//coupleDaysAgo := time.Now().AddDate(0, 0, -3).Format("2006-01-02")
 
-	query := fmt.Sprintf(`SELECT 
-    movement.id AS move_id,
-    movement.move_distance AS move_distance,
-    movement.loaded AS loaded,
-    orders.id AS order_id,
-    orders.total_charge AS charges,
-    orders.bill_distance AS bill_distance,
-    orders.freight_charge AS freight_charge,
-    origin.city_name AS origin_city,
-    origin.state AS origin_state,
-    continuity.equipment_id AS equip_id,
-    continuity.actual_arrival AS actual_arrival,
-    continuity.dest_actualarrival AS del_date,
-    continuity.equipment_id AS tractor,
-    continuity.equipment_type_id,
-    tractor.dispatcher AS dispatcher,
-    tractor.fleet_id AS fleet_id,
-    fleet.description AS fleet_description,
-    users.name AS user_name,
-    COUNT(servicefail.id) AS servicefail_count,
-    CASE WHEN COUNT(servicefail.id) > 0 THEN 1 ELSE 0 END AS has_servicefail,
-	stop_count.stop_count AS stop_count
-FROM 
-    movement
-    JOIN movement_order ON movement.id = movement_order.movement_id AND movement_order.company_id = 'TMS'
-    JOIN orders ON orders.id = movement_order.order_id AND orders.company_id = 'TMS'
-    JOIN stop origin ON origin.movement_id = movement.id AND origin.movement_sequence = 1 AND origin.company_id = 'TMS'
-    JOIN stop dest ON dest.id = movement.dest_stop_id AND dest.company_id = 'TMS'
- JOIN continuity ON movement.id = continuity.movement_id AND continuity.equipment_type_id = 'T' AND continuity.company_id = 'TMS'
-    JOIN tractor ON tractor.id = continuity.equipment_id AND tractor.company_id = 'TMS'
-    LEFT JOIN fleet ON fleet.id = tractor.fleet_id AND fleet.company_id = 'TMS'
-    LEFT JOIN users ON users.id = tractor.dispatcher AND users.company_id = 'TMS'
-    LEFT JOIN servicefail ON servicefail.order_id = orders.id AND servicefail.company_id = 'TMS'
-	LEFT JOIN (
-        SELECT order_id, COUNT(*) AS stop_count
-        FROM stop
-        WHERE company_id = 'TMS'
-        GROUP BY order_id
-    ) AS stop_count ON stop_count.order_id = orders.id
-
-WHERE 
-    movement.company_id = 'TMS' 
-    AND continuity.dest_actualarrival >= {ts '%s 00:00:00'}
-    AND continuity.dest_actualarrival <= {ts '%s 23:59:59'}
-    AND movement.status <> 'V'
-GROUP BY 
-    movement.id, 
-    movement.move_distance, 
-    movement.loaded, 
-    orders.id,
-    orders.total_charge, 
-    orders.bill_distance, 
-    orders.freight_charge, 
-    origin.city_name, 
-    origin.state,
-    continuity.equipment_id,
-    continuity.actual_arrival, 
-    continuity.dest_actualarrival, 
-    continuity.equipment_id, 
-    continuity.equipment_type_id,
-    tractor.dispatcher, 
-    tractor.fleet_id, 
-    fleet.description, 
-    users.name, 
-	stop_count.stop_count
-ORDER BY 
-    dispatcher, 
-    tractor, 
-    continuity.dest_actualarrival;`, yesterday, yesterday)
+	query := MakeQuery(yesterday)
 
 	rows, err := conn.Query(query)
 	if err != nil {
@@ -240,96 +145,179 @@ ORDER BY
 		}
 		fmt.Printf("Move_ID: %d, username: %s\n", d.MoveID, user)
 	}
-
-	// add dbData to the database
-	err = database.AddTransprotationTractorRevenue(dbData)
-	if err != nil {
-		fmt.Println("Error adding data to database: " + err.Error())
-		log.Println("Error adding data to database: " + err.Error())
-		return
-	}
-	log.Printf("Added %d rows to the database\n", len(dbData))
 }
 
-func addTransportationBadStops(conn *sql.DB) {
-	// first query the sql server to get the data from mcloud
+/*
+// the newest iteration of getting orders data - now in real time!
+func GetTransportationOrdersData(conn *sql.DB, startDate, endDate time.Time) ([]models.OrderDetails, error) {
 
-	yesterday := time.Now().AddDate(0, 0, -1).Format("2006-01-02")
-	//coupleDaysAgo := time.Now().AddDate(0, 0, -3).Format("2006-01-02")
+	// make start and end dates into strings
+	startDateStr := startDate.Format("2006-01-02")
+	endDateStr := endDate.Format("2006-01-02")
 
-	query := fmt.Sprintf(`select stop.id, stop.order_id, stop.movement_id, stop.actual_arrival,
-	stop.sched_arrive_early, stop.sched_arrive_late, stop.movement_sequence,
-	movement.equipment_group_id equipment_group_id, movement.dispatcher_user_id dispatcher_user_id,
-	equipment_item.equipment_id equipment_id, equipment_item.equipment_type_id equipment_type_id,
-	driver.fleet_manager fleet_manager, driver.id driver_id, servicefail.stop_id stop_id, servicefail.minutes_late minutes_late,
-	servicefail.appt_required appt_required, servicefail.stop_type stop_type, servicefail.entered_user_id entered_user_id,
-	servicefail.entered_date entered_date, servicefail.edi_standard_code edi_standard_code, servicefail.dsp_comment dsp_comment,
-	servicefail.fault_of_carrier_or_driver sf_fault_of_carrier_or_driver, orders.customer_id customer_id,
-	orders.operations_user operations_user, orders.status order_status 
-from stop left outer join servicefail on servicefail.stop_id = stop.id and servicefail.status != 'V' and servicefail.company_id = 'TMS'  
-left outer join orders on orders.id = stop.order_id  and orders.company_id = 'TMS'  ,movement 
-left outer join equipment_item on equipment_item.equipment_group_id = movement.equipment_group_id and equipment_item.equipment_type_id = 'D' and equipment_item.type_sequence = 0 and equipment_item.company_id = 'TMS'  
-left outer join driver on driver.id = equipment_item.equipment_id and driver.company_id = 'TMS'  
-where stop.company_id = 'TMS' and stop.sched_arrive_early between {ts '%s 00:00:00'} and {ts '%s 23:59:59'} and stop.stop_type in ('PU', 'SO') and movement.loaded = 'L' and movement.id = stop.movement_id and movement.company_id = 'TMS' and driver.fleet_manager != 'NULL' and stop_id != 'NULL'
-order by driver.fleet_manager, servicefail.minutes_late`, yesterday, yesterday)
+	// get query string from helper function
+	query := MakeTransportationOrdersQuery(startDateStr, endDateStr)
 
+	// query the database
 	rows, err := conn.Query(query)
 	if err != nil {
-		fmt.Println("Error querying database: " + err.Error())
-		log.Println("Error querying database: " + err.Error())
-		return
+		err := fmt.Errorf("Error querying database: %v", err)
+		return nil, err
 	}
+
 	defer rows.Close()
 
-	var dbData []*models.BadStop
+	var data []models.OrderDetails
 	for rows.Next() {
-		row := models.BadStop{}
+		var d models.OrderDetails
+		var orderIDStr string
+		var OperationsUser sql.NullString
+		var RevenueCodeID string
+		var FreightCharge float64
+		var BillMiles float64
+		var BillDate sql.NullTime
+		var OrderTrailerType string
+		var OriginValue string
+		var DestinationValue string
+		var CustomerID sql.NullString
+		var CustomerName sql.NullString
+		var CustomerCategory sql.NullString
+		var CategoryDescr sql.NullString
+		var MovementID string
+		var Loaded string
+		var MoveDistance float64
+		var Brokerage string
+		var OriginCity string
+		var OriginState string
+		var DestCity string
+		var DestState string
+		var ReportDate sql.NullTime
+		var ActualDate sql.NullTime
+		var EmptyMiles sql.NullFloat64
+		var LoadedMiles sql.NullFloat64
+		var TotalMiles sql.NullFloat64
+		var TotalRevenue float64
+		var WeekValue sql.NullString
+		var MonthValue sql.NullString
+		var QuarterValue sql.NullString
+		var DetailID string
+
 		err := rows.Scan(
-			&row.ID,
-			&row.OrderID,
-			&row.MovementID,
-			&row.ActualArrival,
-			&row.SchedArriveEarly,
-			&row.SchedArriveLate,
-			&row.MovementSequence,
-			&row.EquipmentGroupID,
-			&row.DispatcherUserID,
-			&row.EquipmentID,
-			&row.EquipmentTypeID,
-			&row.FleetManager,
-			&row.DriverID,
-			&row.StopID,
-			&row.MinutesLate,
-			&row.ApptRequired,
-			&row.StopType,
-			&row.EnteredUserID,
-			&row.EnteredDate,
-			&row.EDIStandardCode,
-			&row.DSPComment,
-			&row.SFFaultOfCarrierOrDriver,
-			&row.CustomerID,
-			&row.OperationsUser,
-			&row.OrderStatus,
-		)
+			&orderIDStr,
+			&OperationsUser,
+			&RevenueCodeID,
+			&FreightCharge,
+			&BillMiles,
+			&BillDate,
+			&OrderTrailerType,
+			&OriginValue,
+			&DestinationValue,
+			&CustomerID,
+			&CustomerName,
+			&CustomerCategory,
+			&CategoryDescr,
+			&MovementID,
+			&Loaded,
+			&MoveDistance,
+			&Brokerage,
+			&OriginCity,
+			&OriginState,
+			&DestCity,
+			&DestState,
+			&ReportDate,
+			&ActualDate,
+			&EmptyMiles,
+			&LoadedMiles,
+			&TotalMiles,
+			&TotalRevenue,
+			&WeekValue,
+			&MonthValue,
+			&QuarterValue,
+			&DetailID)
+
 		if err != nil {
-			fmt.Println("Error scanning row: " + err.Error())
-			log.Println("Error scanning row: " + err.Error())
-			return
+			err := fmt.Errorf("Error scanning row: %v", err)
+			return nil, err
 		}
 
-		dbData = append(dbData, &row)
+		d.OrderID = orderIDStr
+		if OperationsUser.Valid {
+			d.OperationsUser = OperationsUser.String
+		} else {
+			d.OperationsUser = "Loadmaster"
+		}
+		d.RevenueCodeID = RevenueCodeID
+		d.FreightCharge = FreightCharge
+		d.BillMiles = BillMiles
+
+		if BillDate.Valid {
+			d.BillDate = BillDate.Time
+		}
+		d.OrderTrailerType = OrderTrailerType
+		d.OriginValue = OriginValue
+		d.DestinationValue = DestinationValue
+		if CustomerID.Valid {
+			d.CustomerID = CustomerID.String
+		} else {
+			d.CustomerID = "Unknown"
+		}
+		if CustomerName.Valid {
+			d.CustomerName = CustomerName.String
+		} else {
+			d.CustomerName = "Unknown"
+		}
+		if CustomerCategory.Valid {
+			d.CustomerCategory = CustomerCategory.String
+		} else {
+			d.CustomerCategory = "Unknown"
+		}
+		if CategoryDescr.Valid {
+			d.CategoryDescr = CategoryDescr.String
+		} else {
+			d.CategoryDescr = "Unknown"
+		}
+		d.MovementID = MovementID
+		d.Loaded = Loaded
+		d.MoveDistance = MoveDistance
+		d.Brokerage = Brokerage
+		d.OriginCity = OriginCity
+		d.OriginState = OriginState
+		d.DestCity = DestCity
+		d.DestState = DestState
+		if ReportDate.Valid {
+			d.ReportDate = ReportDate.Time
+		}
+		if ActualDate.Valid {
+			d.ActualDate = ActualDate.Time
+		}
+		if EmptyMiles.Valid {
+			d.EmptyMiles = EmptyMiles.Float64
+		}
+		if LoadedMiles.Valid {
+			d.LoadedMiles = LoadedMiles.Float64
+		}
+		if TotalMiles.Valid {
+			d.TotalMiles = TotalMiles.Float64
+		}
+		d.TotalRevenue = TotalRevenue
+		if WeekValue.Valid {
+			d.WeekValue = WeekValue.String
+		}
+		if MonthValue.Valid {
+			d.MonthValue = MonthValue.String
+		}
+		if QuarterValue.Valid {
+			d.QuarterValue = QuarterValue.String
+		}
+		d.DetailID = DetailID
+
+		data = append(data, d)
+
 	}
 
-	// add dbData to the database
-	err = database.AddBadStops(dbData)
-	if err != nil {
-		fmt.Println("Error adding data to database: " + err.Error())
-		log.Println("Error adding data to database: " + err.Error())
-		return
-	}
-
-	log.Printf("Added %d rows to the database\n", len(dbData))
+	return data, nil
 }
+*/
 
 // With access to the db, we can now grab the data from the production database and dont need
 // to replicate the data in our own database. This will save time and space and provide greater accuracy
@@ -394,12 +382,13 @@ func GetLogisticsMTDData(startDate, endDate time.Time) []models.LogisticsMTDStat
 	//dispatcher_user_id	revenue	override_pay_amt	truck_hire	total_stops	total_servicefail_count	orders_with_service_fail	total_orders
 	//cami      	313240.22	251552.70	256503.35	307	63	51	135	69430.00
 	var data []models.LogisticsMTDStats
+	var myDispatcher sql.NullString
 	var dispatcher string
 	var revenue, overridePayAmt, truckHire, miles float64
 	var totalStops, totalServiceFailCount, ordersWithServiceFail, totalOrders int
 
 	for rows.Next() {
-		err := rows.Scan(&dispatcher, &revenue, &overridePayAmt,
+		err := rows.Scan(&myDispatcher, &revenue, &overridePayAmt,
 			&truckHire, &totalStops, &totalServiceFailCount,
 			&ordersWithServiceFail, &totalOrders, &miles)
 		if err != nil {
@@ -407,6 +396,11 @@ func GetLogisticsMTDData(startDate, endDate time.Time) []models.LogisticsMTDStat
 			return nil
 		}
 
+		if !myDispatcher.Valid {
+			dispatcher = "Unknown"
+		} else {
+			dispatcher = myDispatcher.String
+		}
 		// remove all spaces and make the dispatcher name lowercase
 		dispatcher = strings.ReplaceAll(strings.ToLower(dispatcher), " ", "")
 
@@ -419,138 +413,90 @@ func GetLogisticsMTDData(startDate, endDate time.Time) []models.LogisticsMTDStat
 		data = append(data, *myData)
 	}
 
-	return data
+	rows.Close()
+	conn.Close()
 
+	return data
 }
 
-func GetTransportationOrders(conn *sql.DB, startDate, endDate time.Time) {
+func GetTransportationDailyOps(startDate, endDate time.Time) ([]*models.DailyOpsData, error) {
 	// format start and endDates to be "2024-08-11"
 	startDateStr := startDate.Format("2006-01-02")
 	endDateStr := endDate.Format("2006-01-02")
 
-	query := fmt.Sprintf(`
-		select 
-			orders.id order_id, orders.operations_user operations_user, orders.revenue_code_id revenue_code_id,
-			orders.freight_charge freight_charge, orders.bill_distance bill_miles, orders.bill_date bill_date,
-			orders.ctrl_party_id controlling_party, orders.commodity_id commodity, orders.order_type_id order_type,
-			orders.equipment_type_id order_trailer_type, origin.state origin_value, dest.state destination_value, customer.id customer_id,
-			customer.name customer_name, customer.category customer_category, category.descr category_descr, movement.id movement_id,
-			loaded, move_distance, movement.brokerage, trailer.trailer_type trailer_type, origin.city_name origin_city, origin.state origin_state,
-			dest.city_name dest_city, dest.state dest_state, other_charge.amount oc_amount, charge_code.is_fuel_surcharge is_fuel_surcharge,
-			dest.sched_arrive_early report_date, dest.actual_arrival actual_date, prorated_orderdist.empty_distance empty_miles,
-			prorated_orderdist.loaded_distance loaded_miles, (prorated_orderdist.empty_distance+prorated_orderdist.loaded_distance) total_miles,
-			orders.id record_count, orders.id fuel_surcharge, orders.id remaining_charges, orders.id total_revenue, orders.id empty_pct,
-			orders.id rev_loaded_mile, orders.id rev_total_mile, orders.id billed, orders.id week_value, orders.id month_value,
-			orders.id quarter_value, revenue_code_id detail_id 
-		from 
-			orders left outer join customer on customer.id = orders.customer_id and customer.company_id = 'TMS'  
-			left outer join category on category.id = customer.category and category.company_id = 'TMS'  
-			left outer join movement_order on movement_order.order_id = orders.id and movement_order.company_id = 'TMS'  
-			left outer join movement on movement.id = movement_order.movement_id and movement.company_id = 'TMS'  
-			left outer join continuity trailercont on (movement.id = trailercont.movement_id)and(trailercont.equipment_type_id='L') and  trailercont.company_id = 'TMS'  
-			left outer join trailer on trailer.id = trailercont.equipment_id and trailer.company_id = 'TMS'  left outer join other_charge on other_charge.order_id = orders.id and other_charge.company_id = 'TMS'  
-			left outer join charge_code on charge_code.id = other_charge.charge_id  
-			left outer join prorated_orderdist on prorated_orderdist.order_id = orders.id and prorated_orderdist.company_id = 'TMS'  ,stop origin ,stop dest 
-		where 
-			orders.company_id = 'TMS' and orders.status <> 'Q' and orders.status <> 'V' and (orders.subject_order_status is null or orders.subject_order_status <> 'S') and loaded = 'L' 
-			and ((dest.actual_arrival is not null and dest.actual_arrival >= {ts '2024-08-11 00:00:00'}) or dest.actual_arrival is null and dest.sched_arrive_early >= {ts '%s 00:00:00'}) and ((dest.actual_arrival is not null and dest.actual_arrival <= {ts '%s 23:59:59'}) 
-			or dest.actual_arrival is null and dest.sched_arrive_early <= {ts '2024-08-15 23:59:59'}) and origin.id = orders.shipper_stop_id  and  origin.company_id = 'TMS' and dest.id = orders.consignee_stop_id  and  dest.company_id = 'TMS' order by revenue_code_id, order_id, movement_id`, startDateStr, endDateStr)
+	dispacherNames := map[string]string{
+		"tracy":    "Tracy",
+		"sheridan": "Sheridan",
+		"rochelle": "Rochelle",
+		"randy":    "Randy",
+		"patrick":  "Patrick",
+		"lindsay":  "Lindsay",
+		"katrina":  "Katrina",
+		"grace":    "Grace",
+		"eric":     "Eric",
+	}
+
+	conn, err := sql.Open("mssql", URL)
+	if err != nil {
+		fmt.Println("Error creating connection pool: " + err.Error())
+		return nil, err
+	}
+
+	defer conn.Close()
+
+	err = conn.Ping()
+	if err != nil {
+		fmt.Println("Error pinging database: " + err.Error())
+		return nil, err
+	}
+
+	myData := make([]*models.DailyOpsData, 0)
+
+	query := MakeTransportationDailyOpsQuery(startDateStr, endDateStr)
 
 	rows, err := conn.Query(query)
 	if err != nil {
 		fmt.Println("Error querying database: " + err.Error())
 		log.Println("Error querying database: " + err.Error())
-		return
+		return nil, fmt.Errorf("Error querying database: %v", err)
 	}
 
 	defer rows.Close()
 
-}
+	var dispacher_user_id string
+	var total_bill_distance, total_move_distance sql.NullFloat64
+	var total_stops, total_servicefail_count, orders_with_service_fail, total_orders, total_unique_trucks int
+	//unpack the rows from the query into the data struct
 
-func getLogisticsMTDQuery(startDate, endDate time.Time) string {
-	startdateStr := startDate.Format("2006-01-02")
-	endDateStr := endDate.Format("2006-01-02")
+	for rows.Next() {
+		if rows.Err() != nil {
+			fmt.Println("Error scanning row: " + rows.Err().Error())
+			log.Println("Error scanning row: " + rows.Err().Error())
+			continue
+		}
+		// scan the row into the variables
+		rows.Scan(&dispacher_user_id, &total_stops, &total_servicefail_count, &orders_with_service_fail, &total_orders, &total_bill_distance, &total_move_distance, &total_unique_trucks)
 
-	query := fmt.Sprintf(`
-SELECT
-    move1.dispatcher_user_id,
-    SUM(orders.total_charge) AS revenue,           -- Total charges per dispatcher
-    SUM(move1.override_pay_amt) AS override_pay_amt,  -- Sum of override pay amounts
-    SUM(COALESCE(de_sum.amount, 0) + override_pay_amt) AS truck_hire,  -- Total truck hire (sum of driver_extra_pay amounts + override pay)
-    SUM(COALESCE(stop_counts.stop_count, 0)) AS total_stops,  -- Total stops per dispatcher
-    SUM(COALESCE(servicefail_counts.servicefail_count, 0)) AS total_servicefail_count,  -- Total service failures per dispatcher
-    COUNT(DISTINCT CASE WHEN servicefail_counts.servicefail_count > 0 THEN mo1.order_id END) AS orders_with_service_fail,  -- Count of orders with service fails
-    COUNT(DISTINCT mo1.order_id) AS total_orders,  -- Count of distinct orders per dispatcher
-	SUM(orders.bill_distance) AS total_bill_distance  -- Sum of bill distances per dispatcher
+		// sanitize the dispacher_user_id
+		dispacher_user_id = strings.ToLower(strings.ReplaceAll(dispacher_user_id, " ", ""))
 
+		// look for name in the map
+		if name, exists := dispacherNames[dispacher_user_id]; !exists {
+			dispacher_user_id = "Unknown"
+			continue
+		} else {
+			dispacher_user_id = name
+		}
 
-FROM
-    movement move1
-    JOIN movement_order mo1 ON move1.id = mo1.movement_id AND mo1.company_id = 'TMS2'
-    JOIN orders ON orders.id = mo1.order_id AND orders.company_id = 'TMS2'
-    LEFT JOIN (
-        SELECT
-            de.movement_id,
-            SUM(de.amount) AS amount
-        FROM
-            driver_extra_pay de
-        WHERE
-            de.company_id = 'TMS2'
-        GROUP BY
-            de.movement_id
-    ) AS de_sum ON de_sum.movement_id = move1.id
-    LEFT JOIN (
-        SELECT
-            orders.id AS order_id,
-            COUNT(stop.id) AS stop_count
-        FROM
-            orders
-            JOIN stop ON stop.order_id = orders.id AND stop.company_id = 'TMS2' AND stop.status <> 'V'
-        WHERE
-            orders.company_id = 'TMS2' AND orders.status <> 'V'
-        GROUP BY
-            orders.id
-    ) AS stop_counts ON stop_counts.order_id = mo1.order_id
-    LEFT JOIN (
-        SELECT
-            servicefail.order_id,
-            COUNT(DISTINCT servicefail.id) AS servicefail_count
-        FROM
-            servicefail
-        WHERE
-            servicefail.company_id = 'TMS2'
-            AND servicefail.status <> 'V'
-        GROUP BY
-            servicefail.order_id
-    ) AS servicefail_counts ON servicefail_counts.order_id = mo1.order_id
-WHERE
-    move1.company_id = 'TMS2'
-    AND move1.loaded = 'L'
-    AND move1.status <> 'V'
-    AND move1.id IN (
-        SELECT
-            movement.id
-        FROM
-            movement
-            LEFT OUTER JOIN payee ON payee.id = movement.override_payee_id AND payee.company_id = 'TMS2'
-            LEFT OUTER JOIN users ON users.id = movement.dispatcher_user_id AND users.company_id = 'TMS2'
-            JOIN movement_order ON movement.id = movement_order.movement_id AND movement_order.company_id = 'TMS2'
-            JOIN orders ON orders.id = movement_order.order_id AND orders.company_id = 'TMS2'
-            LEFT OUTER JOIN customer ON customer.id = orders.customer_id AND customer.company_id = 'TMS2'
-            LEFT OUTER JOIN revenue_code ON revenue_code.id = orders.revenue_code_id AND revenue_code.company_id = 'TMS2'
-            JOIN stop ON stop.id = orders.shipper_stop_id AND stop.company_id = 'TMS2'
-            JOIN stop dest ON dest.id = orders.consignee_stop_id AND dest.company_id = 'TMS2'
-        WHERE
-            movement.company_id = 'TMS2'
-            AND stop.actual_arrival BETWEEN {ts '%s 00:00:00'} AND {ts '%s 23:59:59'}
-            AND movement.status <> 'V'
-            AND movement.loaded = 'L'
-    )
-GROUP BY
-    move1.dispatcher_user_id
-ORDER BY
-    move1.dispatcher_user_id;
-`, startdateStr, endDateStr)
+		// create a new data struct
+		myDispacherStats := models.NewDailyOpsDataFromDB(dispacher_user_id, total_bill_distance, total_move_distance, total_stops, total_servicefail_count, orders_with_service_fail, total_orders, total_unique_trucks)
 
-	return query
+		myData = append(myData, myDispacherStats)
+	}
+
+	if len(myData) < 1 {
+		fmt.Println("No data returned from the query")
+		log.Println("No data returned from the query")
+	}
+	return myData, nil
 }

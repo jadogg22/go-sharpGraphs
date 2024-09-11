@@ -5,6 +5,40 @@ import (
 	"time"
 )
 
+type OrderDetails struct {
+	OrderID          string    `json:"order_id"`
+	OperationsUser   string    `json:"operations_user"`
+	RevenueCodeID    string    `json:"revenue_code_id"`
+	FreightCharge    float64   `json:"freight_charge"`
+	BillMiles        float64   `json:"bill_miles"`
+	BillDate         time.Time `json:"bill_date"`
+	OrderTrailerType string    `json:"order_trailer_type"`
+	OriginValue      string    `json:"origin_value"`
+	DestinationValue string    `json:"destination_value"`
+	CustomerID       string    `json:"customer_id"`
+	CustomerName     string    `json:"customer_name"`
+	CustomerCategory string    `json:"customer_category"`
+	CategoryDescr    string    `json:"category_descr"`
+	MovementID       string    `json:"movement_id"`
+	Loaded           string    `json:"loaded"`
+	MoveDistance     float64   `json:"move_distance"`
+	Brokerage        string    `json:"brokerage"`
+	OriginCity       string    `json:"origin_city"`
+	OriginState      string    `json:"origin_state"`
+	DestCity         string    `json:"dest_city"`
+	DestState        string    `json:"dest_state"`
+	ReportDate       time.Time `json:"report_date"`
+	ActualDate       time.Time `json:"actual_date"`
+	EmptyMiles       float64   `json:"empty_miles"`
+	LoadedMiles      float64   `json:"loaded_miles"`
+	TotalMiles       float64   `json:"total_miles"`
+	TotalRevenue     float64   `json:"total_revenue"`
+	WeekValue        string    `json:"week_value"`
+	MonthValue       string    `json:"month_value"`
+	QuarterValue     string    `json:"quarter_value"`
+	DetailID         string    `json:"detail_id"`
+}
+
 type TransportationOrder struct {
 	TotalRevenue     sql.NullFloat64 `json:"total_revenue"`
 	BillMiles        sql.NullInt64   `json:"bill_miles"`
@@ -218,12 +252,32 @@ func NewLogisticsMTDStats(dispacher string, truck_hire, charges, miles float64, 
 }
 
 type DailyOpsData struct {
-	Manager  string  `json:"driverManager"`
-	Trucks   int     `json:"numberOfTrucks"`
-	Miles    float64 `json:"milesPerTruck"`
-	Deadhead float64 `json:"deadhead"`
-	Order    float64 `json:"order"`
-	Stop     float64 `json:"stop"`
+	Dispatcher     string  `json:"driverManager"`
+	NumberOfTrucks int     `json:"numberOfTrucks"`
+	MilesPerTruck  float64 `json:"milesPerTruck"`
+	Deadhead       float64 `json:"deadhead"`
+	OrderPercent   float64 `json:"order"`
+	StopPercent    float64 `json:"stop"`
+}
+
+func NewDailyOpsDataFromDB(dispatcher string, total_bill_distance, total_move_distance sql.NullFloat64, total_stops, total_servicefail_count, orders_with_service_fail, total_orders, total_unique_trucks int) *DailyOpsData {
+	if total_unique_trucks == 0 {
+		total_unique_trucks = 1
+	}
+	if total_orders == 0 {
+		total_orders = 1
+	}
+	if total_stops == 0 {
+		total_stops = 1
+	}
+	return &DailyOpsData{
+		Dispatcher:     dispatcher,
+		NumberOfTrucks: total_unique_trucks,
+		MilesPerTruck:  total_move_distance.Float64 / float64(total_unique_trucks),
+		Deadhead:       total_bill_distance.Float64 - total_move_distance.Float64,
+		OrderPercent:   (float64(total_orders) - float64(orders_with_service_fail)) / float64(total_orders),
+		StopPercent:    (float64(total_stops) - float64(total_servicefail_count)) / float64(total_stops),
+	}
 }
 
 type LoadData struct {

@@ -2,10 +2,7 @@ package main
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/jadogg22/go-sharpGraphs/pkg/getData"
 	"github.com/jadogg22/go-sharpGraphs/pkg/handlers"
-	"github.com/robfig/cron/v3"
-	"log"
 	"net/http"
 )
 
@@ -14,18 +11,6 @@ import (
 //
 
 func main() {
-	// Create a new cron scheduler for db updates
-	cr := cron.New()
-
-	// Add a new job to the cron scheduler
-	_, err := cr.AddFunc("0 0 * * *", getdata.RunUpdater)
-	if err != nil {
-		log.Println(err)
-	}
-
-	// Start the cron scheduler
-	cr.Start()
-
 	r := gin.Default()
 
 	// setup cors middleware
@@ -51,18 +36,11 @@ func main() {
 	r.GET("/api/Logistics/MTD", handlers.LogisticsMTD)
 	//r.GET("/Logistics/Stacked_miles/", Log_stacked_miles)
 
-	r.POST("/api/Logistics/add", handlers.Logistics_post)
+	//r.POST("/api/Logistics/add", handlers.Logistics_post)
 
 	// ---------- Dispatch Handlers ----------------
 	r.GET("/api/Dispatch/Week_to_date", handlers.Dispach_week_to_date)
 
-	// ---------- receive data ----------
-	// Define a POST endpoint to receive DispatcherStats data
-	r.POST("/api/Dispatcher/add/", handlers.Dispatch_post)
-	r.POST("/api/OTWTD/add/", handlers.Dispatch_post_WTDOT)
-	// run the server on port 5000
-
-	r.GET("/api/test_db", handlers.Test_db)
 	r.Run(":5000")
 
 }

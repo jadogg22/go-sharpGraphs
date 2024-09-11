@@ -20,6 +20,38 @@ func GetYearAndWeek() (int, int) {
 	return year, week
 }
 
+func FirstDayOfWeek(week int) time.Time {
+	if week < 1 || week > 53 {
+		fmt.Println("Error: Week is less than 1")
+		return time.Time{}
+	}
+	// Get the current date
+	today := time.Now()
+
+	// Define the first day of the year
+	start := time.Date(today.Year(), time.January, 1, 0, 0, 0, 0, time.UTC)
+
+	// Find the first Monday of the year
+	for start.Weekday() != time.Sunday {
+		start = start.AddDate(0, 0, 1)
+	}
+
+	// Calculate the first day of the specified week
+	firstDay := start.AddDate(0, 0, (week-1)*7)
+
+	return firstDay
+}
+
+func GetWeekStartAndEndDates() (time.Time, time.Time) {
+	// Get the current date
+	today := time.Now()
+
+	// Get the first day of the week
+	startOfWeek := GetStartDayOfWeek()
+
+	return startOfWeek, today
+}
+
 func StartOfISOWeek(year int, week int) time.Time {
 	date := time.Date(year, 0, 0, 0, 0, 0, 0, time.UTC)
 	isoYear, isoWeek := date.ISOWeek()

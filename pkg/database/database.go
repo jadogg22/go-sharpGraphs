@@ -62,6 +62,12 @@ func init() {
 
 }
 
+/*
+Now that we have acesss to the mcloud data base this database is going to serve as a cache for computationaly expensive data. ie. the year by year data
+for the trans and logistics line graphs. This will allow us to store the data in the database and not have to recalculate it every time the user requests at
+get the request much quicker.
+*/
+
 func Make_connection() (*sql.DB, error) {
 	db, err := sql.Open("sqlite3", "Data/Production.db")
 	if err != nil {
@@ -103,6 +109,15 @@ func Add_DailyDriverData(dailyData models.DailyDriverData) error {
 		return err
 	}
 
+	return nil
+}
+
+func AddCacheData(rev float64, week int, year int) error {
+	query := `INSERT INTO trans_weekly_rev (totalrevenue, week, year) VALUES ($1, $2, $3)`
+	_, err := DB.Exec(query, rev, week, year)
+	if err != nil {
+		return fmt.Errorf("failed to insert data: %w", err)
+	}
 	return nil
 }
 
@@ -175,7 +190,7 @@ func GetCachedData(company string) ([]models.WeeklyRevenue, error) {
 	var dbTable string
 	switch company {
 	case "transportation":
-		dbTable = "trans_year_rev"
+		dbTable = "trans_weekly_rev"
 	case "logistics":
 		dbTable = "log_year_rev"
 	default:
@@ -190,10 +205,62 @@ func GetCachedData(company string) ([]models.WeeklyRevenue, error) {
 	return data, nil
 }
 
+func NewFetchMyCache() ([]models.WeeklyRevenue, int, error) {
+	query := `SELECT 
+    week AS week_number,
+    SUM(CASE WHEN year = 2021 THEN totalrevenue ELSE 0 END) AS "2021_revenue",
+    SUM(CASE WHEN year = 2022 THEN totalrevenue ELSE 0 END) AS "2022_revenue",
+    SUM(CASE WHEN year = 2023 THEN totalrevenue ELSE 0 END) AS "2023_revenue",
+    SUM(CASE WHEN year = 2024 THEN totalrevenue ELSE 0 END) AS "2024_revenue"
+FROM 
+    trans_weekly_rev
+GROUP BY 
+    week
+ORDER BY 
+    week;`
+
+	rows, err := DB.Query(query)
+	if err != nil {
+		return nil, 0, fmt.Errorf("error executing query: %v", err)
+	}
+
+	defer rows.Close()
+
+	data := make([]models.WeeklyRevenue, 53)
+	newestWeek := 53
+
+	for rows.Next() {
+		var week int
+		var rev2021, rev2022, rev2023, rev2024 sql.NullFloat64
+
+		if err := rows.Scan(&week, &rev2021, &rev2022, &rev2023, &rev2024); err != nil {
+			return nil, 0, fmt.Errorf("error scanning row: %v", err)
+		}
+
+		if week < newestWeek && rev2024.Float64 == 0.0 {
+			newestWeek = week
+		}
+
+		data[week-1] = models.WeeklyRevenue{
+			Name:        week,
+			Revenue2021: &rev2021.Float64,
+			Revenue2022: &rev2022.Float64,
+			Revenue2023: &rev2023.Float64,
+			Revenue2024: &rev2024.Float64,
+		}
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, 0, fmt.Errorf("error iterating rows: %v", err)
+	}
+
+	return data, newestWeek, nil
+}
+
 // refactored code
 func FetchRevenueDataToWeeklyRevenue(db *sql.DB, dbTable string) ([]models.WeeklyRevenue, error) {
 	query := fmt.Sprintf(`
-        SELECT Year, Week, TotalRevenue
+        SELECT year, week, totalrevenue
         FROM %s
         WHERE Year BETWEEN $1 AND $2
         ORDER BY Week, Year
@@ -379,6 +446,10 @@ func FindMissingData(data []models.WeeklyRevenue) ([]MissingDataPoint, error) {
 	return missingData, nil
 }
 
+// This function should be called about once a week when we're getting more then a weeks worth of data from from the
+//mcloud databse, this will add a new entry to our "cache" database so we dont have to access as much from mcloud
+
+// TODO - change to the new yearly data db-table
 func CreateYearlyRevenueRecord(db *sql.DB, year int, week int, revenue float64) error {
 	// create table if it doesn't exist
 	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS year_by_year (
@@ -405,6 +476,9 @@ func CreateYearlyRevenueRecord(db *sql.DB, year int, week int, revenue float64) 
 	return nil
 
 }
+
+// This function is curretly not being uesed and we're going to have to switch it over to the getData pkg
+// TODO - implement coded revenue data
 
 func GetCodedRevenueData(when string) ([]map[string]interface{}, float64, int64, error) {
 	// Query to retrieve revenue data grouped by RevenueCode
@@ -589,179 +663,55 @@ func GetMilesData(when, company string) ([]models.MilesData, error) {
 	return results, nil
 }
 
-func FindNewestMilesData(company string) (time.Time, error) {
-	var query string
-	if company != "transportation" && company != "logistics" {
-		return time.Time{}, fmt.Errorf("this company doesn't exist")
-	}
+func GetWeeklyRevenueData() ([]models.WeeklyRevenue, error) {
 
-	query = fmt.Sprintf(`
-		SELECT MAX(deliverydate)
-		FROM %s
-	`, company)
+	query := `SELECT 
+    week AS week_number,
+    SUM(CASE WHEN year = 2020 THEN totalrevenue ELSE 0 END) AS "2020_revenue",
+    SUM(CASE WHEN year = 2021 THEN totalrevenue ELSE 0 END) AS "2021_revenue",
+    SUM(CASE WHEN year = 2022 THEN totalrevenue ELSE 0 END) AS "2022_revenue",
+    SUM(CASE WHEN year = 2023 THEN totalrevenue ELSE 0 END) AS "2023_revenue",
+    SUM(CASE WHEN year = 2024 THEN totalrevenue ELSE 0 END) AS "2024_revenue"
+FROM 
+    trans_weekly_rev
+GROUP BY 
+    week
+ORDER BY 
+    week;`
 
-	var newestDate time.Time
-	err := DB.QueryRow(query).Scan(&newestDate)
+	rows, err := DB.Query(query)
 	if err != nil {
-		return time.Time{}, err
-	}
-	return newestDate, nil
-}
-
-func AddOrderToDB(loadData *[]models.LoadData, company string) error {
-	// Begin a transaction
-	tx, err := DB.Begin()
-	if err != nil {
-		return fmt.Errorf("failed to start transaction: %w", err)
-	}
-	defer tx.Rollback() // This will be a no-op if the transaction is committed successfully
-
-	if company != "transportation" && company != "logistics" {
-		return fmt.Errorf("invalid company")
+		return nil, err
 	}
 
-	query := fmt.Sprintf(`
-       INSERT INTO %s (
-    revenuecode, ordernumber, ordertype, freight, fuelsurcharge, remainingcharges,
-    totalrevenue, billmiles, loadedmiles, emptymiles, totalmiles, emptypercentage,
-    revloadedmile, revtotalmile, deliverydate, origin, destination, customer,
-    customercategory, operationsuser, billed, controllingparty, commodity,
-    trailertype, originstate, destinationstate, week, month, quarter, brokered
-) VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17,
-    $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30
-) ON CONFLICT (ordernumber) DO NOTHING;`, company)
+	defer rows.Close()
 
-	// Prepare the INSERT statement
-	stmt, err := tx.Prepare(query)
-	if err != nil {
-		return fmt.Errorf("failed to prepare statement: %w", err)
-	}
-	defer stmt.Close()
+	var data []models.WeeklyRevenue
 
-	// Insert or ignore each LoadData object into the database
-	for _, data := range *loadData {
-		_, err := stmt.Exec(
-			data.RevenueCode,
-			data.Order,
-			data.OrderType,
-			data.Freight,
-			data.FuelSurcharge,
-			data.RemainingCharges,
-			data.TotalRevenue,
-			data.BillMiles,
-			data.LoadedMiles,
-			data.EmptyMiles,
-			data.TotalMiles,
-			data.EmptyPct,
-			data.RevPerLoadedMile,
-			data.RevPerTotalMile,
-			data.DeliveryDate,
-			data.Origin,
-			data.Destination,
-			data.Customer,
-			data.CustomerCategory,
-			data.OperationsUser,
-			data.Billed,
-			data.ControllingParty,
-			data.Commodity,
-			data.TrailerType,
-			data.OriginState,
-			data.DestinationState,
-			data.Week,
-			data.Month,
-			data.Quarter,
-			data.Brokered,
-		)
+	var weekNumber int
+	var revenue2020, revenue2021, revenue2022, revenue2023, revenue2024 float64
+
+	for rows.Next() {
+
+		err := rows.Scan(&weekNumber, &revenue2020, &revenue2021, &revenue2022, &revenue2023, &revenue2024)
 		if err != nil {
-			return fmt.Errorf("failed to execute statement: %w", err)
+			return nil, err
 		}
-	}
 
-	// Commit the transaction
-	if err := tx.Commit(); err != nil {
-		return fmt.Errorf("failed to commit the transaction: %w", err)
-	}
-
-	return nil
-}
-
-func AddTransprotationTractorRevenue(dbData []*models.TractorRevenue) error {
-	// Begin a transaction
-
-	tx, err := DB.Begin()
-	if err != nil {
-		return fmt.Errorf("failed to start transaction: %w", err)
-	}
-	defer tx.Rollback() // This will be a no-op if the transaction is committed successfully
-
-	// Prepare the INSERT statement
-	stmt, err := tx.Prepare(`
-		INSERT INTO Transportation_Tractor_Revenue (
-			move_id, move_distance, loaded, order_id, charges, bill_distance, freight_charge, origin_city, origin_state, equip_id, actual_arrival, del_date, tractor, equipment_type_id, dispatcher, fleet_id, fleet_description, user_name, service_fail_count, has_service_fail, stop_count 
-		) VALUES (
-			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21
-		)
-		ON CONFLICT (move_id) DO UPDATE SET
-			move_distance = EXCLUDED.move_distance,
-			loaded = EXCLUDED.loaded,
-			order_id = EXCLUDED.order_id,
-			charges = EXCLUDED.charges,
-			bill_distance = EXCLUDED.bill_distance,
-			freight_charge = EXCLUDED.freight_charge,
-			origin_city = EXCLUDED.origin_city,
-			origin_state = EXCLUDED.origin_state,
-			equip_id = EXCLUDED.equip_id,
-			actual_arrival = EXCLUDED.actual_arrival,
-			del_date = EXCLUDED.del_date,
-			tractor = EXCLUDED.tractor,
-			equipment_type_id = EXCLUDED.equipment_type_id,
-			dispatcher = EXCLUDED.dispatcher,
-			fleet_id = EXCLUDED.fleet_id,
-			fleet_description = EXCLUDED.fleet_description,
-			user_name = EXCLUDED.user_name,
-			service_fail_count = EXCLUDED.service_fail_count,
-			has_service_fail = EXCLUDED.has_service_fail,
-			stop_count = EXCLUDED.stop_count;`)
-	if err != nil {
-		return fmt.Errorf("failed to prepare statement: %w", err)
-	}
-	defer stmt.Close()
-
-	// Insert each TractorRevenue object into the database
-	for _, d := range dbData {
-		_, err := stmt.Exec(
-			&d.MoveID,
-			&d.MoveDistance,
-			&d.Loaded,
-			&d.OrderID,
-			&d.Charges,
-			&d.BillDistance,
-			&d.FreightCharge,
-			&d.OriginCity,
-			&d.OriginState,
-			&d.EquipID,
-			&d.ActualArrival,
-			&d.DelDate,
-			&d.Tractor,
-			&d.EquipmentTypeID,
-			&d.Dispatcher,
-			&d.FleetID,
-			&d.FleetDescription,
-			&d.UserName,
-			&d.ServiceFailCount,
-			&d.HasServiceFail,
-			&d.StopCount,
-		)
-		if err != nil {
-			return fmt.Errorf("failed to execute statement: %w", err)
+		theWeek := models.WeeklyRevenue{
+			Name:        weekNumber,
+			Revenue2021: &revenue2021,
+			Revenue2022: &revenue2022,
+			Revenue2023: &revenue2023,
 		}
-	}
+		if revenue2024 != 0 {
+			theWeek.Revenue2024 = &revenue2024
+		} else {
+			// redundant, but just to be clear
+			theWeek.Revenue2024 = nil
+		}
 
-	// Commit the transaction
-	if err := tx.Commit(); err != nil {
-		return fmt.Errorf("failed to commit the transaction: %w", err)
+		data = append(data, theWeek)
 	}
-
-	return nil
+	return data, nil
 }

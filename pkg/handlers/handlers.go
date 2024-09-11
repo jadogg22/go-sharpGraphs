@@ -8,55 +8,17 @@ import (
 	"github.com/jadogg22/go-sharpGraphs/pkg/cache"
 	"github.com/jadogg22/go-sharpGraphs/pkg/database"
 	"github.com/jadogg22/go-sharpGraphs/pkg/getData"
+	"github.com/jadogg22/go-sharpGraphs/pkg/helpers"
 	"github.com/jadogg22/go-sharpGraphs/pkg/models"
 
 	"github.com/gin-gonic/gin"
 )
-
-// Handler function for	root route for debuging
-func TestHandler(c *gin.Context) {
-	c.JSON(200, gin.H{
-		"Message": "This came from the test handler",
-	})
-}
-
-func Test_db(c *gin.Context) {
-	// connect to the database
-	db, err := database.PG_Make_connection()
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"Message": "Error connecting to the database",
-		})
-		return
-	}
-
-	rows, err := db.Query("SELECT count(*) FROM transportation")
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"Message": "Error querying the database",
-		})
-		return
-	}
-
-	defer rows.Close()
-
-	var count int
-
-	for rows.Next() {
-		rows.Scan(&count)
-	}
-
-	c.JSON(200, gin.H{
-		"message": "Successfully connected to the database, there are " + fmt.Sprint(count) + " rows in the transportation table"})
-
-}
 
 // ---------- Transportation Handlers ----------
 //
 //	This is the handler function for the transportation yearly revenue data, this function will return
 //	52 weeks per year of the revenue earned to compair and contrast.
 func Trans_year_by_year(c *gin.Context) {
-
 	// Now that we have the cache lets use it and not hit the db everytime
 	cacheKey := "transportationYearByYear"
 	cachedData, typeID, found := cache.MyCache.Get(cacheKey)
@@ -71,18 +33,19 @@ func Trans_year_by_year(c *gin.Context) {
 		fmt.Println("Error casting the data")
 	}
 
-	data, err := database.GetCachedData("transportation")
+	// First lets get the cached weekly revunue data
+	data, err := database.GetWeeklyRevenueData()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"Message": "Error getting data from the database",
 			"Error":   err,
 		})
-		return
 	}
 
 	// Because its not very likly that we are at the end of the week
 	// and we want to show the most recent data we need to check the
 	// Transportation table and get the most recent data
+	//newData, err := getdata.GetYearByYearData(data, "transportation")
 
 	newData, err := database.GetYearByYearDataRefactored(data, "transportation")
 	if err != nil {
@@ -167,12 +130,21 @@ func Daily_Ops(c *gin.Context) {
 		}
 	}
 	// cache miss, get the data from the database.
-
-	data, err := database.GetDailyOpsData("transportation")
+	// get the start and end date for the current week
+	startDate, endDate := helpers.GetWeekStartAndEndDates()
+	data, err := getdata.GetTransportationDailyOps(startDate, endDate)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"Message": "Error getting data from the database",
 			"error":   fmt.Sprintf("%s", err),
+		})
+		return
+	}
+
+	if data == nil || len(data) <= 1 {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"Message": "Error getting data from the database",
+			"error":   fmt.Sprintf("No data found for the week"),
 		})
 		return
 	}
@@ -183,22 +155,6 @@ func Daily_Ops(c *gin.Context) {
 	//Finally update the Response with the json data
 	c.JSON(200, data)
 }
-
-//func Transportation_post(c *gin.Context) {
-//	var data []models.LoadData
-
-//	if err := c.ShouldBindJSON(&data); err != nil {
-//		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-//c		return
-//	}
-
-//	fmt.Println("Adding data to the database")
-
-//	var err error
-//	err = database.AddOrderToDB(&data, "transportation")
-//	if err != nil {
-//		fmt.Printf("error %v \n", err)
-//	}
 
 // ---------- Logisitics Handlers ----------
 func Log_year_by_year(c *gin.Context) {
@@ -278,23 +234,6 @@ func LogisticsMTD(c *gin.Context) {
 	c.JSON(200, data)
 }
 
-func Logistics_post(c *gin.Context) {
-	var data []models.LoadData
-
-	if err := c.ShouldBindJSON(&data); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	fmt.Println("Adding data to the database")
-
-	var err error
-	err = database.AddOrderToDB(&data, "logistics")
-	if err != nil {
-		fmt.Printf("error %v \n", err)
-	}
-}
-
 // ---------- Dispatch Handlers ----------
 
 func Dispach_week_to_date(c *gin.Context) {
@@ -328,52 +267,6 @@ func Dispatch_post(c *gin.Context) {
 			fmt.Printf("error %v \n", err)
 		}
 
-	}
-
-	c.JSON(200, gin.H{"Message": "Data received"})
-}
-
-func Dispatch_post_WTDOT(c *gin.Context) {
-	// receive data from the client
-	var data []models.OTWTDStats
-	if err := c.ShouldBindJSON(&data); err != nil {
-		// if there is an error return a 400 status code
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	// driver add the data to the database
-	conn, err := database.Make_connection()
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	// make sure the table exists
-	query := `CREATE TABLE IF NOT EXISTS WTDOTStats (
-		dispatcher TEXT,
-		date DATE,
-		startDate DATE,
-		endDate DATE,
-		TotalOrders INT,
-		TotalStops INT,
-		ServiceIncidents INT,
-		OrderOnTime float,
-		StopOnTime float,
-		PRIMARY KEY (dispatcher, date)
-);`
-
-	_, err = conn.Exec(query)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	for _, driver := range data {
-		err = database.Add_OTWTDStats(conn, driver)
-		if err != nil {
-			fmt.Printf("error %v \n", err)
-		}
 	}
 
 	c.JSON(200, gin.H{"Message": "Data received"})
