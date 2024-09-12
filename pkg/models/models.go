@@ -274,9 +274,9 @@ func NewDailyOpsDataFromDB(dispatcher string, total_bill_distance, total_move_di
 		Dispatcher:     dispatcher,
 		NumberOfTrucks: total_unique_trucks,
 		MilesPerTruck:  total_move_distance.Float64 / float64(total_unique_trucks),
-		Deadhead:       total_bill_distance.Float64 - total_move_distance.Float64,
-		OrderPercent:   (float64(total_orders) - float64(orders_with_service_fail)) / float64(total_orders),
-		StopPercent:    (float64(total_stops) - float64(total_servicefail_count)) / float64(total_stops),
+		Deadhead:       ((total_move_distance.Float64 - total_bill_distance.Float64) / total_move_distance.Float64),
+		OrderPercent:   ((float64(total_orders) - float64(orders_with_service_fail)) / float64(total_orders)),
+		StopPercent:    ((float64(total_stops) - float64(total_servicefail_count)) / float64(total_stops)),
 	}
 }
 
