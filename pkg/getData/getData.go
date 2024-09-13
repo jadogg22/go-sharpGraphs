@@ -482,7 +482,6 @@ func GetTransportationDailyOps(startDate, endDate time.Time) ([]*models.DailyOps
 
 		// look for name in the map
 		if name, exists := dispacherNames[dispacher_user_id]; !exists {
-			dispacher_user_id = "Unknown"
 			continue
 		} else {
 			dispacher_user_id = name
@@ -498,5 +497,8 @@ func GetTransportationDailyOps(startDate, endDate time.Time) ([]*models.DailyOps
 		fmt.Println("No data returned from the query")
 		log.Println("No data returned from the query")
 	}
+
+	rows.Close()
+	conn.Close()
 	return myData, nil
 }

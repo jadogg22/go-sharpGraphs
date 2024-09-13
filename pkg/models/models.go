@@ -2,6 +2,7 @@ package models
 
 import (
 	"database/sql"
+	"fmt"
 	"time"
 )
 
@@ -261,6 +262,7 @@ type DailyOpsData struct {
 }
 
 func NewDailyOpsDataFromDB(dispatcher string, total_bill_distance, total_move_distance sql.NullFloat64, total_stops, total_servicefail_count, orders_with_service_fail, total_orders, total_unique_trucks int) *DailyOpsData {
+	// avoid divide by zero
 	if total_unique_trucks == 0 {
 		total_unique_trucks = 1
 	}
@@ -270,13 +272,52 @@ func NewDailyOpsDataFromDB(dispatcher string, total_bill_distance, total_move_di
 	if total_stops == 0 {
 		total_stops = 1
 	}
+
+	fmt.Println("--------------------")
+	fmt.Println("Dispacher: ", dispatcher)
+	// calculate miles per truck
+	var miles_per_truck float64
+	if total_move_distance.Float64 == 0 {
+		miles_per_truck = 0
+	} else {
+		miles_per_truck = total_move_distance.Float64 / float64(total_unique_trucks)
+	}
+	// calculate the deadhead percentage
+	var deadhead float64
+	if total_move_distance.Float64 == 0 {
+		deadhead = 0
+	} else {
+		deadhead = ((total_bill_distance.Float64 - total_move_distance.Float64) / total_bill_distance.Float64)
+		deadhead = deadhead * 100
+	}
+
+	// calculate the order percentage
+	var order_percent float64
+	if total_orders == 0 {
+		order_percent = 100.0
+	} else if orders_with_service_fail == 0 {
+		order_percent = 100.0
+	} else {
+		order_percent = ((float64(total_orders) - float64(orders_with_service_fail)) / float64(total_orders))
+	}
+
+	// calculate the stop percentage
+	var stop_percent float64
+	if total_stops == 0 {
+		stop_percent = 100.0
+	} else if total_servicefail_count == 0 {
+		stop_percent = 100.0
+	} else {
+		stop_percent = ((float64(total_stops) - float64(total_servicefail_count)) / float64(total_stops))
+	}
+
 	return &DailyOpsData{
 		Dispatcher:     dispatcher,
 		NumberOfTrucks: total_unique_trucks,
-		MilesPerTruck:  total_move_distance.Float64 / float64(total_unique_trucks),
-		Deadhead:       ((total_move_distance.Float64 - total_bill_distance.Float64) / total_move_distance.Float64),
-		OrderPercent:   ((float64(total_orders) - float64(orders_with_service_fail)) / float64(total_orders)),
-		StopPercent:    ((float64(total_stops) - float64(total_servicefail_count)) / float64(total_stops)),
+		MilesPerTruck:  miles_per_truck,
+		Deadhead:       deadhead,
+		OrderPercent:   order_percent,
+		StopPercent:    stop_percent,
 	}
 }
 

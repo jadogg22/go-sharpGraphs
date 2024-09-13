@@ -26,6 +26,19 @@ func SetupRouter() *gin.Engine {
 	return r
 }
 
+func TestGetYearlyRevenue(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	router := SetupRouter()
+
+	req := httptest.NewRequest("GET", "/api/Transportation/get_yearly_revenue", nil)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, 200, w.Code)
+	fmt.Println("response for endpoint: /api/Transportation/get_yearly_revenue is: ", w.Body.String())
+}
+
 func TestEndpoints(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 

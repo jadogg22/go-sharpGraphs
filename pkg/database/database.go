@@ -689,26 +689,38 @@ ORDER BY
 	var data []models.WeeklyRevenue
 
 	var weekNumber int
-	var revenue2020, revenue2021, revenue2022, revenue2023, revenue2024 float64
+	var revenue2020, revenue2024 float64
 
 	for rows.Next() {
+		// Use pointers for each revenue field
+		var revenue2021Ptr, revenue2022Ptr, revenue2023Ptr, revenue2024Ptr *float64
 
-		err := rows.Scan(&weekNumber, &revenue2020, &revenue2021, &revenue2022, &revenue2023, &revenue2024)
+		// Initialize float64 values and assign their addresses to pointers
+		var revenue2021Value, revenue2022Value, revenue2023Value float64
+		revenue2021Ptr = &revenue2021Value
+		revenue2022Ptr = &revenue2022Value
+		revenue2023Ptr = &revenue2023Value
+
+		// Scan into temporary variables
+		err := rows.Scan(&weekNumber, &revenue2020, revenue2021Ptr, revenue2022Ptr, revenue2023Ptr, &revenue2024)
 		if err != nil {
 			return nil, err
 		}
 
+		// Handle Revenue2024 as an optional field
+		if revenue2024 != 0 {
+			revenue2024Ptr = &revenue2024
+		} else {
+			revenue2024Ptr = nil
+		}
+
+		// Create WeeklyRevenue struct
 		theWeek := models.WeeklyRevenue{
 			Name:        weekNumber,
-			Revenue2021: &revenue2021,
-			Revenue2022: &revenue2022,
-			Revenue2023: &revenue2023,
-		}
-		if revenue2024 != 0 {
-			theWeek.Revenue2024 = &revenue2024
-		} else {
-			// redundant, but just to be clear
-			theWeek.Revenue2024 = nil
+			Revenue2021: revenue2021Ptr,
+			Revenue2022: revenue2022Ptr,
+			Revenue2023: revenue2023Ptr,
+			Revenue2024: revenue2024Ptr,
 		}
 
 		data = append(data, theWeek)

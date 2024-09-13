@@ -22,6 +22,7 @@ func TestTransportationDailyOps(t *testing.T) {
 	if len(myData) < 1 {
 		t.Fail()
 	}
+
 }
 
 /*
