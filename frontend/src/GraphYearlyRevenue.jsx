@@ -17,6 +17,8 @@ import {
 
   
   function formatNumberWithCommas(number) {
+    //first only grab the number to the hundredth place
+    number = number.toFixed(2);
     return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   }
   
