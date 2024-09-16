@@ -69,8 +69,8 @@ const DailyOps = () => {
                                 <td className="py-4 px-6 text-gray-900 text-lg font-semibold">{row.numberOfTrucks}</td>
                                 <td className="py-4 px-6 text-gray-900 text-lg font-semibold">{Math.round(row.milesPerTruck)}</td>
                                 <td className="py-4 px-6 text-gray-900 text-lg font-semibold">{Math.round(row.deadhead)}%</td>
-                                <td className="py-4 px-6 text-gray-900 text-lg font-semibold">{Math.round(row.order)}%</td>
-                                <td className="py-4 px-6 text-gray-900 text-lg font-semibold">{Math.round(row.stop)}%</td>
+                                <td className="py-4 px-6 text-gray-900 text-lg font-semibold">{Math.round(row.order * 100)}%</td>
+                                <td className="py-4 px-6 text-gray-900 text-lg font-semibold">{Math.round(row.stop  * 100)}%</td>
                             </tr>
                         ))}
                     </tbody>
