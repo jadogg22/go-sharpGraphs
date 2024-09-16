@@ -294,9 +294,9 @@ func NewDailyOpsDataFromDB(dispatcher string, total_bill_distance, total_move_di
 	// calculate the order percentage
 	var order_percent float64
 	if total_orders == 0 {
-		order_percent = 100.0
+		order_percent = 1.0
 	} else if orders_with_service_fail == 0 {
-		order_percent = 100.0
+		order_percent = 1.0
 	} else {
 		order_percent = ((float64(total_orders) - float64(orders_with_service_fail)) / float64(total_orders))
 	}
@@ -304,9 +304,9 @@ func NewDailyOpsDataFromDB(dispatcher string, total_bill_distance, total_move_di
 	// calculate the stop percentage
 	var stop_percent float64
 	if total_stops == 0 {
-		stop_percent = 100.0
+		stop_percent = 1.0
 	} else if total_servicefail_count == 0 {
-		stop_percent = 100.0
+		stop_percent = 1.0
 	} else {
 		stop_percent = ((float64(total_stops) - float64(total_servicefail_count)) / float64(total_stops))
 	}
