@@ -428,12 +428,9 @@ func GetTransportationDailyOps(startDate, endDate time.Time) ([]*models.DailyOps
 		"tracy":    "Tracy",
 		"sheridan": "Sheridan",
 		"rochelle": "Rochelle",
-		"randy":    "Randy",
 		"patrick":  "Patrick",
 		"lindsay":  "Lindsay",
 		"katrina":  "Katrina",
-		"grace":    "Grace",
-		"eric":     "Eric",
 	}
 
 	conn, err := sql.Open("mssql", URL)

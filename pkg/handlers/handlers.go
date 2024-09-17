@@ -271,3 +271,39 @@ func Dispatch_post(c *gin.Context) {
 
 	c.JSON(200, gin.H{"Message": "Data received"})
 }
+
+// function for the vacation endpoint to calculate the vacation days for the drivers and office staff
+func Vacation(c *gin.Context) {
+	fmt.Println("Getting vacation days")
+
+	typeID := c.Param("type")
+	fmt.Println("Getting vacation days for ", typeID)
+
+	switch typeID {
+	case "drivers":
+		// get the vacation days for the drivers
+		fmt.Println("Getting vacation days for drivers")
+	case "tms":
+		// get the vacation days for the office staff
+		fmt.Println("Getting vacation days for office staff")
+	case "tms2":
+		// get the vacation days for the office staff
+		fmt.Println("Getting vacation days for office staff 2")
+	case "tms3":
+		// get the vacation days for the office staff
+		fmt.Println("Getting vacation days for office staff 3")
+	case "all":
+		// get the vacation days for all staff
+		fmt.Println("Getting vacation days for all staff")
+	default:
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Message": "Invalid type",
+		})
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"Message": "Vacation days",
+		"Type":    typeID,
+	})
+}

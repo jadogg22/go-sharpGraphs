@@ -22,24 +22,31 @@ func main() {
 		})
 	})
 
-	// // ---------- Transportation Handlers ----------
-	r.GET("/api/Transportation/get_yearly_revenue", handlers.Trans_year_by_year)
-	r.GET("/api/Transportation/Stacked_miles/:when", handlers.Trans_stacked_miles)
-	r.GET("/api/Transportation/get_coded_revenue/:when", handlers.Trans_coded_revenue)
-	r.GET("/api/Transportation/Daily_Ops", handlers.Daily_Ops)
+	r.GET("/vacation/:type", handlers.Vacation)
 
-	//r.POST("/api/Transportation/add/", handlers.Transportation_post)
-
-	// // ---------- Logisitics Handlers ----------
-	r.GET("/api/Logistics/get_yearly_revenue", handlers.Log_year_by_year)
-
-	r.GET("/api/Logistics/MTD", handlers.LogisticsMTD)
-	//r.GET("/Logistics/Stacked_miles/", Log_stacked_miles)
-
-	//r.POST("/api/Logistics/add", handlers.Logistics_post)
-
-	// ---------- Dispatch Handlers ----------------
-	r.GET("/api/Dispatch/Week_to_date", handlers.Dispach_week_to_date)
+	apiGroup := r.Group("/api")
+	apiGroup.Use(CORSMiddleware())
+	{
+		// ---------- Transportation Handlers ----------
+		TransportationGroup := apiGroup.Group("/Transportation")
+		{
+			TransportationGroup.GET("/get_yearly_revenue", handlers.Trans_year_by_year)
+			TransportationGroup.GET("/Stacked_miles/:when", handlers.Trans_stacked_miles)
+			TransportationGroup.GET("/get_coded_revenue/:when", handlers.Trans_coded_revenue)
+			TransportationGroup.GET("/Daily_Ops", handlers.Daily_Ops)
+		}
+		// ---------- Logisitics Handlers ----------
+		LogisticsGroup := apiGroup.Group("/Logistics")
+		{
+			LogisticsGroup.GET("/get_yearly_revenue", handlers.Log_year_by_year)
+			LogisticsGroup.GET("/MTD", handlers.LogisticsMTD)
+		}
+		// ---------- Dispatch Handlers ----------------
+		DispatchGroup := apiGroup.Group("/Dispatch")
+		{
+			DispatchGroup.GET("/Week_to_date", handlers.Dispach_week_to_date)
+		}
+	}
 
 	r.Run(":5000")
 
