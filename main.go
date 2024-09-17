@@ -14,7 +14,6 @@ func main() {
 	r := gin.Default()
 
 	// setup cors middleware
-	r.Use(CORSMiddleware())
 
 	r.GET("/ping", func(c *gin.Context) {
 		c.JSON(200, gin.H{
@@ -22,7 +21,7 @@ func main() {
 		})
 	})
 
-	r.GET("/vacation/:type", handlers.Vacation)
+	r.GET("/api2/vacation/:type", handlers.Vacation)
 
 	apiGroup := r.Group("/api")
 	apiGroup.Use(CORSMiddleware())
