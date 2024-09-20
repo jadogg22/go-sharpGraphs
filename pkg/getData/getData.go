@@ -499,3 +499,92 @@ func GetTransportationDailyOps(startDate, endDate time.Time) ([]*models.DailyOps
 	conn.Close()
 	return myData, nil
 }
+
+func GetVacationFromDB(companyId string) ([]models.VacationHours, error) {
+	if companyId != "tms" && companyId != "tms2" && companyId != "tms3" {
+		return nil, fmt.Errorf("Invalid companyID")
+	}
+	if companyId == "drivers" || companyId == "all" {
+		error := fmt.Errorf("Server error, Unimplmented companyID")
+		return nil, error
+	}
+
+	// helper function to grab the sql query string
+	query := GetVacationHoursByCompanyQuery(companyId)
+	conn, err := sql.Open("mssql", URL)
+	if err != nil {
+		fmt.Println("Error creating connection pool: " + err.Error())
+		return nil, err
+	}
+
+	defer conn.Close()
+
+	err = conn.Ping()
+	if err != nil {
+		fmt.Println("Error pinging database: " + err.Error())
+		return nil, err
+	}
+
+	rows, err := conn.Query(query)
+	if err != nil {
+		fmt.Println("Error querying database: " + err.Error())
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	var data []models.VacationHours
+	var employeeID, employeeName string
+	var vacationHoursDue, vacationHoursRate sql.NullFloat64
+	for rows.Next() {
+		err := rows.Scan(&employeeID, &employeeName, &vacationHoursRate, &vacationHoursDue)
+		if err != nil {
+			fmt.Println("Error scanning row: " + err.Error())
+			return nil, err
+		}
+
+		// clean up the data
+		employeeID = strings.TrimSpace(employeeID)
+		employeeName = strings.TrimSpace(employeeName)
+
+		var vacationHoursDueStr string
+		var vacationHoursRateStr string
+		var amount float64
+
+		if vacationHoursDue.Valid && vacationHoursRate.Valid {
+			// some rates are salary based for the week
+			if vacationHoursRate.Float64 > 45.0 {
+				amount = (vacationHoursRate.Float64 / 80.0) * vacationHoursDue.Float64
+			} else {
+				amount = vacationHoursRate.Float64 * vacationHoursDue.Float64
+			}
+		}
+
+		if !vacationHoursDue.Valid {
+			vacationHoursDueStr = "Not entered"
+		} else {
+			vacationHoursDueStr = fmt.Sprintf("%.2f", vacationHoursDue.Float64)
+		}
+
+		if !vacationHoursRate.Valid {
+			vacationHoursRateStr = "Not entered"
+		} else {
+			vacationHoursRateStr = fmt.Sprintf("%.2f", vacationHoursRate.Float64)
+		}
+
+		myData := models.VacationHours{
+			EmployeeID:        employeeID,
+			EmployeeName:      employeeName,
+			VacationHoursDue:  vacationHoursDueStr,
+			VacationHoursRate: vacationHoursRateStr,
+			AmountDue:         fmt.Sprintf("%.2f", amount),
+		}
+
+		data = append(data, myData)
+	}
+	if len(data) < 1 {
+		err := fmt.Errorf("Server error, No data returned from the query")
+		return nil, err
+	}
+	return data, nil
+}

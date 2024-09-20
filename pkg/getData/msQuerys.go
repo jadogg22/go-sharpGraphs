@@ -266,3 +266,64 @@ func OldTrandportaionOrdersQuery(startDateStr, endDateStr string) string {
 			and ((dest.actual_arrival is not null and dest.actual_arrival >= {ts '2024-08-11 00:00:00'}) or dest.actual_arrival is null and dest.sched_arrive_early >= {ts '%s 00:00:00'}) and ((dest.actual_arrival is not null and dest.actual_arrival <= {ts '%s 23:59:59'}) 
 			or dest.actual_arrival is null and dest.sched_arrive_early <= {ts '2024-08-15 23:59:59'}) and origin.id = orders.shipper_stop_id  and  origin.company_id = 'TMS' and dest.id = orders.consignee_stop_id  and  dest.company_id = 'TMS' order by revenue_code_id, order_id, movement_id`, startDateStr, endDateStr)
 }
+
+func GetVacationHoursByCompanyQuery(companyID string) string {
+
+	return fmt.Sprintf(`WITH LatestLeaveTransaction AS (
+    SELECT
+        payee_id,
+        MAX(trx_date) AS latest_trx_date
+    FROM leave_transaction
+    WHERE company_id = '%s'
+      AND applies_to = 'V'
+      AND (effect = 'B' OR effect = 'S')
+      AND (is_void IS NULL OR is_void <> 'Y')
+    GROUP BY payee_id
+),
+NewestLeaveTransaction AS (
+    SELECT
+        lt.payee_id,
+        lt.amount,
+        lt.trx_date
+    FROM leave_transaction lt
+    JOIN LatestLeaveTransaction llt
+      ON lt.payee_id = llt.payee_id
+     AND lt.trx_date = llt.latest_trx_date
+    WHERE lt.company_id = '%s'
+      AND lt.applies_to = 'V'
+      AND (lt.effect = 'B' OR lt.effect = 'S')
+      AND (lt.is_void IS NULL OR lt.is_void <> 'Y')
+),
+OfficeEmployees AS (
+    SELECT
+        payee.*,
+        off_payee.regular_rate,
+        off_payee.vacation_hours_due,
+        off_payee.vacation_pay_rate
+    FROM
+        payee
+        JOIN off_payee 
+          ON payee.id = off_payee.id 
+         AND payee.company_id = off_payee.company_id
+        JOIN drs_payee 
+          ON payee.id = drs_payee.id 
+         AND payee.company_id = drs_payee.company_id
+    WHERE
+        payee.company_id = '%s'
+        AND payee.office_employee = 'Y'
+        AND off_payee.company_id = '%s'
+        AND status = 'A'
+)
+SELECT
+    --oe.*,
+	oe.id,
+	oe.check_name,
+	oe.vacation_pay_rate,
+    nlt.amount AS latest_amount
+FROM
+    OfficeEmployees oe
+    LEFT JOIN NewestLeaveTransaction nlt
+      ON oe.id = nlt.payee_id
+ORDER BY
+    oe.id;`, companyID, companyID, companyID, companyID)
+}

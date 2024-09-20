@@ -280,30 +280,49 @@ func Vacation(c *gin.Context) {
 	fmt.Println("Getting vacation days for ", typeID)
 
 	switch typeID {
+	case "tms", "tms2", "tms3":
+		// get the vacation days for the drivers
+		data, err := getdata.GetVacationFromDB(typeID)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"Message": "Error getting data from the database",
+				"error":   err,
+			})
+			return
+		}
+		// sort the data by the greatest amount of vacation days
+		data = helpers.SortVacationData(data)
+		c.JSON(200, gin.H{
+			"Data": gin.H{typeID: data},
+		})
+	case "all":
+		// get the vacation days for all the staff
+		companyData := make(map[string][]models.VacationHours)
+		companys := []string{"tms", "tms2", "tms3"}
+		for _, company := range companys {
+			data, err := getdata.GetVacationFromDB(company)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{
+					"Message": "Error getting data from the database",
+					"error":   err,
+				})
+				return
+			}
+			// sort the data by the greatest amount of vacation days
+			sortedData := helpers.SortVacationData(data)
+			companyData[company] = sortedData
+		}
+		c.JSON(200, gin.H{
+			"Data": companyData,
+		})
 	case "drivers":
 		// get the vacation days for the drivers
-		fmt.Println("Getting vacation days for drivers")
-	case "tms":
-		// get the vacation days for the office staff
-		fmt.Println("Getting vacation days for office staff")
-	case "tms2":
-		// get the vacation days for the office staff
-		fmt.Println("Getting vacation days for office staff 2")
-	case "tms3":
-		// get the vacation days for the office staff
-		fmt.Println("Getting vacation days for office staff 3")
-	case "all":
-		// get the vacation days for all staff
-		fmt.Println("Getting vacation days for all staff")
+		c.JSON(200, gin.H{
+			"Message": "server error, not implemented",
+		})
 	default:
 		c.JSON(http.StatusBadRequest, gin.H{
 			"Message": "Invalid type",
 		})
-		return
 	}
-
-	c.JSON(200, gin.H{
-		"Message": "Vacation days",
-		"Type":    typeID,
-	})
 }

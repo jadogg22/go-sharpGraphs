@@ -425,3 +425,11 @@ type WeeklyRevenue struct {
 	Revenue2023 *float64 `json:"2023 Revenue,omitempty"`
 	Revenue2024 *float64 `json:"2024 Revenue,omitempty"`
 }
+
+type VacationHours struct {
+	EmployeeID        string
+	EmployeeName      string
+	VacationHoursDue  string
+	VacationHoursRate string // sql null float
+	AmountDue         string
+}

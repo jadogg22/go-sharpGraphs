@@ -526,3 +526,23 @@ func SameName(s1, s2 string) bool {
 	// Check if the strings are the same
 	return s1 == s2
 }
+
+func SortVacationData(vacationData []models.VacationHours) []models.VacationHours {
+	// Define the sorting function
+	sortingFunc := func(i, j int) bool {
+		amountI, okI := strconv.ParseFloat(vacationData[i].AmountDue, 64)
+		amountJ, okJ := strconv.ParseFloat(vacationData[j].AmountDue, 64)
+
+		if okI != nil || okJ != nil {
+			return false
+		}
+
+		return amountI > amountJ
+	}
+
+	// Sort the vacationData based on the start date
+	sort.Slice(vacationData, sortingFunc)
+
+	// Return the sorted vacationData
+	return vacationData
+}
