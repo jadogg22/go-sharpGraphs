@@ -1,8 +1,12 @@
 package getdata
 
 import (
+	"errors"
 	"testing"
 	"time"
+
+	"github.com/jadogg22/go-sharpGraphs/pkg/database"
+	"github.com/jadogg22/go-sharpGraphs/pkg/helpers"
 )
 
 func TestTransportationDailyOps(t *testing.T) {
@@ -22,6 +26,49 @@ func TestTransportationDailyOps(t *testing.T) {
 	if len(myData) < 1 {
 		t.Fail()
 	}
+
+}
+
+func TestWeeklyRevenue(t *testing.T) {
+	t.Log("TestWeeklyRevenue")
+
+	data, err := database.GetWeeklyRevenueData()
+	if err != nil {
+		err := errors.New("Error getting data from the database" + err.Error())
+		t.Error(err)
+	}
+
+	latestDataDate, err := helpers.FindLatestDateFromRevenueData(data)
+	if err != nil {
+		err := errors.New("Error finding latest date from revenue data" + err.Error())
+		t.Error(err)
+	}
+
+	if latestDataDate.IsZero() {
+		t.Error("No data found")
+	}
+
+	dateRanges := helpers.GenerateDateRanges(latestDataDate)
+	if len(dateRanges) < 1 {
+		t.Error("No date ranges found")
+	}
+
+	for _, dateRange := range dateRanges {
+		t.Logf("Start Date: %s, End Date: %s", dateRange.StartDate, dateRange.EndDate)
+		t.Logf("Week Value: %d", dateRange.Week)
+	}
+
+	// grab the data from db
+	if err := UpdateDateRangeAmounts(dateRanges); err != nil {
+		err := errors.New("Error updating date range amounts " + err.Error())
+		t.Error(err)
+	}
+
+	for _, dateRange := range dateRanges {
+		t.Logf("Week Value: %d, Amount: %f", dateRange.Week, dateRange.Amount)
+	}
+
+	helpers.UpdateWeeklyRevenue(data, dateRanges)
 
 }
 

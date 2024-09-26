@@ -546,3 +546,114 @@ func SortVacationData(vacationData []models.VacationHours) []models.VacationHour
 	// Return the sorted vacationData
 	return vacationData
 }
+
+func FindLatestDateFromRevenueData(data []models.WeeklyRevenue) (time.Time, error) {
+	// Define the latest date as the zero value
+	today := time.Now()
+	year, week := today.ISOWeek()
+
+	weekAmt := len(data)
+
+	if weekAmt == 0 {
+		// No data
+		return time.Time{}, fmt.Errorf("No data found")
+	} else if weekAmt < 52 || weekAmt > 53 {
+		// Only one week of data
+		return time.Time{}, fmt.Errorf("Incorrect week count")
+	}
+	for i := year; i >= 2020; i-- {
+		for j := week; j >= 1; j-- {
+			revenueStruct := data[j]
+			rev := revenueStruct.GetRevenue(i)
+
+			if rev == nil {
+				// no data found
+				// continue with the a previous week
+				continue
+			} else if *rev > 0 {
+				// data found
+				// create a time object with the current week and year. returns a monday
+				fmt.Printf("Week: %d Year: %d Revenue: %f\n", j, i, *rev)
+				return FindSundayfromWeek(j, i), nil
+			}
+
+		}
+		week = 52
+	}
+	return time.Time{}, fmt.Errorf("No data found")
+}
+
+func FindSundayfromWeek(week int, year int) time.Time {
+	// Start with the first day of the year
+	date := time.Date(year, 1, 1, 0, 0, 0, 0, time.UTC)
+	isoYear, isoWeek := date.ISOWeek()
+
+	// Adjust to the first Monday of the specified week
+	for isoYear < year || (isoYear == year && isoWeek < week) {
+		date = date.AddDate(0, 0, 1) // Move forward one day
+		isoYear, isoWeek = date.ISOWeek()
+	}
+
+	// Adjust to find the Sunday of that week
+	return date.AddDate(0, 0, -1) // Go back one day to get Sunday
+}
+
+// DateRange represents a range of dates.
+type DateRange struct {
+	StartDate time.Time
+	EndDate   time.Time
+	Week      int
+	Amount    float64
+}
+
+// GenerateDateRanges generates a slice of DateRange structs from the start date (Sunday) to today.
+func GenerateDateRanges(startDate time.Time) []*DateRange {
+	var dateRanges []*DateRange
+	today := time.Now()
+
+	// Adjust the start date to be the Sunday of that week (if needed)
+	for startDate.Weekday() != time.Sunday {
+		startDate = startDate.AddDate(0, 0, -1)
+	}
+
+	// Loop until we reach today, creating a DateRange for each week
+	for startDate.Before(today) || startDate.Equal(today) {
+		endDate := startDate.AddDate(0, 0, 6).Add(23*time.Hour + 59*time.Minute + 59*time.Second) // End date is the following Saturday at 23:59:59
+		_, weekNumber := startDate.ISOWeek()
+
+		dateRanges = append(dateRanges, &DateRange{
+			StartDate: startDate,
+			EndDate:   endDate,
+			Week:      weekNumber,
+		})
+		startDate = startDate.AddDate(0, 0, 7) // Move to the next week
+		weekNumber++
+	}
+
+	return dateRanges
+}
+
+func UpdateWeeklyRevenue(weeklyRevenues []models.WeeklyRevenue, dateRanges []*DateRange) {
+	for _, dateRange := range dateRanges {
+		year, weekNumber := dateRange.StartDate.ISOWeek() // Get the ISO week number
+
+		// Update the revenue field based on the year
+		switch year {
+		case 2021:
+			weeklyRevenues[weekNumber-1].Revenue2021 = new(float64)
+			*weeklyRevenues[weekNumber-1].Revenue2021 = dateRange.Amount
+		case 2022:
+			weeklyRevenues[weekNumber-1].Revenue2022 = new(float64)
+			*weeklyRevenues[weekNumber-1].Revenue2022 = dateRange.Amount
+		case 2023:
+			weeklyRevenues[weekNumber-1].Revenue2023 = new(float64)
+			*weeklyRevenues[weekNumber-1].Revenue2023 = dateRange.Amount
+		case 2024:
+			weeklyRevenues[weekNumber-1].Revenue2024 = new(float64)
+			*weeklyRevenues[weekNumber-1].Revenue2024 = dateRange.Amount
+		default:
+			fmt.Println("Year not in range")
+			continue // Skip if the year is not in the range
+		}
+	}
+}

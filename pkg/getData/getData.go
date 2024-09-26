@@ -2,6 +2,7 @@ package getdata
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -10,6 +11,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/jadogg22/go-sharpGraphs/pkg/database"
+	"github.com/jadogg22/go-sharpGraphs/pkg/helpers"
 	"github.com/jadogg22/go-sharpGraphs/pkg/models"
 	"github.com/joho/godotenv"
 
@@ -318,6 +321,122 @@ func GetTransportationOrdersData(conn *sql.DB, startDate, endDate time.Time) ([]
 	return data, nil
 }
 */
+
+func TransportationRevenue(startDate, endDate time.Time) (float64, error) {
+	// make a connection to the database
+	conn, err := sql.Open("mssql", URL)
+	if err != nil {
+		fmt.Println("Error creating connection pool: " + err.Error())
+		log.Println("Error creating connection pool: " + err.Error())
+		return 0, err
+	}
+
+	defer conn.Close()
+
+	// format time objects to be "2024-08-11"
+	startDateStr := startDate.Format("2006-01-02")
+	endDateStr := endDate.Format("2006-01-02")
+	query := fmt.Sprintf("SELECT SUM(total_charge) from orders where company_id = 'tms' and bol_recv_date between %s and %s", startDateStr, endDateStr)
+
+	rows, err := conn.Query(query)
+	if err != nil {
+		fmt.Println("Error querying database: " + err.Error())
+		log.Println("Error querying database: " + err.Error())
+		return 0, err
+	}
+
+	defer rows.Close()
+
+	var totalRevenue float64
+	for rows.Next() {
+		err := rows.Scan(&totalRevenue)
+		if err != nil {
+			fmt.Println("Error scanning row: " + err.Error())
+			log.Println("Error scanning row: " + err.Error())
+			return 0, err
+		}
+	}
+
+	return totalRevenue, nil
+}
+
+func UpdateDateRangeAmounts(dateRanges []*helpers.DateRange) error {
+
+	conn, err := sql.Open("mssql", URL)
+	if err != nil {
+		fmt.Println("Error creating connection pool: " + err.Error())
+		log.Println("Error creating connection pool: " + err.Error())
+		return err
+	}
+
+	defer conn.Close()
+
+	for _, dateRange := range dateRanges {
+		startDateStr := dateRange.StartDate.Format("2006-01-02 00:00:00")
+		EndDateStr := dateRange.EndDate.Format("2006-01-02 00:00:00")
+
+		query := fmt.Sprintf("SELECT SUM(total_charge) from orders where company_id = 'tms' and bol_recv_date between '%s' and '%s'", startDateStr, EndDateStr)
+
+		var amount sql.NullFloat64
+
+		err = conn.QueryRow(query).Scan(&amount)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				fmt.Println("No rows returned from query")
+				log.Println("No rows returned from query")
+				dateRange.Amount = 0
+			} else {
+				fmt.Println("Error querying database: " + err.Error())
+				log.Println("Error querying database: " + err.Error())
+				return err
+			}
+		}
+
+		if amount.Valid {
+			dateRange.Amount = amount.Float64
+		} else {
+			dateRange.Amount = 0
+		}
+	}
+	return nil
+}
+
+func UpdateTransRevData(data []models.WeeklyRevenue) {
+
+	latestDataDate, err := helpers.FindLatestDateFromRevenueData(data)
+	if err != nil {
+		err := errors.New("Error finding latest date from revenue data" + err.Error())
+		fmt.Println(err)
+	}
+
+	var dateRanges []*helpers.DateRange
+	dateRanges = helpers.GenerateDateRanges(latestDataDate)
+	if len(dateRanges) < 1 {
+		fmt.Println("No date ranges found")
+	}
+
+	// Update the date range amounts
+
+	if err := UpdateDateRangeAmounts(dateRanges); err != nil {
+		err := errors.New("Error updating date range amounts " + err.Error())
+		fmt.Println(err)
+	}
+
+	if len(dateRanges) < 3 {
+		// take the first weeks up the the last 3 weeks
+		newDateRanges := dateRanges[:3]
+		//update my database with the new data
+		database.UpdateMyDatabase(newDateRanges)
+	}
+
+	helpers.UpdateWeeklyRevenue(data, dateRanges)
+}
+
+type revenueData struct {
+	TotalRevenue float64
+	year         int
+	week         int
+}
 
 // With access to the db, we can now grab the data from the production database and dont need
 // to replicate the data in our own database. This will save time and space and provide greater accuracy

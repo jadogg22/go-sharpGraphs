@@ -44,23 +44,15 @@ func Trans_year_by_year(c *gin.Context) {
 
 	// Because its not very likly that we are at the end of the week
 	// and we want to show the most recent data we need to check the
-	// Transportation table and get the most recent data
-	//newData, err := getdata.GetYearByYearData(data, "transportation")
+	// Transportation table and get the most recent data from the ms sql server
 
-	newData, err := database.GetYearByYearDataRefactored(data, "transportation")
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"Message": "Error getting newest data from the database",
-			"Error":   err,
-		})
-		return
-	}
+	getdata.UpdateTransRevData(data)
 
 	// Set the cache
-	cache.MyCache.Set(cacheKey, newData, "[]models.WeeklyRevenue", time.Hour*2)
+	cache.MyCache.Set(cacheKey, data, "[]models.WeeklyRevenue", time.Hour*2)
 
 	c.JSON(200, gin.H{
-		"Data": newData,
+		"Data": data,
 	})
 }
 
@@ -82,6 +74,14 @@ func Trans_stacked_miles(c *gin.Context) {
 	c.JSON(200, data) // We're gonna come up with something better here
 }
 
+type UnimplementedError struct {
+	msg string
+}
+
+func (e *UnimplementedError) Error() string {
+	return e.msg
+}
+
 func Trans_coded_revenue(c *gin.Context) {
 	when := c.Param("when")
 	fmt.Println("Getting coded revenue for ", when)
@@ -100,20 +100,28 @@ func Trans_coded_revenue(c *gin.Context) {
 	// 	fmt.Println("Sorry but, WTF")
 	// }
 
-	data, revenue, count, err2 := database.GetCodedRevenueData(when)
-	if err2 != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"Message": "Error getting data from the database",
-			"error":   err2,
-		})
-		return
-	}
-
-	c.JSON(200, gin.H{
-		"CodedRevenue": data,
-		"TotalRevenue": revenue,
-		"TotalCount":   count,
+	UNIMPLEMENTED := &UnimplementedError{"This endpoint is not implemented yet"}
+	c.JSON(http.StatusInternalServerError, gin.H{
+		"Message": "Error getting data from the database",
+		"error":   UNIMPLEMENTED,
 	})
+	return
+	/*
+		data, revenue, count, err2 := database.GetCodedRevenueData(when)
+		if err2 != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"Message": "Error getting data from the database",
+				"error":   err2,
+			})
+			return
+		}
+
+		c.JSON(200, gin.H{
+			"CodedRevenue": data,
+			"TotalRevenue": revenue,
+			"TotalCount":   count,
+		})
+	*/
 }
 
 func Daily_Ops(c *gin.Context) {

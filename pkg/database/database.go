@@ -309,6 +309,28 @@ func FetchRevenueDataToWeeklyRevenue(db *sql.DB, dbTable string) ([]models.Weekl
 	return data, nil
 }
 
+func UpdateMyDatabase(data []*helpers.DateRange) error {
+	// Create table if it doesn't exist
+	_, err := DB.Exec(`CREATE TABLE IF NOT EXISTS trans_weekly_rev`)
+	if err != nil {
+		return fmt.Errorf("error creating table: %w", err)
+	}
+
+	// Insert data into the table
+	for _, dateRange := range data {
+		if dateRange.Amount < 1 {
+			continue
+		}
+		year, week := dateRange.StartDate.ISOWeek()
+		query := `INSERT INTO trans_weekly_rev (totalrevenue, week, year) VALUES ($1, $2, $3)`
+		_, err := DB.Exec(query, dateRange.Amount, week, year)
+		if err != nil {
+			return fmt.Errorf("error inserting data: %w", err)
+		}
+	}
+	return nil
+}
+
 func GetYearByYearDataRefactored(data []models.WeeklyRevenue, company string) ([]models.WeeklyRevenue, error) {
 	currentYear, currentWeek := time.Now().ISOWeek()
 	if company != "transportation" && company != "logistics" {

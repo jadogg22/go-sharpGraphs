@@ -426,6 +426,21 @@ type WeeklyRevenue struct {
 	Revenue2024 *float64 `json:"2024 Revenue,omitempty"`
 }
 
+func (wr *WeeklyRevenue) GetRevenue(year int) *float64 {
+	switch year {
+	case 2021:
+		return wr.Revenue2021
+	case 2022:
+		return wr.Revenue2022
+	case 2023:
+		return wr.Revenue2023
+	case 2024:
+		return wr.Revenue2024
+	default:
+		return nil
+	}
+}
+
 type VacationHours struct {
 	EmployeeID        string
 	EmployeeName      string
