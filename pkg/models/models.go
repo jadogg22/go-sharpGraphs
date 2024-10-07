@@ -261,7 +261,7 @@ type DailyOpsData struct {
 	StopPercent    float64 `json:"stop"`
 }
 
-func NewDailyOpsDataFromDB(dispatcher string, total_bill_distance, total_move_distance sql.NullFloat64, total_stops, total_servicefail_count, orders_with_service_fail, total_orders, total_unique_trucks int) *DailyOpsData {
+func NewDailyOpsDataFromDB(dispatcher string, total_loaded_distance, total_empty_distance sql.NullFloat64, total_stops, total_servicefail_count, orders_with_service_fail, total_orders, total_unique_trucks int) *DailyOpsData {
 	// avoid divide by zero
 	if total_unique_trucks == 0 {
 		total_unique_trucks = 1
@@ -272,22 +272,29 @@ func NewDailyOpsDataFromDB(dispatcher string, total_bill_distance, total_move_di
 	if total_stops == 0 {
 		total_stops = 1
 	}
+	if total_loaded_distance.Float64 == 0 || !total_loaded_distance.Valid {
+		total_loaded_distance.Float64 = 1
+	}
+	if total_empty_distance.Float64 == 0 || !total_empty_distance.Valid {
+		total_empty_distance.Float64 = 1
+	}
 
-	fmt.Println("--------------------")
-	fmt.Println("Dispacher: ", dispatcher)
+	total_distance := total_loaded_distance.Float64 + total_empty_distance.Float64
+
 	// calculate miles per truck
 	var miles_per_truck float64
-	if total_move_distance.Float64 == 0 {
+	// avoid divide by zero error
+	if total_unique_trucks == 0 {
 		miles_per_truck = 0
 	} else {
-		miles_per_truck = total_move_distance.Float64 / float64(total_unique_trucks)
+		miles_per_truck = total_distance / float64(total_unique_trucks)
 	}
 	// calculate the deadhead percentage
 	var deadhead float64
-	if total_move_distance.Float64 == 0 {
+	if total_distance == 0 {
 		deadhead = 0
 	} else {
-		deadhead = ((total_bill_distance.Float64 - total_move_distance.Float64) / total_bill_distance.Float64)
+		deadhead = ((total_distance - total_empty_distance.Float64) / total_distance)
 		deadhead = deadhead * 100
 	}
 
@@ -394,6 +401,12 @@ type CodedRevenueData struct {
 	Code    []string    `json:"Code"`
 	Revenue []float64   `json:"Revenue"`
 	Date    []time.Time `json:"Date"`
+}
+
+type CodedData struct {
+	Name    string
+	Revenue float64
+	Count   int
 }
 
 type MilesData struct {

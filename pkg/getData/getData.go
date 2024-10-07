@@ -583,7 +583,7 @@ func GetTransportationDailyOps(startDate, endDate time.Time) ([]*models.DailyOps
 	defer rows.Close()
 
 	var dispacher_user_id string
-	var total_bill_distance, total_move_distance sql.NullFloat64
+	var total_empty_distance, total_loaded_distance sql.NullFloat64
 	var total_stops, total_servicefail_count, orders_with_service_fail, total_orders, total_unique_trucks int
 	//unpack the rows from the query into the data struct
 
@@ -594,7 +594,7 @@ func GetTransportationDailyOps(startDate, endDate time.Time) ([]*models.DailyOps
 			continue
 		}
 		// scan the row into the variables
-		rows.Scan(&dispacher_user_id, &total_stops, &total_servicefail_count, &orders_with_service_fail, &total_orders, &total_bill_distance, &total_move_distance, &total_unique_trucks)
+		rows.Scan(&dispacher_user_id, &total_stops, &total_servicefail_count, &orders_with_service_fail, &total_orders, &total_empty_distance, &total_loaded_distance, &total_unique_trucks)
 
 		// sanitize the dispacher_user_id
 		dispacher_user_id = strings.ToLower(strings.ReplaceAll(dispacher_user_id, " ", ""))

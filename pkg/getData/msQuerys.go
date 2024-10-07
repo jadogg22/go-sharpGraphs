@@ -15,13 +15,14 @@ SELECT
     SUM(COALESCE(servicefail_counts.servicefail_count, 0)) AS total_servicefail_count,
     COUNT(DISTINCT CASE WHEN servicefail_counts.servicefail_count > 0 THEN mo1.order_id END) AS orders_with_service_fail,
     COUNT(DISTINCT mo1.order_id) AS total_orders,
-    SUM(orders.bill_distance) AS total_bill_distance,
-    SUM(move1.move_distance) AS total_move_distance,
+    SUM(COALESCE(p.empty_distance, 0)) AS total_empty_distance,  -- Replaced bill_distance with empty_distance
+    SUM(COALESCE(p.loaded_distance, 0)) AS total_loaded_distance,  -- Replaced move_distance with loaded_distance
     COUNT(DISTINCT continuity.equipment_id) AS total_unique_trucks
 FROM
     movement move1
     JOIN movement_order mo1 ON move1.id = mo1.movement_id AND mo1.company_id = 'TMS'
     JOIN orders ON orders.id = mo1.order_id AND orders.company_id = 'TMS'
+    JOIN prorated_orderdist p ON orders.id = p.order_id  -- Join prorated_orderdist to get empty and loaded distances
     LEFT JOIN (
         SELECT
             orders.id AS order_id,
@@ -386,4 +387,18 @@ FROM
       ON oe.id = nlt.payee_id
 ORDER BY
     oe.id;`, companyID, companyID, companyID, companyID)
+}
+
+func MakeCodedRevenueQuery(startDate, endDate time.Time) string {
+	startdateStr := startDate.Format("2006-01-02")
+	endDateStr := endDate.Format("2006-01-02")
+
+	return fmt.Sprintf(`SELECT revenue_code_id, freight_charge FROM orders where bol_recv_date between {ts '%s 00:00:00'} and {ts '%s 23:59:59'} and company_id = 'TMS'`, startdateStr, endDateStr)
+}
+
+func MakeStackedMilesQuery(startDate, endDate time.Time) string {
+	startdateStr := startDate.Format("2006-01-02")
+	endDateStr := endDate.Format("2006-01-02")
+
+	return fmt.Sprintf(`SELECT o.id, o.bol_recv_date, p.loaded_distance, p.empty_distance from orders o join prorated_orderdist p on o.id = p.order_id where o.bol_recv_date between {ts '%s 00:00:00'} and {ts '%s 23:59:59'} and o.company_id = 'TMS'`, startdateStr, endDateStr)
 }
