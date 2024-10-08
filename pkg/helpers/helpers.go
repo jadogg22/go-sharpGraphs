@@ -747,7 +747,7 @@ func UpdateWeeklyRevenue(weeklyRevenues []models.WeeklyRevenue, dateRanges []*Da
 
 func CombineStackedMilesData(when string, data []models.StackedMilesData) []models.StackedMilesData {
 	// Create a map to hold the data
-	if when == "week" {
+	if when == "week_to_date" {
 		// Create a map to hold the data
 		weekData := make(map[int]models.StackedMilesData)
 		timeLayout := "2006-01-02T15:04:05Z"
@@ -792,7 +792,7 @@ func CombineStackedMilesData(when string, data []models.StackedMilesData) []mode
 		return sortedData
 	}
 
-	if when == "month" {
+	if when == "month_to_date" {
 		// Create a map to hold the data
 		weekData := make(map[int]models.StackedMilesData)
 		timeLayout := "2006-01-02T15:04:05Z"
