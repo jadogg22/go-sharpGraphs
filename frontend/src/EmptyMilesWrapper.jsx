@@ -14,7 +14,7 @@ const EmptyMilesWrapper = () => {
     setError(null);
     try {
       const response = await axios.get(`http://192.168.0.62:5000/api/Transportation/Stacked_miles/${timeFrame}`);
-      setMilesData(response.data.reverse());
+      setMilesData(response.data);
     } catch (err) {
       setError('Failed to fetch data. Please try again.');
       console.error('Error fetching data:', err);
