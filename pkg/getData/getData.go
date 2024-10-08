@@ -554,12 +554,12 @@ func GetStackedMilesData(when string) ([]models.StackedMilesData, error) {
 	fmt.Println("Getting the start and end dates")
 	var startDate, endDate time.Time
 	switch when {
-	case "week":
+	case "week_to_date":
 		endDate = time.Now()
 		startDate = endDate.AddDate(0, 0, -10)
 		fmt.Println("Start Date: ", startDate)
 		fmt.Println("End Date: ", endDate)
-	case "month":
+	case "month_to_date":
 		endDate = time.Now()
 		// 6 weeks worth
 		startDate = endDate.AddDate(0, -1, -14)

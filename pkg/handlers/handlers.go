@@ -63,7 +63,7 @@ func Trans_stacked_miles(c *gin.Context) {
 	timePeriod := c.Param("when")
 
 	//sanatize the input
-	if timePeriod != "week" && timePeriod != "month" && timePeriod != "quarter" {
+	if timePeriod != "week_to_date" && timePeriod != "month_to_date" && timePeriod != "quarter" {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"Message": "Invalid time period",
 		})
