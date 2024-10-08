@@ -2,6 +2,7 @@ package helpers
 
 import (
 	"fmt"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -825,14 +826,16 @@ func CombineStackedMilesData(when string, data []models.StackedMilesData) []mode
 			keys = append(keys, k)
 		}
 
-		sort.Ints(keys)
+		slices.Sort(keys)
 
+		// create another final slice to hold the data sorted by the weeks
+		sortedData := make([]models.StackedMilesData, 0, len(keys))
 		// Create a slice to hold the data
 		for _, k := range keys {
-			data = append(data, weekData[k])
+			sortedData = append(sortedData, weekData[k])
 		}
 
-		return data
+		return sortedData
 	}
 	if when == "quarter" {
 		// Create a map to hold the data

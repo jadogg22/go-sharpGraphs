@@ -56,10 +56,14 @@ func main() {
 // make sure that the request is coming from the correct origin of my proxy server.
 func CORSMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// Allow cors from my proxy
-		allowedOrigins := "http://192.168.0.62"
 
 		origin := c.Request.Header.Get("Origin")
+		if origin == "" {
+			c.Next()
+		}
+
+		// Allow cors from my proxy
+		allowedOrigins := "http://192.168.0.62"
 
 		if origin != allowedOrigins {
 			c.AbortWithStatus(http.StatusForbidden)
