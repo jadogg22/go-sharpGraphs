@@ -855,7 +855,8 @@ func StackedToMilesData(timeframe string, data []models.StackedMilesData) []mode
 			continue
 		}
 
-		if timeframe == "week" {
+		if timeframe == "week_to_date" {
+			timeframe = "week"
 			// get the day number from the date
 			parsedTime, err := time.Parse("2006-01-02T15:04:05Z", v.Date)
 			if err != nil {
@@ -866,7 +867,8 @@ func StackedToMilesData(timeframe string, data []models.StackedMilesData) []mode
 			section = "Day"
 		}
 
-		if timeframe == "month" {
+		if timeframe == "month_to_date" {
+			timeframe = "month"
 			// we are doing weekly data
 			time, error := time.Parse("2006-01-02T15:04:05Z", v.Date)
 			if error != nil {
@@ -881,7 +883,6 @@ func StackedToMilesData(timeframe string, data []models.StackedMilesData) []mode
 
 		totalmiles := v.EmptyMiles + v.LoadedMiles
 		percentEmpty := ((v.LoadedMiles - v.EmptyMiles) / v.LoadedMiles) * 100
-
 		milesData = append(milesData, models.MilesData{
 			Name:             "time " + timeframestr,
 			NameStr:          section + strconv.Itoa(i+1),
