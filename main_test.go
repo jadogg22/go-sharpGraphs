@@ -40,14 +40,15 @@ func TestGetYearlyRevenue(t *testing.T) {
 }
 
 func TestEndpoints(t *testing.T) {
+	// Set the gin mode to test - ? this doesn't really seem to be doing much tbh
 	gin.SetMode(gin.TestMode)
 
 	router := SetupRouter()
 
 	endponts := []string{
 		"/api/Transportation/get_yearly_revenue",
-		//"/api/Transportation/Stacked_miles/:when",
-		//"/api/Transportation/get_coded_revenue/:when",
+		"/api/Transportation/Stacked_miles/week",
+		"/api/Transportation/get_coded_revenue/week",
 		"/api/Transportation/Daily_Ops",
 		"/api/Logistics/get_yearly_revenue",
 		"/api/Logistics/MTD",

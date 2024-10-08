@@ -52,6 +52,87 @@ func GetWeekStartAndEndDates() (time.Time, time.Time) {
 	return startOfWeek, today
 }
 
+func GetMonthStartAndEndDates() (time.Time, time.Time) {
+	// Get the current date
+	today := time.Now()
+
+	// Get the first day of the month
+	firstDay := time.Date(today.Year(), today.Month(), 1, 0, 0, 0, 0, today.Location())
+
+	// Get the last day of the month
+	lastDay := firstDay.AddDate(0, 1, -1)
+
+	return firstDay, lastDay
+}
+
+func GetQuarterStartAndEndDates() (time.Time, time.Time) {
+	// Get the current date
+	today := time.Now()
+
+	// Get the first day of the quarter
+	quarter := monthToQuarter(int(today.Month()))
+	quarterStartMonth := 3 * (quarter - 1) // 0, 3, 6, 9
+	quarterStart := time.Date(today.Year(), time.Month(quarterStartMonth), 1, 0, 0, 0, 0, today.Location())
+
+	// Get the last day of the quarter
+	quarterEnd := quarterStart.AddDate(0, 3, -1)
+
+	return quarterStart, quarterEnd
+}
+
+func monthToQuarter(month int) int {
+	switch month {
+	case 1, 2, 3:
+		return 1
+	case 4, 5, 6:
+		return 2
+	case 7, 8, 9:
+		return 3
+	case 10, 11, 12:
+		return 4
+	default:
+		return 0
+	}
+}
+
+func SortData(data map[string]models.CodedData) []models.CodedData {
+	// Create a slice to hold the data
+
+	var sortedData []models.CodedData
+
+	// Iterate over the data and add it to the slice
+	for _, v := range data {
+		sortedData = append(sortedData, v)
+	}
+
+	// Sort the data by revenue
+	sort.Slice(sortedData, func(i, j int) bool {
+		return sortedData[i].Revenue > sortedData[j].Revenue
+	})
+	return sortedData
+}
+
+func CombineData(data []models.CodedData) []models.CodedData {
+	// take the top 9 and combine the rest into one
+	const NUM_ELEMENTS = 9
+
+	// Create a slice to hold the data
+	var combinedData []models.CodedData
+
+	// Iterate over the data and add it to the slice
+	for i, v := range data {
+		if i <= NUM_ELEMENTS {
+			combinedData = append(combinedData, v)
+		} else {
+			combinedData[NUM_ELEMENTS].Name += ", " + v.Name
+			combinedData[NUM_ELEMENTS].Revenue += v.Revenue
+			combinedData[NUM_ELEMENTS].Count += v.Count
+		}
+	}
+
+	return combinedData
+}
+
 func StartOfISOWeek(year int, week int) time.Time {
 	date := time.Date(year, 0, 0, 0, 0, 0, 0, time.UTC)
 	isoYear, isoWeek := date.ISOWeek()
@@ -274,13 +355,19 @@ func GetStartDayOfWeek() time.Time {
 	// Get the current date
 	today := time.Now()
 
+	// Start with today and iterate backwards until we hit Sunday
+	myDay := today
+
 	// get the day of the week
-	day := today.Weekday()
+	day := myDay.Weekday()
 
-	// get monday as the start of the week
-	startOfWeek := today.AddDate(0, 0, -int(day))
+	// get Sunday as the start of the week
+	for day != time.Sunday {
+		myDay = myDay.AddDate(0, 0, -1)
+		day = myDay.Weekday()
+	}
 
-	return startOfWeek
+	return myDay
 }
 
 func IsHoliday(date time.Time) bool {
@@ -656,4 +743,155 @@ func UpdateWeeklyRevenue(weeklyRevenues []models.WeeklyRevenue, dateRanges []*Da
 			continue // Skip if the year is not in the range
 		}
 	}
+}
+
+func CombineStackedMilesData(when string, data []models.StackedMilesData) []models.StackedMilesData {
+	// Create a map to hold the data
+	if when == "week" {
+		// Create a map to hold the data
+		weekData := make(map[int]models.StackedMilesData)
+		timeLayout := "2006-01-02T15:04:05Z"
+
+		// Iterate over the data and add it to the map
+		for _, v := range data {
+			// get the day number from the date
+			parsedTime, err := time.Parse(timeLayout, v.Date)
+			if err != nil {
+				fmt.Println("Error parsing time: ", err)
+				continue
+			}
+
+			day := parsedTime.Day()
+
+			// Check if the day is already in the map
+			if d, ok := weekData[day]; ok {
+				// Add the miles to the existing data
+
+				d.EmptyMiles += v.EmptyMiles
+				d.LoadedMiles += v.LoadedMiles
+				weekData[day] = d
+			} else {
+				// Add the data to the map
+				weekData[day] = v
+			}
+		}
+
+		// place the data in ascending order
+		keys := make([]int, 0, len(weekData))
+		for k := range weekData {
+			keys = append(keys, k)
+		}
+
+		sort.Ints(keys)
+
+		// Create a slice to hold the data
+		sortedData := make([]models.StackedMilesData, 0, len(keys))
+		for _, k := range keys {
+			sortedData = append(sortedData, weekData[k])
+		}
+		return sortedData
+	}
+
+	if when == "month" {
+		// Create a map to hold the data
+		weekData := make(map[int]models.StackedMilesData)
+		timeLayout := "2006-01-02T15:04:05Z"
+
+		// Iterate over the data and add it to the map
+		for _, v := range data {
+			// get the day number from the date
+			parsedTime, err := time.Parse(timeLayout, v.Date)
+			if err != nil {
+				fmt.Println("Error parsing time: ", err)
+				continue
+			}
+
+			_, week := parsedTime.ISOWeek()
+
+			// Check if the day is already in the map
+			if d, ok := weekData[week]; ok {
+				// Add the miles to the existing data
+				d.EmptyMiles += v.EmptyMiles
+				d.LoadedMiles += v.LoadedMiles
+			} else {
+				// Add the data to the map
+				weekData[week] = v
+			}
+		}
+
+		// place the data in ascending order
+		keys := make([]int, 0, len(weekData))
+		for k := range weekData {
+			keys = append(keys, k)
+		}
+
+		sort.Ints(keys)
+
+		// Create a slice to hold the data
+		for _, k := range keys {
+			data = append(data, weekData[k])
+		}
+
+		return data
+	}
+	if when == "quarter" {
+		// Create a map to hold the data
+		fmt.Println("unimplemented")
+		return nil
+	}
+
+	fmt.Println("Error: Invalid when parameter")
+	return nil
+}
+
+func StackedToMilesData(timeframe string, data []models.StackedMilesData) []models.MilesData {
+	var milesData []models.MilesData
+	var timeframestr, section string
+
+	for i, v := range data {
+
+		if v.LoadedMiles < 1 {
+			// skip if there are no loaded miles
+			continue
+		}
+
+		if timeframe == "week" {
+			// get the day number from the date
+			parsedTime, err := time.Parse("2006-01-02T15:04:05Z", v.Date)
+			if err != nil {
+				fmt.Println("Error parsing time: ", err)
+				continue
+			}
+			timeframestr = strconv.Itoa(parsedTime.Day())
+			section = "Day"
+		}
+
+		if timeframe == "month" {
+			// we are doing weekly data
+			time, error := time.Parse("2006-01-02T15:04:05Z", v.Date)
+			if error != nil {
+				fmt.Println("Error parsing time: ", error)
+				continue
+			}
+			_, week := time.ISOWeek()
+
+			timeframestr = strconv.Itoa(week)
+			section = "Week"
+		}
+
+		totalmiles := v.EmptyMiles + v.LoadedMiles
+		percentEmpty := ((v.LoadedMiles - v.EmptyMiles) / v.LoadedMiles) * 100
+
+		milesData = append(milesData, models.MilesData{
+			Name:             "time " + timeframestr,
+			NameStr:          section + strconv.Itoa(i+1),
+			DeliveryDate:     v.Date,
+			TotalEmptyMiles:  v.EmptyMiles,
+			TotalLoadedMiles: v.LoadedMiles,
+			TotalMiles:       totalmiles,
+			PercentEmpty:     percentEmpty,
+		})
+	}
+
+	return milesData
 }

@@ -52,7 +52,8 @@ func main() {
 }
 
 // CORS middleware handler
-// CORSMiddleware is a custom CORS middleware that takes a pointer to gin.Context
+// CORSMiddleware is a middleware handler that adds CORS headers to requests
+// make sure that the request is coming from the correct origin of my proxy server.
 func CORSMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Allow cors from my proxy

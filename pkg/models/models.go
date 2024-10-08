@@ -2,7 +2,6 @@ package models
 
 import (
 	"database/sql"
-	"fmt"
 	"time"
 )
 
@@ -437,6 +436,7 @@ type WeeklyRevenue struct {
 	Revenue2022 *float64 `json:"2022 Revenue,omitempty"`
 	Revenue2023 *float64 `json:"2023 Revenue,omitempty"`
 	Revenue2024 *float64 `json:"2024 Revenue,omitempty"`
+	Revenue2025 *float64 `json:"2025 Revenue,omitempty"`
 }
 
 func (wr *WeeklyRevenue) GetRevenue(year int) *float64 {
@@ -460,4 +460,12 @@ type VacationHours struct {
 	VacationHoursDue  string
 	VacationHoursRate string // sql null float
 	AmountDue         string
+}
+
+// stacked miles data
+type StackedMilesData struct {
+	ID          string
+	Date        string
+	EmptyMiles  float64
+	LoadedMiles float64
 }

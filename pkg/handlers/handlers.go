@@ -62,16 +62,42 @@ func Trans_year_by_year(c *gin.Context) {
 func Trans_stacked_miles(c *gin.Context) {
 	timePeriod := c.Param("when")
 
-	data, err2 := database.GetMilesData(timePeriod, "transportation")
-	if err2 != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"Message": "Error getting data from the database",
-			"error":   err2,
+	//sanatize the input
+	if timePeriod != "week" && timePeriod != "month" && timePeriod != "quarter" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Message": "Invalid time period",
 		})
 		return
 	}
 
-	c.JSON(200, data) // We're gonna come up with something better here
+	// check the cache
+	cacheKey := "stackedMiles" + timePeriod
+	cachedData, typeID, found := cache.MyCache.Get(cacheKey)
+	if found {
+		if typeID == "[]models.MilesData" {
+			if cachedData, ok := cachedData.([]models.MilesData); ok {
+				c.JSON(200, gin.H{"data": cachedData})
+				return
+			}
+		}
+	}
+
+	// Get the data from the database
+	data, err := getdata.GetStackedMilesData(timePeriod)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"Message": "Error getting data from the database",
+			"error":   err,
+		})
+		return
+	}
+
+	milesData := helpers.StackedToMilesData(timePeriod, data)
+
+	// Set the cache
+	cache.MyCache.Set(cacheKey, milesData, "[]models.MilesData", time.Hour*2)
+
+	c.JSON(200, milesData) // We're gonna come up with something better here
 }
 
 type UnimplementedError struct {
@@ -86,42 +112,39 @@ func Trans_coded_revenue(c *gin.Context) {
 	when := c.Param("when")
 	fmt.Println("Getting coded revenue for ", when)
 
-	// parts := strings.Split(when, "-")
-
-	// if len(parts) == 1 {
-	// 	fmt.Println("TODO, write funtion for coded revnue for one peram")
-	// }
-
-	// if len(parts) == 2 {
-	// 	fmt.Println("TODO, write function for coded revenue from one date to another.")
-	// }
-
-	// if len(parts) < 1 && len(parts) > 2 {
-	// 	fmt.Println("Sorry but, WTF")
-	// }
-
-	UNIMPLEMENTED := &UnimplementedError{"This endpoint is not implemented yet"}
-	c.JSON(http.StatusInternalServerError, gin.H{
-		"Message": "Error getting data from the database",
-		"error":   UNIMPLEMENTED,
-	})
-	return
-	/*
-		data, revenue, count, err2 := database.GetCodedRevenueData(when)
-		if err2 != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"Message": "Error getting data from the database",
-				"error":   err2,
-			})
-			return
-		}
-
-		c.JSON(200, gin.H{
-			"CodedRevenue": data,
-			"TotalRevenue": revenue,
-			"TotalCount":   count,
+	//sanatize the input
+	if when != "week" && when != "month" && when != "quarter" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Message": "Invalid time period",
 		})
-	*/
+		return
+	}
+	// check the cache
+	cacheKey := "codedRevenue" + when
+	cachedData, typeID, found := cache.MyCache.Get(cacheKey)
+	if found {
+		if typeID == "[]models.CodedData" {
+			if cachedData, ok := cachedData.([]models.CodedData); ok {
+				c.JSON(200, gin.H{"data": cachedData})
+				return
+			}
+		}
+	}
+
+	// Get the data from the database
+	data, err := getdata.GetCodedRevenueData(when)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"Message": "Error getting data from the database",
+			"error":   err,
+		})
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"Data": data,
+	})
+	cache.MyCache.Set(cacheKey, data, "[]models.CodedData", time.Hour*2)
 }
 
 func Daily_Ops(c *gin.Context) {

@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -26,6 +25,9 @@ var (
 	SQL_SERVER   string
 	SQL_DB       string
 	URL          string
+
+	conn    *sql.DB                           // db connection
+	limiter = time.NewTicker(1 * time.Second) // db rate limiter
 )
 
 func init() {
@@ -38,14 +40,15 @@ func init() {
 		if _, err := os.Stat(filepath.Join(dir, ".env")); err == nil {
 			err := godotenv.Load(filepath.Join(dir, ".env"))
 			if err != nil {
-				log.Fatal("Error loading .env file")
+				fmt.Println("Error loading .env file")
 			}
 			break
 		}
 
 		parent := filepath.Dir(dir)
 		if parent == dir {
-			log.Fatal(".env file not found")
+			fmt.Println("Error finding .env file")
+			break
 		}
 		dir = parent
 	}
@@ -59,13 +62,21 @@ func init() {
 
 	file, err := os.OpenFile("app.log", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0666)
 	if err != nil {
-		log.Fatalf("Error opening log file: %v", err)
+		fmt.Println("Error opening log file: " + err.Error())
 	}
 	defer file.Close()
 
-	// Set log output to the file
-	log.SetOutput(file)
+	conn, err = sql.Open("mssql", URL)
+	if err != nil {
+		fmt.Println("Error creating connection pool: " + err.Error())
+		return
+	}
 
+	conn.SetMaxOpenConns(1)
+	conn.SetMaxIdleConns(1)
+	conn.SetConnMaxLifetime(5 * time.Minute)
+
+	fmt.Println("Connected to the database")
 }
 
 func getTransportationTractorRevenue(conn *sql.DB) {
@@ -79,7 +90,6 @@ func getTransportationTractorRevenue(conn *sql.DB) {
 	rows, err := conn.Query(query)
 	if err != nil {
 		fmt.Println("Error querying database: " + err.Error())
-		log.Println("Error querying database: " + err.Error())
 		return
 	}
 	defer rows.Close()
@@ -115,21 +125,18 @@ func getTransportationTractorRevenue(conn *sql.DB) {
 		)
 		if err != nil {
 			fmt.Println("Error scanning row: " + err.Error())
-			log.Println("Error scanning row: " + err.Error())
 			return
 		}
 
 		moveid, err := strconv.Atoi(strings.TrimSpace(moveidstr))
 		if err != nil {
 			fmt.Println("Error converting moveid to int: " + err.Error())
-			log.Println("Error converting moveid to int: " + err.Error())
 			return
 		}
 
 		orderid, err := strconv.Atoi(strings.TrimSpace(orderidstr))
 		if err != nil {
 			fmt.Println("Error converting orderid to int: " + err.Error())
-			log.Println("Error converting orderid to int: " + err.Error())
 			return
 		}
 
@@ -150,188 +157,7 @@ func getTransportationTractorRevenue(conn *sql.DB) {
 	}
 }
 
-/*
-// the newest iteration of getting orders data - now in real time!
-func GetTransportationOrdersData(conn *sql.DB, startDate, endDate time.Time) ([]models.OrderDetails, error) {
-
-	// make start and end dates into strings
-	startDateStr := startDate.Format("2006-01-02")
-	endDateStr := endDate.Format("2006-01-02")
-
-	// get query string from helper function
-	query := MakeTransportationOrdersQuery(startDateStr, endDateStr)
-
-	// query the database
-	rows, err := conn.Query(query)
-	if err != nil {
-		err := fmt.Errorf("Error querying database: %v", err)
-		return nil, err
-	}
-
-	defer rows.Close()
-
-	var data []models.OrderDetails
-	for rows.Next() {
-		var d models.OrderDetails
-		var orderIDStr string
-		var OperationsUser sql.NullString
-		var RevenueCodeID string
-		var FreightCharge float64
-		var BillMiles float64
-		var BillDate sql.NullTime
-		var OrderTrailerType string
-		var OriginValue string
-		var DestinationValue string
-		var CustomerID sql.NullString
-		var CustomerName sql.NullString
-		var CustomerCategory sql.NullString
-		var CategoryDescr sql.NullString
-		var MovementID string
-		var Loaded string
-		var MoveDistance float64
-		var Brokerage string
-		var OriginCity string
-		var OriginState string
-		var DestCity string
-		var DestState string
-		var ReportDate sql.NullTime
-		var ActualDate sql.NullTime
-		var EmptyMiles sql.NullFloat64
-		var LoadedMiles sql.NullFloat64
-		var TotalMiles sql.NullFloat64
-		var TotalRevenue float64
-		var WeekValue sql.NullString
-		var MonthValue sql.NullString
-		var QuarterValue sql.NullString
-		var DetailID string
-
-		err := rows.Scan(
-			&orderIDStr,
-			&OperationsUser,
-			&RevenueCodeID,
-			&FreightCharge,
-			&BillMiles,
-			&BillDate,
-			&OrderTrailerType,
-			&OriginValue,
-			&DestinationValue,
-			&CustomerID,
-			&CustomerName,
-			&CustomerCategory,
-			&CategoryDescr,
-			&MovementID,
-			&Loaded,
-			&MoveDistance,
-			&Brokerage,
-			&OriginCity,
-			&OriginState,
-			&DestCity,
-			&DestState,
-			&ReportDate,
-			&ActualDate,
-			&EmptyMiles,
-			&LoadedMiles,
-			&TotalMiles,
-			&TotalRevenue,
-			&WeekValue,
-			&MonthValue,
-			&QuarterValue,
-			&DetailID)
-
-		if err != nil {
-			err := fmt.Errorf("Error scanning row: %v", err)
-			return nil, err
-		}
-
-		d.OrderID = orderIDStr
-		if OperationsUser.Valid {
-			d.OperationsUser = OperationsUser.String
-		} else {
-			d.OperationsUser = "Loadmaster"
-		}
-		d.RevenueCodeID = RevenueCodeID
-		d.FreightCharge = FreightCharge
-		d.BillMiles = BillMiles
-
-		if BillDate.Valid {
-			d.BillDate = BillDate.Time
-		}
-		d.OrderTrailerType = OrderTrailerType
-		d.OriginValue = OriginValue
-		d.DestinationValue = DestinationValue
-		if CustomerID.Valid {
-			d.CustomerID = CustomerID.String
-		} else {
-			d.CustomerID = "Unknown"
-		}
-		if CustomerName.Valid {
-			d.CustomerName = CustomerName.String
-		} else {
-			d.CustomerName = "Unknown"
-		}
-		if CustomerCategory.Valid {
-			d.CustomerCategory = CustomerCategory.String
-		} else {
-			d.CustomerCategory = "Unknown"
-		}
-		if CategoryDescr.Valid {
-			d.CategoryDescr = CategoryDescr.String
-		} else {
-			d.CategoryDescr = "Unknown"
-		}
-		d.MovementID = MovementID
-		d.Loaded = Loaded
-		d.MoveDistance = MoveDistance
-		d.Brokerage = Brokerage
-		d.OriginCity = OriginCity
-		d.OriginState = OriginState
-		d.DestCity = DestCity
-		d.DestState = DestState
-		if ReportDate.Valid {
-			d.ReportDate = ReportDate.Time
-		}
-		if ActualDate.Valid {
-			d.ActualDate = ActualDate.Time
-		}
-		if EmptyMiles.Valid {
-			d.EmptyMiles = EmptyMiles.Float64
-		}
-		if LoadedMiles.Valid {
-			d.LoadedMiles = LoadedMiles.Float64
-		}
-		if TotalMiles.Valid {
-			d.TotalMiles = TotalMiles.Float64
-		}
-		d.TotalRevenue = TotalRevenue
-		if WeekValue.Valid {
-			d.WeekValue = WeekValue.String
-		}
-		if MonthValue.Valid {
-			d.MonthValue = MonthValue.String
-		}
-		if QuarterValue.Valid {
-			d.QuarterValue = QuarterValue.String
-		}
-		d.DetailID = DetailID
-
-		data = append(data, d)
-
-	}
-
-	return data, nil
-}
-*/
-
 func TransportationRevenue(startDate, endDate time.Time) (float64, error) {
-	// make a connection to the database
-	conn, err := sql.Open("mssql", URL)
-	if err != nil {
-		fmt.Println("Error creating connection pool: " + err.Error())
-		log.Println("Error creating connection pool: " + err.Error())
-		return 0, err
-	}
-
-	defer conn.Close()
 
 	// format time objects to be "2024-08-11"
 	startDateStr := startDate.Format("2006-01-02")
@@ -341,7 +167,6 @@ func TransportationRevenue(startDate, endDate time.Time) (float64, error) {
 	rows, err := conn.Query(query)
 	if err != nil {
 		fmt.Println("Error querying database: " + err.Error())
-		log.Println("Error querying database: " + err.Error())
 		return 0, err
 	}
 
@@ -352,7 +177,33 @@ func TransportationRevenue(startDate, endDate time.Time) (float64, error) {
 		err := rows.Scan(&totalRevenue)
 		if err != nil {
 			fmt.Println("Error scanning row: " + err.Error())
-			log.Println("Error scanning row: " + err.Error())
+			return 0, err
+		}
+	}
+
+	return totalRevenue, nil
+}
+
+func LogisiticsRevenue(startDate, endDate time.Time) (float64, error) {
+
+	// format time objects to be "2024-08-11"
+	startDateStr := startDate.Format("2006-01-02")
+	endDateStr := endDate.Format("2006-01-02")
+	query := fmt.Sprintf("SELECT SUM(total_charge) from orders where company_id = 'tms2' and bol_recv_date between %s and %s", startDateStr, endDateStr)
+
+	rows, err := conn.Query(query)
+	if err != nil {
+		fmt.Println("Error querying database: " + err.Error())
+		return 0, err
+	}
+
+	defer rows.Close()
+
+	var totalRevenue float64
+	for rows.Next() {
+		err := rows.Scan(&totalRevenue)
+		if err != nil {
+			fmt.Println("Error scanning row: " + err.Error())
 			return 0, err
 		}
 	}
@@ -362,15 +213,6 @@ func TransportationRevenue(startDate, endDate time.Time) (float64, error) {
 
 func UpdateDateRangeAmounts(dateRanges []*helpers.DateRange) error {
 
-	conn, err := sql.Open("mssql", URL)
-	if err != nil {
-		fmt.Println("Error creating connection pool: " + err.Error())
-		log.Println("Error creating connection pool: " + err.Error())
-		return err
-	}
-
-	defer conn.Close()
-
 	for _, dateRange := range dateRanges {
 		startDateStr := dateRange.StartDate.Format("2006-01-02 00:00:00")
 		EndDateStr := dateRange.EndDate.Format("2006-01-02 00:00:00")
@@ -379,15 +221,13 @@ func UpdateDateRangeAmounts(dateRanges []*helpers.DateRange) error {
 
 		var amount sql.NullFloat64
 
-		err = conn.QueryRow(query).Scan(&amount)
+		err := conn.QueryRow(query).Scan(&amount)
 		if err != nil {
 			if err == sql.ErrNoRows {
 				fmt.Println("No rows returned from query")
-				log.Println("No rows returned from query")
 				dateRange.Amount = 0
 			} else {
 				fmt.Println("Error querying database: " + err.Error())
-				log.Println("Error querying database: " + err.Error())
 				return err
 			}
 		}
@@ -438,29 +278,6 @@ type revenueData struct {
 	week         int
 }
 
-// With access to the db, we can now grab the data from the production database and dont need
-// to replicate the data in our own database. This will save time and space and provide greater accuracy
-func NoDBDailyOpsCacheGrab() {
-	// make a connection to the database
-	conn, err := sql.Open("mssql", URL)
-	if err != nil {
-		fmt.Println("Error creating connection pool: " + err.Error())
-		log.Println("Error creating connection pool: " + err.Error())
-		return
-	}
-
-	defer conn.Close()
-
-	err = conn.Ping()
-	if err != nil {
-		fmt.Println("Error pinging database: " + err.Error())
-		log.Println("Error pinging database: " + err.Error())
-		return
-	}
-
-	// get all the data from the database
-}
-
 func GetLogisticsMTDData(startDate, endDate time.Time) []models.LogisticsMTDStats {
 
 	var dispacherNames = map[string]string{
@@ -472,20 +289,6 @@ func GetLogisticsMTDData(startDate, endDate time.Time) []models.LogisticsMTDStat
 		"mijken":   "Mijken Cassidy",
 		"riki":     "Riki Marotz",
 		"samswens": "Sam Swenson",
-	}
-
-	conn, err := sql.Open("mssql", URL)
-	if err != nil {
-		fmt.Println("Error creating connection pool: " + err.Error())
-		return nil
-	}
-
-	defer conn.Close()
-
-	err = conn.Ping()
-	if err != nil {
-		fmt.Println("Error pinging database: " + err.Error())
-		return nil
 	}
 
 	query := getLogisticsMTDQuery(startDate, endDate) // Helperfunction to get the long query string
@@ -533,7 +336,6 @@ func GetLogisticsMTDData(startDate, endDate time.Time) []models.LogisticsMTDStat
 	}
 
 	rows.Close()
-	conn.Close()
 
 	return data
 }
@@ -555,15 +357,7 @@ func GetTransportationDailyOps(startDate, endDate time.Time) ([]*models.DailyOps
 		"amber":    "Amber",
 	}
 
-	conn, err := sql.Open("mssql", URL)
-	if err != nil {
-		fmt.Println("Error creating connection pool: " + err.Error())
-		return nil, err
-	}
-
-	defer conn.Close()
-
-	err = conn.Ping()
+	err := conn.Ping()
 	if err != nil {
 		fmt.Println("Error pinging database: " + err.Error())
 		return nil, err
@@ -576,7 +370,6 @@ func GetTransportationDailyOps(startDate, endDate time.Time) ([]*models.DailyOps
 	rows, err := conn.Query(query)
 	if err != nil {
 		fmt.Println("Error querying database: " + err.Error())
-		log.Println("Error querying database: " + err.Error())
 		return nil, fmt.Errorf("Error querying database: %v", err)
 	}
 
@@ -590,7 +383,6 @@ func GetTransportationDailyOps(startDate, endDate time.Time) ([]*models.DailyOps
 	for rows.Next() {
 		if rows.Err() != nil {
 			fmt.Println("Error scanning row: " + rows.Err().Error())
-			log.Println("Error scanning row: " + rows.Err().Error())
 			continue
 		}
 		// scan the row into the variables
@@ -607,18 +399,16 @@ func GetTransportationDailyOps(startDate, endDate time.Time) ([]*models.DailyOps
 		}
 
 		// create a new data struct
-		myDispacherStats := models.NewDailyOpsDataFromDB(dispacher_user_id, total_bill_distance, total_move_distance, total_stops, total_servicefail_count, orders_with_service_fail, total_orders, total_unique_trucks)
+		myDispacherStats := models.NewDailyOpsDataFromDB(dispacher_user_id, total_loaded_distance, total_empty_distance, total_stops, total_servicefail_count, orders_with_service_fail, total_orders, total_unique_trucks)
 
 		myData = append(myData, myDispacherStats)
 	}
 
 	if len(myData) < 1 {
 		fmt.Println("No data returned from the query")
-		log.Println("No data returned from the query")
 	}
 
 	rows.Close()
-	conn.Close()
 	return myData, nil
 }
 
@@ -633,19 +423,6 @@ func GetVacationFromDB(companyId string) ([]models.VacationHours, error) {
 
 	// helper function to grab the sql query string
 	query := GetVacationHoursByCompanyQuery(companyId)
-	conn, err := sql.Open("mssql", URL)
-	if err != nil {
-		fmt.Println("Error creating connection pool: " + err.Error())
-		return nil, err
-	}
-
-	defer conn.Close()
-
-	err = conn.Ping()
-	if err != nil {
-		fmt.Println("Error pinging database: " + err.Error())
-		return nil, err
-	}
 
 	rows, err := conn.Query(query)
 	if err != nil {
@@ -709,4 +486,121 @@ func GetVacationFromDB(companyId string) ([]models.VacationHours, error) {
 		return nil, err
 	}
 	return data, nil
+}
+
+func GetCodedRevenueData(when string) ([]models.CodedData, error) {
+	// get the dates ranges
+	fmt.Println("Getting the start and end dates")
+	var startDate, endDate time.Time
+	switch when {
+	case "week":
+		startDate, endDate = helpers.GetWeekStartAndEndDates()
+	case "month":
+		startDate, endDate = helpers.GetMonthStartAndEndDates()
+	case "quarter":
+		startDate, endDate = helpers.GetQuarterStartAndEndDates()
+	default:
+		return nil, fmt.Errorf("Invalid time period")
+	}
+
+	if startDate.IsZero() || endDate.IsZero() {
+		return nil, fmt.Errorf("Error getting start and end dates")
+	}
+
+	// get the data from the database
+	query := MakeCodedRevenueQuery(startDate, endDate)
+	fmt.Println("Query: ", query)
+	rows, err := conn.Query(query)
+	if err != nil {
+		fmt.Println("Error querying database: " + err.Error())
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	myData := make(map[string]models.CodedData)
+
+	fmt.Println("Getting data from the database")
+	// scan the rows into the data struct
+	for rows.Next() {
+		var name string
+		var revenue float64
+
+		err := rows.Scan(&name, &revenue)
+		if err != nil {
+			fmt.Println("Error scanning row: " + err.Error())
+			return nil, err
+		}
+
+		info, ok := myData[name]
+		if !ok {
+			myData[name] = models.CodedData{Name: name, Revenue: revenue, Count: 1}
+		} else {
+			info.Revenue += revenue
+			info.Count++
+			myData[name] = info
+		}
+	}
+
+	sortedData := helpers.SortData(myData)          // changes the map to a slice of structs and sorts it uses sort package
+	combinedData := helpers.CombineData(sortedData) // combines the small data into a single struct
+	return combinedData, nil
+}
+
+// Stacked miles data endpont
+
+func GetStackedMilesData(when string) ([]models.StackedMilesData, error) {
+	// get the dates ranges
+	fmt.Println("Getting the start and end dates")
+	var startDate, endDate time.Time
+	switch when {
+	case "week":
+		endDate = time.Now()
+		startDate = endDate.AddDate(0, 0, -10)
+		fmt.Println("Start Date: ", startDate)
+		fmt.Println("End Date: ", endDate)
+	case "month":
+		endDate = time.Now()
+		// 6 weeks worth
+		startDate = endDate.AddDate(0, -1, -14)
+	case "quarter":
+		// IDK how to split this one up exactly yet
+		startDate, endDate = helpers.GetQuarterStartAndEndDates()
+	default:
+		return nil, fmt.Errorf("Invalid time period")
+	}
+
+	if startDate.IsZero() || endDate.IsZero() {
+		return nil, fmt.Errorf("Error getting start and end dates")
+	}
+
+	// get the data from the database
+	query := MakeStackedMilesQuery(startDate, endDate)
+	rows, err := conn.Query(query)
+	if err != nil {
+		fmt.Println("Error querying database: " + err.Error())
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	myData := make([]models.StackedMilesData, 0)
+
+	// scan the rows into the data struct
+	for rows.Next() {
+		var id, date string
+		var emptyMiles, loadedMiles float64
+
+		err := rows.Scan(&id, &date, &loadedMiles, &emptyMiles)
+		if err != nil {
+			fmt.Println("Error scanning row: " + err.Error())
+			return nil, err
+		}
+
+		myData = append(myData, models.StackedMilesData{ID: id, Date: date, EmptyMiles: emptyMiles, LoadedMiles: loadedMiles})
+	}
+
+	aggregateData := helpers.CombineStackedMilesData(when, myData)
+
+	return aggregateData, nil
 }
