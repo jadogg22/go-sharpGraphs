@@ -329,7 +329,7 @@ func Vacation(c *gin.Context) {
 	case "all":
 		// get the vacation days for all the staff
 		companyData := make(map[string][]models.VacationHours)
-		companys := []string{"tms", "tms2", "tms3"}
+		companys := []string{"tms", "tms2", "tms3", "drivers"}
 		for _, company := range companys {
 			data, err := getdata.GetVacationFromDB(company)
 			if err != nil {
@@ -345,11 +345,6 @@ func Vacation(c *gin.Context) {
 		}
 		c.JSON(200, gin.H{
 			"Data": companyData,
-		})
-	case "drivers":
-		// get the vacation days for the drivers
-		c.JSON(200, gin.H{
-			"Message": "server error, not implemented",
 		})
 	default:
 		c.JSON(http.StatusBadRequest, gin.H{

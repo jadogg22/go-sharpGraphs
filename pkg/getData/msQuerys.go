@@ -269,6 +269,9 @@ func OldTrandportaionOrdersQuery(startDateStr, endDateStr string) string {
 }
 
 func GetVacationHoursByCompanyQuery(companyID string) string {
+	if companyID == "drivers" {
+		return DriversVacationHoursQuery()
+	}
 
 	return fmt.Sprintf(`WITH LatestLeaveTransaction AS (
     SELECT
@@ -329,64 +332,40 @@ ORDER BY
     oe.id;`, companyID, companyID, companyID, companyID)
 }
 
-func DriversVacationHoursQuery(companyID string) string {
-	return fmt.Sprintf(`WITH LatestLeaveTransaction AS (
-    SELECT
+func DriversVacationHoursQuery() string {
+	return `
+WITH LatestTransactions AS (
+    SELECT 
         payee_id,
-        MAX(trx_date) AS latest_trx_date
-    FROM leave_transaction
-    WHERE company_id = '%s'
-      AND applies_to = 'V'
-      AND (effect = 'B' OR effect = 'S')
-      AND (is_void IS NULL OR is_void <> 'Y')
-    GROUP BY payee_id
-),
-NewestLeaveTransaction AS (
-    SELECT
-        lt.payee_id,
-        lt.amount,
-        lt.trx_date
-    FROM leave_transaction lt
-    JOIN LatestLeaveTransaction llt
-      ON lt.payee_id = llt.payee_id
-     AND lt.trx_date = llt.latest_trx_date
-    WHERE lt.company_id = '%s'
-      AND lt.applies_to = 'V'
-      AND (lt.effect = 'B' OR lt.effect = 'S')
-      AND (lt.is_void IS NULL OR lt.is_void <> 'Y')
-),
-OfficeEmployees AS (
-    SELECT
-        payee.*,
-        off_payee.regular_rate,
-        off_payee.vacation_hours_due,
-        off_payee.vacation_pay_rate
-    FROM
-        payee
-        JOIN off_payee 
-          ON payee.id = off_payee.id 
-         AND payee.company_id = off_payee.company_id
-        JOIN drs_payee 
-          ON payee.id = drs_payee.id 
-         AND payee.company_id = drs_payee.company_id
-    WHERE
-        payee.company_id = '%s'
-        AND payee.non_office_emp = 'Y'
-        AND off_payee.company_id = '%s'
-        AND status = 'A'
+        amount,
+        trx_date,
+        ROW_NUMBER() OVER (PARTITION BY payee_id ORDER BY trx_date DESC, id DESC) AS rn
+    FROM 
+        leave_transaction
+    WHERE 
+        company_id = 'TMS' 
+        AND applies_to = 'V' 
+        AND (is_void IS NULL OR is_void <> 'Y') 
+        AND effect <> 'S'
 )
-SELECT
-    --oe.*,
-	oe.id,
-	oe.check_name,
-	oe.vacation_pay_rate,
-    nlt.amount AS latest_amount
-FROM
-    OfficeEmployees oe
-    LEFT JOIN NewestLeaveTransaction nlt
-      ON oe.id = nlt.payee_id
-ORDER BY
-    oe.id;`, companyID, companyID, companyID, companyID)
+
+SELECT 
+    p.id, 
+    p.check_name, 
+    d.vacation_pay_rate, 
+    lt.amount as latest_amout
+FROM 
+    payee p
+JOIN 
+    drs_payee d ON p.id = d.id 
+LEFT JOIN 
+    LatestTransactions lt ON p.id = lt.payee_id AND lt.rn = 1
+WHERE 
+    p.company_id = 'TMS' 
+    AND p.non_office_emp = 'Y' 
+    AND p.status = 'A'
+    AND d.company_id = 'TMS';
+`
 }
 
 func MakeCodedRevenueQuery(startDate, endDate time.Time) string {

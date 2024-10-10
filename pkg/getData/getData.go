@@ -413,12 +413,8 @@ func GetTransportationDailyOps(startDate, endDate time.Time) ([]*models.DailyOps
 }
 
 func GetVacationFromDB(companyId string) ([]models.VacationHours, error) {
-	if companyId != "tms" && companyId != "tms2" && companyId != "tms3" {
+	if companyId != "tms" && companyId != "tms2" && companyId != "tms3" && companyId != "drivers" {
 		return nil, fmt.Errorf("Invalid companyID")
-	}
-	if companyId == "drivers" || companyId == "all" {
-		error := fmt.Errorf("Server error, Unimplmented companyID")
-		return nil, error
 	}
 
 	// helper function to grab the sql query string
@@ -452,7 +448,7 @@ func GetVacationFromDB(companyId string) ([]models.VacationHours, error) {
 
 		if vacationHoursDue.Valid && vacationHoursRate.Valid {
 			// some rates are salary based for the week
-			if vacationHoursRate.Float64 > 45.0 {
+			if vacationHoursRate.Float64 > 100.0 {
 				amount = (vacationHoursRate.Float64 / 80.0) * vacationHoursDue.Float64
 			} else {
 				amount = vacationHoursRate.Float64 * vacationHoursDue.Float64
