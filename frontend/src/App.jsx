@@ -6,6 +6,7 @@ import GraphYearlyRevenue from './GraphYearlyRevenue';
 import LogYearlyRevenue from './LogYearlyRevenue.jsx';
 import EmptyMilesWrapper from './EmptyMilesWrapper';
 import LogisticsMTD from './LogisticsMTD';
+import RevPie from './RevPie';
 
 const App = () => {
   return (
@@ -45,6 +46,15 @@ const App = () => {
               </li>
               <li>
                 <NavLink
+                  to="/RevenuePie"
+                  activeClassName="bg-gray-700"
+                  className="block py-2 px-4 hover:bg-gray-700"
+                >
+                  Revenue Pie
+                </NavLink>
+              </li>
+              <li>
+                <NavLink
                   to="/LogisticsMTD"
                   activeClassName="bg-gray-700"
                   className="block py-2 px-4 hover:bg-gray-700"
@@ -62,10 +72,10 @@ const App = () => {
                 </NavLink>
               </li>
               <li>
-                <NavLink 
-                to="/logisticsWeekly"
-                activeClassName="bg-gray-700"
-                className="block py-2 px-4 hover:bg-gray-700"
+                <NavLink
+                  to="/logisticsWeekly"
+                  activeClassName="bg-gray-700"
+                  className="block py-2 px-4 hover:bg-gray-700"
                 >
                   Logistics Weekly
                 </NavLink>
@@ -78,6 +88,7 @@ const App = () => {
             <Route path="/" element={<GraphYearlyRevenue />} />
             <Route path="/LogisticsYearly" element={<LogYearlyRevenue />} />
             <Route path="/dailyOps" element={<DailyOps />} />
+            <Route path="/RevenuePie" element={<RevPie />} />
             <Route path="/LogisticsMTD" element={<LogisticsMTD />} />
             <Route path="/EmptyMiles" element={<EmptyMilesWrapper />} />
             <Route path="/logisticsWeekly" element={<LogisticsWeekly />} />

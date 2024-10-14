@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/jadogg22/go-sharpGraphs/pkg/handlers"
 	"net/http"
@@ -57,8 +58,10 @@ func main() {
 func CORSMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 
+		fmt.Println("CORSMiddleware")
 		origin := c.Request.Header.Get("Origin")
-		if origin == "" {
+		fmt.Println(origin)
+		if origin == "" || origin == "http://localhost:5173" {
 			c.Next()
 		}
 

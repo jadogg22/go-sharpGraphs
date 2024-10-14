@@ -76,7 +76,7 @@ func Trans_stacked_miles(c *gin.Context) {
 	if found {
 		if typeID == "[]models.MilesData" {
 			if cachedData, ok := cachedData.([]models.MilesData); ok {
-				c.JSON(200, gin.H{"data": cachedData})
+				c.JSON(200, gin.H{timePeriod: cachedData})
 				return
 			}
 		}
@@ -97,7 +97,7 @@ func Trans_stacked_miles(c *gin.Context) {
 	// Set the cache
 	cache.MyCache.Set(cacheKey, milesData, "[]models.MilesData", time.Hour*2)
 
-	c.JSON(200, milesData) // We're gonna come up with something better here
+	c.JSON(200, gin.H{timePeriod: milesData})
 }
 
 type UnimplementedError struct {

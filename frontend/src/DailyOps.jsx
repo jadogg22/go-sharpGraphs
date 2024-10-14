@@ -8,10 +8,11 @@ const DailyOps = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    const apiURL = import.meta.env.VITE_API_URL;
     const fetchData = async () => {
         setLoading(true);
         setError(null); // Reset error state before fetching
-        fetch('http://192.168.0.62:5000/api/Transportation/Daily_Ops')
+        fetch(`${apiURL}/Transportation/Daily_Ops`)
             .then(response => {
                 if (!response.ok) {
                     throw new Error(`Error: ${response.statusText}`);
@@ -26,9 +27,9 @@ const DailyOps = () => {
                 setError(err.message);
                 setLoading(false);
             });
-        };
+    };
 
-        
+
     useEffect(() => {
         fetchData();
 
@@ -45,7 +46,7 @@ const DailyOps = () => {
 
     if (error) {
         return <p className="text-center text-red-500 text-lg">Failed to load data: {error}</p>;
-    } 
+    }
 
     return (
         <div className="p-6 bg-gray-100 min-h-screen flex flex-col items-center">
@@ -70,7 +71,7 @@ const DailyOps = () => {
                                 <td className="py-4 px-6 text-gray-900 text-lg font-semibold">{Math.round(row.milesPerTruck)}</td>
                                 <td className="py-4 px-6 text-gray-900 text-lg font-semibold">{Math.round(row.deadhead)}%</td>
                                 <td className="py-4 px-6 text-gray-900 text-lg font-semibold">{Math.round(row.order * 100)}%</td>
-                                <td className="py-4 px-6 text-gray-900 text-lg font-semibold">{Math.round(row.stop  * 100)}%</td>
+                                <td className="py-4 px-6 text-gray-900 text-lg font-semibold">{Math.round(row.stop * 100)}%</td>
                             </tr>
                         ))}
                     </tbody>

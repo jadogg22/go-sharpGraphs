@@ -9,7 +9,7 @@ const formatNumber = (number) => {
 
 // Define dispatcher groups by location
 const locationGroups = {
-    "Wellsvile": ["Cami Hansen", "Liz Swenson", "Sam Swenson", "Lenora Smith" ],
+    "Wellsvile": ["Cami Hansen", "Liz Swenson", "Sam Swenson", "Lenora Smith"],
     "SLC": ["Joy Lynn", "Mijken Cassidy"],
     "Ashton": ["Jerrami Marotz", "Riki Marotz"]
 
@@ -73,7 +73,7 @@ const LogisticsMTD = () => {
     useEffect(() => {
         setLoading(true);
         setError(null); // Reset error state before fetching
-        fetch('http://192.168.0.62:5000/api/Logistics/MTD')
+        fetch(`${apiURL}/Logistics/MTD`)
             .then(response => {
                 if (!response.ok) {
                     throw new Error(`Error: ${response.statusText}`);
