@@ -91,7 +91,6 @@ const App = () => {
             <Route path="/RevenuePie" element={<RevPie />} />
             <Route path="/LogisticsMTD" element={<LogisticsMTD />} />
             <Route path="/EmptyMiles" element={<EmptyMilesWrapper />} />
-            <Route path="/logisticsWeekly" element={<LogisticsWeekly />} />
           </Routes>
         </div>
       </div>

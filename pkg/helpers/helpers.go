@@ -814,6 +814,8 @@ func CombineStackedMilesData(when string, data []models.StackedMilesData) []mode
 				// Add the miles to the existing data
 				d.EmptyMiles += v.EmptyMiles
 				d.LoadedMiles += v.LoadedMiles
+				weekData[week] = d
+
 			} else {
 				// Add the data to the map
 				weekData[week] = v
