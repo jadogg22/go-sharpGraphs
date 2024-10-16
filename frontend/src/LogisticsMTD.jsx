@@ -70,6 +70,8 @@ const LogisticsMTD = () => {
     const [error, setError] = useState(null);
     const [groupedData, setGroupedData] = useState({});
 
+    const apiURL = import.meta.env.VITE_API_URL;
+
     useEffect(() => {
         setLoading(true);
         setError(null); // Reset error state before fetching
