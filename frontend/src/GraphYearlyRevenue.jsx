@@ -18,6 +18,7 @@ function formatNumberWithCommas(number) {
   return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
 
+
 const CustomTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
     const data = payload.map((entry) => entry.payload);
@@ -68,6 +69,7 @@ const YearlyRevenue = ({ company }) => {
   const apiURL = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
+
     const fetchData = async () => {
       setLoading(true);
       try {
@@ -157,7 +159,7 @@ const YearlyRevenue = ({ company }) => {
             domain={([dataMin, dataMax]) => {
               const roundedMin = Math.floor(dataMin / 100000) * 100000;
               const roundedMax = Math.ceil(dataMax / 50000) * 50000;
-              return [roundedMin, roundedMax];
+              return [Math.min(roundedMin, 400000), roundedMax];
             }}
             tickFormatter={(value) => `${Math.round(value / 1000)}K`}
           />
