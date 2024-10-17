@@ -47,6 +47,17 @@ func Trans_year_by_year(c *gin.Context) {
 	// Transportation table and get the most recent data from the ms sql server
 
 	getdata.UpdateTransRevData(data)
+	if len(data) == 0 {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"Message": "Error getting data from the database",
+			"Error":   "No data found for the week",
+		})
+		return
+	}
+
+	if len(data) == 53 {
+		data = data[:52]
+	}
 
 	// Set the cache
 	cache.MyCache.Set(cacheKey, data, "[]models.WeeklyRevenue", time.Hour*2)
@@ -149,19 +160,19 @@ func Trans_coded_revenue(c *gin.Context) {
 
 func Daily_Ops(c *gin.Context) {
 	cacheKey := "dailyOpsData"
-	cachedData, typeID, found := cache.MyCache.Get(cacheKey)
+	cachedData, _, found := cache.MyCache.Get(cacheKey)
 	if found {
-		if typeID == "[]models.DailyOpsData" {
-			if cachedData, ok := cachedData.([]models.DailyOpsData); ok {
-				c.JSON(200, cachedData)
-				return
-			}
+		cachedData, ok := cachedData.([]*models.DailyOpsData)
+		if ok {
+			c.JSON(200, cachedData)
+			return
 		} else {
 			fmt.Println("Error casting the data")
 		}
 	}
 	// cache miss, get the data from the database.
 	// get the start and end date for the current week
+	fmt.Println("cache miss")
 	startDate, endDate := helpers.GetWeekStartAndEndDates()
 	data, err := getdata.GetTransportationDailyOps(startDate, endDate)
 	if err != nil {
@@ -181,8 +192,10 @@ func Daily_Ops(c *gin.Context) {
 	}
 
 	// Set the cache
-	cache.MyCache.Set(cacheKey, data, "[]models.DailyOpsData", time.Minute*45)
+	cache.MyCache.Set(cacheKey, data, "[]*models.DailyOpsData", time.Minute*45)
 
+	fmt.Println("finished getting the data")
+	fmt.Println(data)
 	//Finally update the Response with the json data
 	c.JSON(200, data)
 }

@@ -744,6 +744,32 @@ func UpdateWeeklyRevenue(weeklyRevenues []models.WeeklyRevenue, dateRanges []*Da
 			continue // Skip if the year is not in the range
 		}
 	}
+
+	// if there are 53 weeks then we're going to remove it and apeend the results to the next year
+	if len(weeklyRevenues) == 53 {
+		// remove the last week
+		endOfYear := weeklyRevenues[52]
+		weeklyRevenues = weeklyRevenues[:52]
+
+		// remove 2021 week one
+		weeklyRevenues[0].Revenue2021 = nil
+
+		if endOfYear.Revenue2021 != nil {
+			*weeklyRevenues[0].Revenue2022 += *endOfYear.Revenue2021
+		}
+
+		if endOfYear.Revenue2022 != nil {
+			*weeklyRevenues[0].Revenue2023 = *endOfYear.Revenue2022
+		}
+
+		if endOfYear.Revenue2023 != nil {
+			*weeklyRevenues[0].Revenue2024 += *endOfYear.Revenue2023
+		}
+
+	}
+
+	fmt.Println("Updated weekly revenues")
+
 }
 
 func CombineStackedMilesData(when string, data []models.StackedMilesData) []models.StackedMilesData {
