@@ -7,6 +7,7 @@ import LogYearlyRevenue from './LogYearlyRevenue.jsx';
 import EmptyMilesWrapper from './EmptyMilesWrapper';
 import LogisticsMTD from './LogisticsMTD';
 import RevPie from './RevPie';
+import Dashboard from './Dashboard';
 
 const App = () => {
   return (
@@ -15,6 +16,15 @@ const App = () => {
         <div className="w-64 bg-gray-800 text-white p-4 flex flex-col">
           <nav className="flex-grow flex flex-col justify-center">
             <ul>
+              <li>
+                <NavLink
+                  to="/Dashboard"
+                  activeClassName="p-4 bg-gray-700"
+                  className="block py-2 px-4 hover:bg-gray-700"
+                >
+                  Dashboard
+                </NavLink>
+              </li>
               <li>
                 <NavLink
                   end
@@ -86,6 +96,7 @@ const App = () => {
         <div className="flex-1 p-4 flex flex-col justify-center overflow-auto">
           <Routes>
             <Route path="/" element={<GraphYearlyRevenue />} />
+            <Route path="/Dashboard" element={<Dashboard />} />
             <Route path="/LogisticsYearly" element={<LogYearlyRevenue />} />
             <Route path="/dailyOps" element={<DailyOps />} />
             <Route path="/RevenuePie" element={<RevPie />} />

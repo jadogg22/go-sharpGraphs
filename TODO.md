@@ -79,13 +79,21 @@ This extra data helps me calcuate the stop percentages in the db!
 
 
 
-- [] setup cronjob to get data
-- [] setup table in my db
-- [] grab old data for compairisons sake
-- [] actually write some frontend code for this data
-- [] figure out the order and stop percentages.
+- [X] setup table in my db
+- [X] grab old data for compairisons sake
+- [X] actually write some frontend code for this data
+- [X] figure out the order and stop percentages.
 
-- [] finish the pie chart
+- [X] finish the pie chart
 
+
+
+Okay now we are getting somewhere. we really have just ritten and rewritten this very many times. Although its taking me this long we have sor really cool functionality. We have gone from a one off graph to now having a fully automated systems of graphs.
+
+- [] finish Designing the dashboard
+- [] finish the backnd for the dashboard
+
+- [] finsih the pie chart - The tool tip sucks. and the spacing sucks.
+- [] Maybe include the average order reveneue just to more easlily compare the differances 
 
 

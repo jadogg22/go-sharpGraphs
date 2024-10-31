@@ -57,6 +57,7 @@ const RevPie = () => {
   useEffect(() => {
     fetchData();
     console.log(codeData);
+    setIsLoading(false);
   }, []);
   if (isLoading) {
     return <div className="text-center"><PropagateLoader /></div>;
@@ -65,7 +66,7 @@ const RevPie = () => {
     return <div>Error: {error.message}</div>;
   }
   if (!codeData) {
-    return <div>No data available.</div>;
+    return <div>No data available. Refresh?</div>;
   }
   return (
     <div className='p-8'>

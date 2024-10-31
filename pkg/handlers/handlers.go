@@ -15,9 +15,33 @@ import (
 )
 
 // ---------- Transportation Handlers ----------
-//
-//	This is the handler function for the transportation yearly revenue data, this function will return
-//	52 weeks per year of the revenue earned to compair and contrast.
+
+// This is the handler function for the transportation dashboard data, this function will evenutally return a bunch of data to display on the dash, right now we're working on HOS status.
+func Dashboard(c *gin.Context) {
+	// get the HOS data for the drivers
+	cacheKey := "samsaraHOSData"
+	cachedData, typeID, found := cache.MyCache.Get(cacheKey)
+	if found {
+		if typeID == "[]getdata.DriverInfo" {
+			if cachedData, ok := cachedData.([]getdata.DriverInfo); ok {
+				c.JSON(200, cachedData)
+			}
+		}
+	}
+	data := getdata.GetSamsaraHOSData()
+	if data == nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"Message": "Error getting data from the database",
+		})
+		return
+	}
+
+	//Finally update the Response with the json data
+	c.JSON(200, data)
+}
+
+// This is the handler function for the transportation yearly revenue data, this function will return
+// 52 weeks per year of the revenue earned to compair and contrast.
 func Trans_year_by_year(c *gin.Context) {
 	// Now that we have the cache lets use it and not hit the db everytime
 	cacheKey := "transportationYearByYear"

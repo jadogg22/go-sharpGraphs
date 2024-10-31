@@ -1,6 +1,9 @@
 
 #!/bin/bash
 
+# THis is just a simple script that will grab the latest changes from githb
+# #After it has grabbe that latest data It stops the containers and then 
+# it rebuilds the system.
 # Define variables
 COMPOSE_FILE="docker-compose.yml"
 

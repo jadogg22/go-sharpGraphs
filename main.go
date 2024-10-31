@@ -30,6 +30,7 @@ func main() {
 		// ---------- Transportation Handlers ----------
 		TransportationGroup := apiGroup.Group("/Transportation")
 		{
+			TransportationGroup.GET("/dashboard", handlers.Dashboard)
 			TransportationGroup.GET("/get_yearly_revenue", handlers.Trans_year_by_year)
 			TransportationGroup.GET("/Stacked_miles/:when", handlers.Trans_stacked_miles)
 			TransportationGroup.GET("/get_coded_revenue/:when", handlers.Trans_coded_revenue)
