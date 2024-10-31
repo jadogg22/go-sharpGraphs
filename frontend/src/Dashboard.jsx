@@ -1,18 +1,17 @@
 
-import React from 'react';
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
   ResponsiveContainer,
+  PieChart,
+  Pie,
+  Tooltip,
+  Legend,
+  Cell,
   BarChart,
   Bar,
+  XAxis,
+  YAxis,
 } from 'recharts';
-
-import { PieChart, Pie, Tooltip, Legend, Cell } from 'recharts';
 
 const dataLineChart = [
   { name: 'Jan', revenue: 4000 },
@@ -39,22 +38,12 @@ const aggregateHosStatus = (data) => {
 };
 
 const Dashboard = () => {
-  // state for the driver data
-  const [DriverData, setDriverData] = useState();
+  // Initialize DriverData as an empty array
+  const [DriverData, setDriverData] = useState([]);
   const [IsLoading, setIsLoading] = useState(false);
   const [Error, setError] = useState(null);
 
   const apiURL = import.meta.env.VITE_API_URL;
-
-  const aggregatedData = aggregateHosStatus(DriverData);
-  const chartData = Object.entries(aggregatedData).map(([key, value]) => ({
-    name: key,
-    value,
-  }));
-
-  // Define colors for each status
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#FF6699'];
-
 
   const fetchData = async () => {
     setIsLoading(true);
@@ -62,13 +51,10 @@ const Dashboard = () => {
     try {
       const response = await fetch(`${apiURL}/Transportation/dashboard`);
       if (!response.ok) {
-        console.error(`Error: ${response.statusText}`);
-        setError(`Error: ${response.statusText}`);
-        throw new Error('Network response was not ok');
+        throw new Error(`Error: ${response.statusText}`);
       }
       const data = await response.json();
       setDriverData(data);
-
     } catch (error) {
       console.error('There was a problem with your fetch operation:', error);
       setError(error.toString());
@@ -81,12 +67,15 @@ const Dashboard = () => {
     fetchData();
   }, []);
 
+  // Aggregate only if DriverData is available
+  const aggregatedData = aggregateHosStatus(DriverData);
+  const chartData = Object.entries(aggregatedData).map(([key, value]) => ({
+    name: key,
+    value,
+  }));
 
-
-
-
-
-
+  // Define colors for each status
+  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#FF6699'];
 
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
@@ -112,9 +101,9 @@ const Dashboard = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="border-4 border-gray-600 bg-white p-4 shadow-lg rounded-lg">
-          <h2 className="text-lg font-bold text-gray-700 pb-4">Transportation Hours of Service</h2>
+          <h2 className="text-lg font-bold text-gray-700 pb-4">Transportation Drivers' Status</h2>
           <ResponsiveContainer width="100%" height={300}>
-            <PieChart width={400} height={400}>
+            <PieChart>
               <Pie
                 data={chartData}
                 cx='50%'
@@ -129,7 +118,8 @@ const Dashboard = () => {
               </Pie>
               <Tooltip />
               <Legend />
-            </PieChart>          </ResponsiveContainer>
+            </PieChart>
+          </ResponsiveContainer>
         </div>
 
         <div className="border-4 border-gray-600 bg-white p-4 shadow-lg rounded-lg">
