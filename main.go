@@ -23,6 +23,7 @@ func main() {
 	})
 
 	r.GET("/api2/vacation/:type", handlers.Vacation)
+	r.GET("/api2/Sportsman", handlers.Sportsman)
 
 	apiGroup := r.Group("/api")
 	apiGroup.Use(CORSMiddleware())

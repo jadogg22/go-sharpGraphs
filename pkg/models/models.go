@@ -2,6 +2,7 @@ package models
 
 import (
 	"database/sql"
+	"strings"
 	"time"
 )
 
@@ -468,4 +469,79 @@ type StackedMilesData struct {
 	Date        string
 	EmptyMiles  float64
 	LoadedMiles float64
+}
+
+type SportsmanData struct {
+	Order_id        string
+	Order_date      string
+	Delivery_Date   string
+	Bill_date       string
+	City            string
+	State           string
+	Zip             string
+	End_City        string
+	End_State       string
+	End_Zip         string
+	Consignee       string
+	Miles           string
+	BOL_Number      string
+	Commodity       string
+	Weight          string
+	Movement        int64
+	Pallets_Droped  int64
+	Pallets_Picked  int64
+	Freight_Charges float64
+	OtherCharges    float64
+	Total_Charges   float64
+}
+
+// Helper function to handle NullString to default "N/A"
+func nullStringToStr(ns sql.NullString, defaultVal string) string {
+	if ns.Valid {
+
+		return strings.TrimRight(ns.String, " ")
+	}
+	return defaultVal
+}
+
+// Helper function to handle NullInt64 to default value
+func nullInt64ToInt(n sql.NullInt64, defaultVal int64) int64 {
+	if n.Valid {
+		return n.Int64
+	}
+	return defaultVal
+}
+
+// Helper function to handle NullFloat64 to default value
+func nullFloat64ToFloat(n sql.NullFloat64, defaultVal float64) float64 {
+	if n.Valid {
+		return n.Float64
+	}
+	return defaultVal
+}
+
+func NewSportsmanData(order_id, ordered_date, delivery_date, bill_date, city, state, zip, end_city, end_state, end_zip, consignee, miles, bol_number, commodity, weight sql.NullString, movement, pallets_droped, pallets_picked sql.NullInt64, freight_charges, other_charges, total_charges sql.NullFloat64) *SportsmanData {
+	return &SportsmanData{
+		Order_id:        nullStringToStr(order_id, "N/A"),
+		Order_date:      nullStringToStr(ordered_date, "N/A"),
+		Delivery_Date:   nullStringToStr(delivery_date, "N/A"),
+		Bill_date:       nullStringToStr(bill_date, "N/A"),
+		City:            nullStringToStr(city, "N/A"),
+		State:           nullStringToStr(state, "N/A"),
+		Zip:             nullStringToStr(zip, "N/A"),
+		End_City:        nullStringToStr(end_city, "N/A"),
+		End_State:       nullStringToStr(end_state, "N/A"),
+		End_Zip:         nullStringToStr(end_zip, "N/A"),
+		Consignee:       nullStringToStr(consignee, "N/A"),
+		Miles:           nullStringToStr(miles, "N/A"),
+		BOL_Number:      nullStringToStr(bol_number, "N/A"),
+		Commodity:       nullStringToStr(commodity, "N/A"),
+		Weight:          nullStringToStr(weight, "N/A"),
+		Movement:        nullInt64ToInt(movement, 0),
+		Pallets_Droped:  nullInt64ToInt(pallets_droped, 0),
+		Pallets_Picked:  nullInt64ToInt(pallets_picked, 0),
+		Freight_Charges: nullFloat64ToFloat(freight_charges, 0),
+		OtherCharges:    nullFloat64ToFloat(other_charges, 0),
+		Total_Charges:   nullFloat64ToFloat(total_charges, 0),
+	}
 }

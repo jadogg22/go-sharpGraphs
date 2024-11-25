@@ -389,3 +389,15 @@ func Vacation(c *gin.Context) {
 		})
 	}
 }
+
+// function for the sportsman endpoint to calculate the sportsman of the week
+func Sportsman(c *gin.Context) {
+	fmt.Println("Getting sportsman of the week")
+
+	// get the sportsman of the week
+	data := getdata.GetSportsmanFromDB()
+
+	c.JSON(200, gin.H{
+		"Data": data,
+	})
+}

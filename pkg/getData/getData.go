@@ -600,3 +600,79 @@ func GetStackedMilesData(when string) ([]models.StackedMilesData, error) {
 
 	return aggregateData, nil
 }
+
+func GetSportsmanFromDB() []models.SportsmanData {
+	query := `SELECT 
+    o.id AS order_id,
+    --o.company_id AS order_company_id,
+	o.ordered_date,
+	s.actual_arrival as DEL_DATE,
+	o.bill_date,
+	--shipper
+    s.city_name,
+    s.state,
+    s.zip_code,
+	s.location_name AS consignee,
+	o.bill_distance AS miles,
+	o.blnum AS bol_number,
+	--PO Number
+	-- Movement type
+	-- plts
+	o.commodity,
+	o.weight,
+
+
+    s.movement_sequence,
+    s.pallets_dropped,
+    s.pallets_picked_up,
+	o.freight_charge,
+	o.otherchargetotal,
+	o.total_charge
+FROM 
+    orders o
+JOIN 
+    stop s ON o.id = s.order_id AND o.company_id = s.company_id
+WHERE 
+    o.bill_date BETWEEN '2024-11-14' AND '2024-11-21' 
+    AND o.customer_id = 'SPORTSUT'
+ORDER BY 
+    o.id, s.movement_sequence;`
+
+	dbData := make([]models.SportsmanData, 0)
+
+	rows, err := conn.Query(query)
+	if err != nil {
+		fmt.Println("Error querying database: " + err.Error())
+		return dbData
+	}
+
+	defer rows.Close()
+
+	var StartCity, StartState, StartZip, EndCity, EndState, EndZip sql.NullString
+
+	var OrderID, OrderedDate, DelDate, BillDate, Consignee, Miles, BolNumber, Commodity, Weight sql.NullString
+	var MovementSequence, PalletsDropped, PalletsPickedUp sql.NullInt64
+	var FreightCharge, OtherChargeTotal, TotalCharge sql.NullFloat64
+
+	for rows.Next() {
+		err := rows.Scan(&OrderID, &OrderedDate, &DelDate, &BillDate, &EndCity, &EndState, &EndZip, &Consignee, &Miles, &BolNumber, &Commodity, &Weight, &MovementSequence, &PalletsDropped, &PalletsPickedUp, &FreightCharge, &OtherChargeTotal, &TotalCharge)
+		if err != nil {
+			fmt.Println("Error scanning row: " + err.Error())
+			return dbData
+		}
+
+		if MovementSequence.Valid && MovementSequence.Int64 == 1 {
+			StartCity = EndCity
+			StartState = EndState
+			StartZip = EndZip
+
+			continue
+		}
+
+		myData := models.NewSportsmanData(OrderID, OrderedDate, DelDate, BillDate, StartCity, StartState, StartZip, EndCity, EndState, EndZip, Consignee, Miles, BolNumber, Commodity, Weight, MovementSequence, PalletsDropped, PalletsPickedUp, FreightCharge, OtherChargeTotal, TotalCharge)
+
+		dbData = append(dbData, *myData)
+	}
+
+	return dbData
+}
