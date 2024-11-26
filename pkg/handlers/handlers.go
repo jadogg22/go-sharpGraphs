@@ -395,9 +395,43 @@ func Sportsman(c *gin.Context) {
 	fmt.Println("Getting sportsman of the week")
 
 	// get the sportsman of the week
-	data := getdata.GetSportsmanFromDB()
+	date1 := "2024-11-14"
+	date2 := "2024-11-20"
+	data := getdata.GetSportsmanFromDB(date1, date2)
 
 	c.JSON(200, gin.H{
 		"Data": data,
 	})
+}
+
+func SportsmanWithDates(c *gin.Context) {
+	fmt.Println("Getting sportsman of the week")
+
+	date1 := c.Param("date1")
+	date2 := c.Param("date2")
+
+	// check if the dates are valid
+	_, err := time.Parse("2006-01-02", date1)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Message": "Invalid date format",
+		})
+		return
+	}
+
+	_, err = time.Parse("2006-01-02", date2)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Message": "Invalid date format",
+		})
+		return
+	}
+
+	// get the sportsman of the week
+	data := getdata.GetSportsmanFromDB(date1, date2)
+
+	c.JSON(200, gin.H{
+		"Data": data,
+	})
+
 }

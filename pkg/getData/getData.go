@@ -601,7 +601,7 @@ func GetStackedMilesData(when string) ([]models.StackedMilesData, error) {
 	return aggregateData, nil
 }
 
-func GetSportsmanFromDB() []models.SportsmanData {
+func GetSportsmanFromDB(date1, date2 string) []models.SportsmanData {
 	query := `SELECT 
     o.id AS order_id,
     --o.company_id AS order_company_id,

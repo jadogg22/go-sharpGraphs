@@ -25,6 +25,8 @@ func main() {
 	r.GET("/api2/vacation/:type", handlers.Vacation)
 	r.GET("/api2/Sportsman", handlers.Sportsman)
 
+	r.GET("/api2/Sportsman/:date1/:date2", handlers.SportsmanWithDates)
+
 	apiGroup := r.Group("/api")
 	apiGroup.Use(CORSMiddleware())
 	{
@@ -91,4 +93,17 @@ func CORSMiddleware() gin.HandlerFunc {
 		// Continue processing request
 		c.Next()
 	}
+}
+
+func checkAllowedOrigin(origin string) bool {
+	allowedOrigins := []string{"", "localhost", "http://localhost:5173", "http://192.168.0.62", "127.0.0.1"}
+	fmt.Println("Checking Origin")
+	fmt.Println(origin)
+	for _, allowedOrigin := range allowedOrigins {
+		if origin == allowedOrigin {
+
+			return true
+		}
+	}
+	return false
 }
