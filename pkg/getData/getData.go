@@ -619,7 +619,7 @@ func GetSportsmanFromDB(date1, date2 string) []models.SportsmanData {
 	-- Movement type
 	-- plts
 	o.commodity,
-	o.weight,
+	s.weight,
 
 
     s.movement_sequence,
