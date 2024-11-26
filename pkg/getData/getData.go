@@ -602,7 +602,7 @@ func GetStackedMilesData(when string) ([]models.StackedMilesData, error) {
 }
 
 func GetSportsmanFromDB(date1, date2 string) []models.SportsmanData {
-	query := `SELECT 
+	query := fmt.Sprintf(`SELECT 
     o.id AS order_id,
     --o.company_id AS order_company_id,
 	o.ordered_date,
@@ -633,10 +633,10 @@ FROM
 JOIN 
     stop s ON o.id = s.order_id AND o.company_id = s.company_id
 WHERE 
-    o.bill_date BETWEEN '2024-11-14' AND '2024-11-21' 
+    o.bill_date BETWEEN '%s' AND '%s' 
     AND o.customer_id = 'SPORTSUT'
 ORDER BY 
-    o.id, s.movement_sequence;`
+    o.id, s.movement_sequence;`, date1, date2)
 
 	dbData := make([]models.SportsmanData, 0)
 
