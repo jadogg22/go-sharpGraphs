@@ -381,3 +381,50 @@ func MakeStackedMilesQuery(startDate, endDate time.Time) string {
 
 	return fmt.Sprintf(`SELECT o.id, o.bol_recv_date, p.loaded_distance, p.empty_distance from orders o join prorated_orderdist p on o.id = p.order_id where o.bol_recv_date between {ts '%s 00:00:00'} and {ts '%s 23:59:59'} and o.company_id = 'TMS'`, startdateStr, endDateStr)
 }
+
+// New query for the sportsmans loads report with price breakdown and pallets
+func MakeSportsmansQuery(startDate, endDate string) string {
+
+	return fmt.Sprintf(`SELECT 
+    o.id AS order_id,
+    -- o.company_id AS order_company_id,
+    o.ordered_date,
+    s.actual_arrival AS DEL_DATE,
+    o.bill_date,
+    -- shipper
+    s.city_name,
+    s.state,
+    s.zip_code,
+    s.location_name AS consignee,
+    o.bill_distance AS miles,
+    o.blnum AS bol_number,
+    -- PO Number
+    -- Movement type
+    -- plts
+    o.commodity,
+    s.weight,
+    s.movement_sequence,
+    s.pallets_dropped,
+    s.pallets_picked_up,
+    o.freight_charge,
+	oc.amount AS fuel_surcharge,  -- Add fuel surcharge here
+    (o.otherchargetotal - oc.amount) AS Detention_and_Layover,
+	o.otherchargetotal,
+    o.total_charge
+FROM 
+    orders o
+JOIN 
+    stop s ON o.id = s.order_id AND o.company_id = s.company_id
+LEFT OUTER JOIN 
+    other_charge oc ON oc.order_id = o.id AND oc.company_id = 'TMS'  -- Join to get the fuel surcharge
+LEFT OUTER JOIN 
+    charge_code cc ON cc.id = oc.charge_id  -- Join to get the charge code
+WHERE 
+    o.bill_date BETWEEN '%s' AND '%s'
+    AND o.customer_id = 'SPORTSUT'
+    AND cc.is_fuel_surcharge = 'Y'  
+	AND oc.company_id = o.company_id
+	
+ORDER BY 
+    o.id, s.movement_sequence, bill_date;`, startDate, endDate)
+}

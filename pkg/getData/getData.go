@@ -602,45 +602,13 @@ func GetStackedMilesData(when string) ([]models.StackedMilesData, error) {
 }
 
 func GetSportsmanFromDB(date1, date2 string) []models.SportsmanData {
-	query := fmt.Sprintf(`SELECT 
-    o.id AS order_id,
-    --o.company_id AS order_company_id,
-	o.ordered_date,
-	s.actual_arrival as DEL_DATE,
-	o.bill_date,
-	--shipper
-    s.city_name,
-    s.state,
-    s.zip_code,
-	s.location_name AS consignee,
-	o.bill_distance AS miles,
-	o.blnum AS bol_number,
-	--PO Number
-	-- Movement type
-	-- plts
-	o.commodity,
-	s.weight,
 
-
-    s.movement_sequence,
-    s.pallets_dropped,
-    s.pallets_picked_up,
-	o.freight_charge,
-	o.otherchargetotal,
-	o.total_charge
-FROM 
-    orders o
-JOIN 
-    stop s ON o.id = s.order_id AND o.company_id = s.company_id
-WHERE 
-    o.bill_date BETWEEN '%s' AND '%s' 
-    AND o.customer_id = 'SPORTSUT'
-ORDER BY 
-    o.id, s.movement_sequence;`, date1, date2)
+	// helper function to get the query string in msQuerys.go
+	myQuery := MakeSportsmansQuery(date1, date2)
 
 	dbData := make([]models.SportsmanData, 0)
 
-	rows, err := conn.Query(query)
+	rows, err := conn.Query(myQuery)
 	if err != nil {
 		fmt.Println("Error querying database: " + err.Error())
 		return dbData
@@ -651,17 +619,21 @@ ORDER BY
 	var StartCity, StartState, StartZip, EndCity, EndState, EndZip sql.NullString
 
 	var OrderID, OrderedDate, DelDate, BillDate, Consignee, Miles, BolNumber, Commodity, Weight sql.NullString
-	var MovementSequence, PalletsDropped, PalletsPickedUp sql.NullInt64
-	var FreightCharge, OtherChargeTotal, TotalCharge sql.NullFloat64
+	var MovementSequence, PalletsDropped, PalletsPickedUp, TotalPallets sql.NullInt64
+	var FreightCharge, fuel_surcharge, Detention_and_layover, OtherChargeTotal, TotalCharge sql.NullFloat64
+
+	// Need per pallet charge
+	//
 
 	for rows.Next() {
-		err := rows.Scan(&OrderID, &OrderedDate, &DelDate, &BillDate, &EndCity, &EndState, &EndZip, &Consignee, &Miles, &BolNumber, &Commodity, &Weight, &MovementSequence, &PalletsDropped, &PalletsPickedUp, &FreightCharge, &OtherChargeTotal, &TotalCharge)
+		err := rows.Scan(&OrderID, &OrderedDate, &DelDate, &BillDate, &EndCity, &EndState, &EndZip, &Consignee, &Miles, &BolNumber, &Commodity, &Weight, &MovementSequence, &PalletsDropped, &PalletsPickedUp, &FreightCharge, &fuel_surcharge, &Detention_and_layover, &OtherChargeTotal, &TotalCharge)
 		if err != nil {
 			fmt.Println("Error scanning row: " + err.Error())
 			return dbData
 		}
 
 		if MovementSequence.Valid && MovementSequence.Int64 == 1 {
+			TotalPallets = PalletsDropped
 			StartCity = EndCity
 			StartState = EndState
 			StartZip = EndZip
@@ -669,7 +641,7 @@ ORDER BY
 			continue
 		}
 
-		myData := models.NewSportsmanData(OrderID, OrderedDate, DelDate, BillDate, StartCity, StartState, StartZip, EndCity, EndState, EndZip, Consignee, Miles, BolNumber, Commodity, Weight, MovementSequence, PalletsDropped, PalletsPickedUp, FreightCharge, OtherChargeTotal, TotalCharge)
+		myData := models.NewSportsmanData(OrderID, OrderedDate, DelDate, BillDate, StartCity, StartState, StartZip, EndCity, EndState, EndZip, Consignee, Miles, BolNumber, Commodity, Weight, MovementSequence, PalletsDropped, PalletsPickedUp, TotalPallets, FreightCharge, OtherChargeTotal, TotalCharge, fuel_surcharge, Detention_and_layover)
 
 		dbData = append(dbData, *myData)
 	}
