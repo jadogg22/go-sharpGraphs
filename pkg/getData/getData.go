@@ -620,13 +620,14 @@ func GetSportsmanFromDB(date1, date2 string) []models.SportsmanData {
 
 	var OrderID, OrderedDate, DelDate, BillDate, Consignee, Miles, BolNumber, Commodity, Weight sql.NullString
 	var MovementSequence, PalletsDropped, PalletsPickedUp, TotalPallets sql.NullInt64
-	var FreightCharge, fuel_surcharge, Detention_and_layover, OtherChargeTotal, TotalCharge sql.NullFloat64
+	var FreightCharge, fuel_surcharge, extra_drops, extra_pickup, other_charge, OtherChargeTotal, TotalCharge, per_pallet_fuel, per_pallet_freight sql.NullFloat64
 
 	// Need per pallet charge
 	//
 
 	for rows.Next() {
-		err := rows.Scan(&OrderID, &OrderedDate, &DelDate, &BillDate, &EndCity, &EndState, &EndZip, &Consignee, &Miles, &BolNumber, &Commodity, &Weight, &MovementSequence, &PalletsDropped, &PalletsPickedUp, &FreightCharge, &fuel_surcharge, &Detention_and_layover, &OtherChargeTotal, &TotalCharge)
+		err := rows.Scan(&OrderID, &OrderedDate, &DelDate, &BillDate, &EndCity, &EndState, &EndZip, &Consignee, &Miles, &BolNumber, &Commodity, &Weight, &MovementSequence, &PalletsDropped, &PalletsPickedUp, &FreightCharge, &OtherChargeTotal, &TotalCharge, &fuel_surcharge, &extra_drops, &extra_pickup, &other_charge, &per_pallet_fuel, &per_pallet_freight)
+
 		if err != nil {
 			fmt.Println("Error scanning row: " + err.Error())
 			return dbData
@@ -641,7 +642,7 @@ func GetSportsmanFromDB(date1, date2 string) []models.SportsmanData {
 			continue
 		}
 
-		myData := models.NewSportsmanData(OrderID, OrderedDate, DelDate, BillDate, StartCity, StartState, StartZip, EndCity, EndState, EndZip, Consignee, Miles, BolNumber, Commodity, Weight, MovementSequence, PalletsDropped, PalletsPickedUp, TotalPallets, FreightCharge, OtherChargeTotal, TotalCharge, fuel_surcharge, Detention_and_layover)
+		myData := models.NewSportsmanData(OrderID, OrderedDate, DelDate, BillDate, StartCity, StartState, StartZip, EndCity, EndState, EndZip, Consignee, Miles, BolNumber, Commodity, Weight, MovementSequence, PalletsDropped, PalletsPickedUp, TotalPallets, FreightCharge, fuel_surcharge, extra_drops, extra_pickup, other_charge, OtherChargeTotal, TotalCharge, per_pallet_fuel, per_pallet_freight)
 
 		dbData = append(dbData, *myData)
 	}

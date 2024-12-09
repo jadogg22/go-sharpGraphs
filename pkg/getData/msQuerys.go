@@ -387,44 +387,53 @@ func MakeSportsmansQuery(startDate, endDate string) string {
 
 	return fmt.Sprintf(`SELECT 
     o.id AS order_id,
-    -- o.company_id AS order_company_id,
     o.ordered_date,
     s.actual_arrival AS DEL_DATE,
     o.bill_date,
-    -- shipper
     s.city_name,
     s.state,
     s.zip_code,
     s.location_name AS consignee,
     o.bill_distance AS miles,
     o.blnum AS bol_number,
-    -- PO Number
-    -- Movement type
-    -- plts
     o.commodity,
     s.weight,
     s.movement_sequence,
     s.pallets_dropped,
     s.pallets_picked_up,
     o.freight_charge,
-	oc.amount AS fuel_surcharge,  -- Add fuel surcharge here
-    (o.otherchargetotal - oc.amount) AS Detention_and_Layover,
-	o.otherchargetotal,
-    o.total_charge
+    o.otherchargetotal,
+    o.total_charge,
+    
+    -- Separate charge sums for FUD, EDR, EPU
+    SUM(CASE WHEN oc.charge_id = 'FUD' THEN oc.amount ELSE 0 END) AS fuel_surcharge,  -- FUD
+    SUM(CASE WHEN oc.charge_id = 'EDR' THEN oc.amount ELSE 0 END) AS extra_drops,  -- EDR
+    SUM(CASE WHEN oc.charge_id = 'EPU' THEN oc.amount ELSE 0 END) AS extra_pickup,  -- EPU
+    
+    -- Group all other charge codes under 'other_charge'
+    SUM(CASE WHEN oc.charge_id NOT IN ('FUD', 'EDR', 'EPU') THEN oc.amount ELSE 0 END) AS other_charge,  -- All other charges
+
+    -- Calculate per pallet dropped costs
+    ROUND(SUM(CASE WHEN oc.charge_id = 'FUD' THEN oc.amount ELSE 0 END) / NULLIF(s.pallets_picked_up, 0), 2) AS per_pallet_dropped_fuel_surcharge,  -- Fuel surcharge per pallet dropped
+    ROUND(o.freight_charge / NULLIF(s.pallets_picked_up, 0), 2) AS per_pallet_dropped_freight_charge  -- Freight charge per pallet dropped
+
 FROM 
     orders o
 JOIN 
     stop s ON o.id = s.order_id AND o.company_id = s.company_id
 LEFT OUTER JOIN 
-    other_charge oc ON oc.order_id = o.id AND oc.company_id = 'TMS'  -- Join to get the fuel surcharge
-LEFT OUTER JOIN 
-    charge_code cc ON cc.id = oc.charge_id  -- Join to get the charge code
+    other_charge oc ON oc.order_id = o.id AND oc.company_id = 'TMS'  -- Join to get the charges (FUD, EDR, EPU, and others)
 WHERE 
     o.bill_date BETWEEN '%s' AND '%s'
     AND o.customer_id = 'SPORTSUT'
-    AND cc.is_fuel_surcharge = 'Y'  
-	AND oc.company_id = o.company_id
-	
+    AND oc.company_id = o.company_id
+    AND oc.charge_id IN ('FUD', 'EDR', 'EPU')  -- Filter for FUD, EDR, EPU, and other charges
+    
+GROUP BY 
+    o.id, s.actual_arrival, o.ordered_date, o.bill_date, s.city_name, s.state, s.zip_code, 
+    s.location_name, o.bill_distance, o.blnum, o.commodity, s.weight, s.movement_sequence, 
+    s.pallets_dropped, s.pallets_picked_up, o.freight_charge, o.otherchargetotal, o.total_charge
+
 ORDER BY 
-    o.id, s.movement_sequence, bill_date;`, startDate, endDate)
+    o.id, s.movement_sequence, o.bill_date;`, startDate, endDate)
 }

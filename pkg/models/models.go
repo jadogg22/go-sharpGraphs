@@ -472,30 +472,34 @@ type StackedMilesData struct {
 }
 
 type SportsmanData struct {
-	Order_id              string
-	Order_date            string
-	Delivery_Date         string
-	Bill_date             string
-	City                  string
-	State                 string
-	Zip                   string
-	End_City              string
-	End_State             string
-	End_Zip               string
-	Consignee             string
-	Miles                 string
-	BOL_Number            string
-	Commodity             string
-	Weight                string
-	Movement              int64
-	Total_Pallets         int64
-	Pallets_Droped        int64
-	Pallets_Picked        int64
-	Freight_Charges       float64
-	Fuel_Surcharge        float64
-	Detention_and_layover float64
-	OtherCharges          float64
-	Total_Charges         float64
+	Order_id           string
+	Order_date         string
+	Delivery_Date      string
+	Bill_date          string
+	City               string
+	State              string
+	Zip                string
+	End_City           string
+	End_State          string
+	End_Zip            string
+	Consignee          string
+	Miles              string
+	BOL_Number         string
+	Commodity          string
+	Weight             string
+	Movement           int64
+	Total_Pallets      int64
+	Pallets_Droped     int64
+	Pallets_Picked     int64
+	Freight_Charges    float64
+	Fuel_Surcharge     float64
+	Extra_drops        float64
+	Extra_pickup       float64
+	OtherCharges       float64
+	Other_charge_total float64
+	Total_Charges      float64
+	Fuel_per_pallet    float64
+	Freight_per_pallet float64
 }
 
 // Helper function to handle NullString to default "N/A"
@@ -523,31 +527,35 @@ func nullFloat64ToFloat(n sql.NullFloat64, defaultVal float64) float64 {
 	return defaultVal
 }
 
-func NewSportsmanData(order_id, ordered_date, delivery_date, bill_date, city, state, zip, end_city, end_state, end_zip, consignee, miles, bol_number, commodity, weight sql.NullString, movement, pallets_droped, pallets_picked, TotalPallets sql.NullInt64, freight_charges, other_charges, total_charges, fuel_surcharge, Detention_and_layover sql.NullFloat64) *SportsmanData {
+func NewSportsmanData(order_id, ordered_date, delivery_date, bill_date, city, state, zip, end_city, end_state, end_zip, consignee, miles, bol_number, commodity, weight sql.NullString, movement, pallets_droped, pallets_picked, TotalPallets sql.NullInt64, freight_charges, fuel_surcharge, extra_drops, extra_pickup, other_charge, other_charge_total, total_charges, per_pallet_fuel, per_pallet_freight sql.NullFloat64) *SportsmanData {
 	return &SportsmanData{
-		Order_id:              nullStringToStr(order_id, "N/A"),
-		Order_date:            nullStringToStr(ordered_date, "N/A"),
-		Delivery_Date:         nullStringToStr(delivery_date, "N/A"),
-		Bill_date:             nullStringToStr(bill_date, "N/A"),
-		City:                  nullStringToStr(city, "N/A"),
-		State:                 nullStringToStr(state, "N/A"),
-		Zip:                   nullStringToStr(zip, "N/A"),
-		End_City:              nullStringToStr(end_city, "N/A"),
-		End_State:             nullStringToStr(end_state, "N/A"),
-		End_Zip:               nullStringToStr(end_zip, "N/A"),
-		Consignee:             nullStringToStr(consignee, "N/A"),
-		Miles:                 nullStringToStr(miles, "N/A"),
-		BOL_Number:            nullStringToStr(bol_number, "N/A"),
-		Commodity:             nullStringToStr(commodity, "N/A"),
-		Weight:                nullStringToStr(weight, "N/A"),
-		Movement:              nullInt64ToInt(movement, 0),
-		Total_Pallets:         nullInt64ToInt(TotalPallets, 0),
-		Pallets_Droped:        nullInt64ToInt(pallets_droped, 0),
-		Pallets_Picked:        nullInt64ToInt(pallets_picked, 0),
-		Freight_Charges:       nullFloat64ToFloat(freight_charges, 0),
-		Fuel_Surcharge:        nullFloat64ToFloat(fuel_surcharge, 0),
-		Detention_and_layover: nullFloat64ToFloat(Detention_and_layover, 0),
-		OtherCharges:          nullFloat64ToFloat(other_charges, 0),
-		Total_Charges:         nullFloat64ToFloat(total_charges, 0),
+		Order_id:           nullStringToStr(order_id, "N/A"),
+		Order_date:         nullStringToStr(ordered_date, "N/A"),
+		Delivery_Date:      nullStringToStr(delivery_date, "N/A"),
+		Bill_date:          nullStringToStr(bill_date, "N/A"),
+		City:               nullStringToStr(city, "N/A"),
+		State:              nullStringToStr(state, "N/A"),
+		Zip:                nullStringToStr(zip, "N/A"),
+		End_City:           nullStringToStr(end_city, "N/A"),
+		End_State:          nullStringToStr(end_state, "N/A"),
+		End_Zip:            nullStringToStr(end_zip, "N/A"),
+		Consignee:          nullStringToStr(consignee, "N/A"),
+		Miles:              nullStringToStr(miles, "N/A"),
+		BOL_Number:         nullStringToStr(bol_number, "N/A"),
+		Commodity:          nullStringToStr(commodity, "N/A"),
+		Weight:             nullStringToStr(weight, "N/A"),
+		Movement:           nullInt64ToInt(movement, 0),
+		Total_Pallets:      nullInt64ToInt(TotalPallets, 0),
+		Pallets_Droped:     nullInt64ToInt(pallets_droped, 0),
+		Pallets_Picked:     nullInt64ToInt(pallets_picked, 0),
+		Freight_Charges:    nullFloat64ToFloat(freight_charges, 0),
+		Fuel_Surcharge:     nullFloat64ToFloat(fuel_surcharge, 0),
+		Extra_drops:        nullFloat64ToFloat(extra_drops, 0),
+		Extra_pickup:       nullFloat64ToFloat(extra_pickup, 0),
+		OtherCharges:       nullFloat64ToFloat(other_charge, 0),
+		Other_charge_total: nullFloat64ToFloat(other_charge_total, 0),
+		Total_Charges:      nullFloat64ToFloat(total_charges, 0),
+		Fuel_per_pallet:    nullFloat64ToFloat(per_pallet_fuel, 0),
+		Freight_per_pallet: nullFloat64ToFloat(per_pallet_freight, 0),
 	}
 }
