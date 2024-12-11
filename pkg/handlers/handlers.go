@@ -397,7 +397,7 @@ func Sportsman(c *gin.Context) {
 	// get the sportsman of the week
 	date1 := "2024-11-14"
 	date2 := "2024-11-20"
-	data := getdata.GetSportsmanFromDB(date1, date2)
+	data, _ := getdata.GetSportsmanFromDB(date1, date2)
 
 	c.JSON(200, gin.H{
 		"Data": data,
@@ -428,7 +428,7 @@ func SportsmanWithDates(c *gin.Context) {
 	}
 
 	// get the sportsman of the week
-	data := getdata.GetSportsmanFromDB(date1, date2)
+	data, _ := getdata.GetSportsmanFromDB(date1, date2)
 
 	c.JSON(200, gin.H{
 		"Data": data,
@@ -437,9 +437,9 @@ func SportsmanWithDates(c *gin.Context) {
 }
 
 type SportsmansRequest struct {
-	OrderNumber string
-	StartDate   string
-	EndDate     string
+	OrderNumber string `json:"orderNumber"`
+	StartDate   string `json:"startDate"`
+	EndDate     string `json:"endDate"`
 }
 
 func Generate_Sportsmans(c *gin.Context) {
@@ -471,8 +471,20 @@ func Generate_Sportsmans(c *gin.Context) {
 	dateStr2 := date2.Format("2006-01-02")
 
 	// get the sportsman of the week
-	myData := getdata.GetSportsmanFromDB(dateStr1, dateStr2)
-	spreadSheetData := helpers.GenerateSportsmansSpreadsheet(myData, request.OrderNumber)
+	myData, err := getdata.GetSportsmanFromDB(dateStr1, dateStr2)
+	if err != nil || len(myData) == 0 {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"Message": "Error getting data from the database",
+			"error":   err,
+		})
+	}
+	spreadSheetData, err := helpers.GenerateSportsmansSpreadsheet(myData, request.OrderNumber)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"Message": "Error generating the excel file",
+			"error":   err,
+		})
+	}
 
 	// Send back the excel file
 	c.Header("Content-Description", "attachment; filename=Sportsman.xlsx")

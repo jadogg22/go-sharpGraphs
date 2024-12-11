@@ -930,14 +930,14 @@ func StackedToMilesData(timeframe string, data []models.StackedMilesData) []mode
 	return milesData
 }
 
-func GenerateSportsmansSpreadsheet(data []models.SportsmanData, orderNumber string) []byte {
+func GenerateSportsmansSpreadsheet(data []models.SportsmanData, orderNumber string) ([]byte, error) {
 
 	file := excelize.NewFile()
 
 	index, err := file.NewSheet("Sportsmans")
 	if err != nil {
 		fmt.Println(err)
-		return nil
+		return nil, err
 	}
 
 	// delete default sheet
@@ -1025,13 +1025,13 @@ func GenerateSportsmansSpreadsheet(data []models.SportsmanData, orderNumber stri
 
 		if err != nil {
 			fmt.Println("Error creating style:", err)
-			return nil
+			return nil, err
 		}
 
 		err = file.SetCellStyle("Sportsmans", fmt.Sprintf("A%d", rowNum), fmt.Sprintf("AB%d", rowNum), style)
 		if err != nil {
 			fmt.Println(err)
-			return nil
+			return nil, err
 		}
 
 		preiviousRow = row.Order_id
@@ -1044,11 +1044,11 @@ func GenerateSportsmansSpreadsheet(data []models.SportsmanData, orderNumber stri
 	var buf bytes.Buffer
 	if err := file.Write(&buf); err != nil {
 		fmt.Println("Error writing to buffer:", err)
-		return nil
+		return nil, err
 	}
 
 	fmt.Println("Excel file created successfully: ", orderNumber)
-	return buf.Bytes()
+	return buf.Bytes(), nil
 
 }
 

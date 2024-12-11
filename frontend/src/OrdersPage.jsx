@@ -19,9 +19,9 @@ const OrdersPage = () => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          OrderNumber: orderNumber,
-          StartDate: orderDate,
-          EndDate: deliveryDate,
+          orderNumber: orderNumber,
+          startDate: orderDate,
+          endDate: deliveryDate,
         }),
       });
 

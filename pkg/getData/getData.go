@@ -601,7 +601,7 @@ func GetStackedMilesData(when string) ([]models.StackedMilesData, error) {
 	return aggregateData, nil
 }
 
-func GetSportsmanFromDB(date1, date2 string) []models.SportsmanData {
+func GetSportsmanFromDB(date1, date2 string) ([]models.SportsmanData, error) {
 
 	// helper function to get the query string in msQuerys.go
 	myQuery := MakeSportsmansQuery(date1, date2)
@@ -611,7 +611,7 @@ func GetSportsmanFromDB(date1, date2 string) []models.SportsmanData {
 	rows, err := conn.Query(myQuery)
 	if err != nil {
 		fmt.Println("Error querying database: " + err.Error())
-		return dbData
+		return dbData, err
 	}
 
 	defer rows.Close()
@@ -630,7 +630,7 @@ func GetSportsmanFromDB(date1, date2 string) []models.SportsmanData {
 
 		if err != nil {
 			fmt.Println("Error scanning row: " + err.Error())
-			return dbData
+			return dbData, err
 		}
 
 		if MovementSequence.Valid && MovementSequence.Int64 == 1 {
@@ -647,5 +647,5 @@ func GetSportsmanFromDB(date1, date2 string) []models.SportsmanData {
 		dbData = append(dbData, *myData)
 	}
 
-	return dbData
+	return dbData, nil
 }
