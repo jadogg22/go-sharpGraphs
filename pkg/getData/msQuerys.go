@@ -385,7 +385,8 @@ func MakeStackedMilesQuery(startDate, endDate time.Time) string {
 // New query for the sportsmans loads report with price breakdown and pallets
 func MakeSportsmansQuery(startDate, endDate string) string {
 
-	return fmt.Sprintf(`SELECT 
+	return fmt.Sprintf(`
+SELECT 
     o.id AS order_id,
     o.ordered_date,
     s.actual_arrival AS DEL_DATE,
@@ -435,5 +436,6 @@ GROUP BY
     s.pallets_dropped, s.pallets_picked_up, o.freight_charge, o.otherchargetotal, o.total_charge
 
 ORDER BY 
-    o.id, s.movement_sequence, o.bill_date;`, startDate, endDate)
+    o.id, s.movement_sequence, o.bill_date;
+`, startDate, endDate)
 }
