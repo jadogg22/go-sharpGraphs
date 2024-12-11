@@ -385,8 +385,7 @@ func MakeStackedMilesQuery(startDate, endDate time.Time) string {
 // New query for the sportsmans loads report with price breakdown and pallets
 func MakeSportsmansQuery(startDate, endDate string) string {
 
-	return fmt.Sprintf(`
-SELECT 
+	return fmt.Sprintf(`SELECT 
     o.id AS order_id,
     o.ordered_date,
     s.actual_arrival AS DEL_DATE,
@@ -418,6 +417,10 @@ SELECT
     ROUND(SUM(CASE WHEN oc.charge_id = 'FUD' THEN oc.amount ELSE 0 END) / NULLIF(s.pallets_picked_up, 0), 2) AS per_pallet_dropped_fuel_surcharge,  -- Fuel surcharge per pallet dropped
     ROUND(o.freight_charge / NULLIF(s.pallets_picked_up, 0), 2) AS per_pallet_dropped_freight_charge  -- Freight charge per pallet dropped
 
+    -- Handling NULL charge_id and amount by replacing them with default values
+    --COALESCE(MAX(oc.charge_id), 'NA') AS charge_id,  -- Replacing NULL with 'NA'
+    --COALESCE(MAX(oc.amount), 0) AS amount  -- Replacing NULL with 0
+
 FROM 
     orders o
 JOIN 
@@ -425,10 +428,13 @@ JOIN
 LEFT OUTER JOIN 
     other_charge oc ON oc.order_id = o.id AND oc.company_id = 'TMS'  -- Join to get the charges (FUD, EDR, EPU, and others)
 WHERE 
-    o.bill_date BETWEEN '%s' AND '%s'
+    -- Make sure to handle possible time issues with bill_date and include records where charge_id could be NULL
+    CAST(o.bill_date AS DATE) between '%s' and '%s'  -- Remove time portion from bill_date
+    
     AND o.customer_id = 'SPORTSUT'
-    AND oc.company_id = o.company_id
-    AND oc.charge_id IN ('FUD', 'EDR', 'EPU')  -- Filter for FUD, EDR, EPU, and other charges
+    
+    -- Allow for NULL charge_id if no matching charges exist
+    AND (oc.charge_id IN ('FUD', 'EDR', 'EPU') OR oc.charge_id IS NULL)
     
 GROUP BY 
     o.id, s.actual_arrival, o.ordered_date, o.bill_date, s.city_name, s.state, s.zip_code, 
