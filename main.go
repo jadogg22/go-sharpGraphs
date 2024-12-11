@@ -24,7 +24,7 @@ func main() {
 
 	r.GET("/api2/vacation/:type", handlers.Vacation)
 	r.GET("/api2/Sportsman", handlers.Sportsman)
-
+	// Select the spacific sportsman by dates for invoice
 	r.GET("/api2/Sportsman/:date1/:date2", handlers.SportsmanWithDates)
 
 	apiGroup := r.Group("/api")
@@ -38,6 +38,7 @@ func main() {
 			TransportationGroup.GET("/Stacked_miles/:when", handlers.Trans_stacked_miles)
 			TransportationGroup.GET("/get_coded_revenue/:when", handlers.Trans_coded_revenue)
 			TransportationGroup.GET("/Daily_Ops", handlers.Daily_Ops)
+			TransportationGroup.POST("/Generate_Sportsmans", handlers.Generate_Sportsmans)
 		}
 		// ---------- Logisitics Handlers ----------
 		LogisticsGroup := apiGroup.Group("/Logistics")

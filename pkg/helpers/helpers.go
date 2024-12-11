@@ -1,6 +1,7 @@
 package helpers
 
 import (
+	"bytes"
 	"fmt"
 	"slices"
 	"sort"
@@ -9,6 +10,7 @@ import (
 	"time"
 
 	"github.com/jadogg22/go-sharpGraphs/pkg/models"
+	"github.com/xuri/excelize/v2"
 )
 
 func GetYearAndWeek() (int, int) {
@@ -926,4 +928,166 @@ func StackedToMilesData(timeframe string, data []models.StackedMilesData) []mode
 	}
 
 	return milesData
+}
+
+func GenerateSportsmansSpreadsheet(data []models.SportsmanData, orderNumber string) []byte {
+
+	file := excelize.NewFile()
+
+	index, err := file.NewSheet("Sportsmans")
+	if err != nil {
+		fmt.Println(err)
+		return nil
+	}
+
+	// delete default sheet
+	file.DeleteSheet("Sheet1")
+
+	loadCount, Total := getInfoFromData(data)
+
+	createHeader(file, "Sportsmans", loadCount, Total, orderNumber)
+
+	// Loop through the data and write it to the Excel file
+	const SR = 17 // Start Row
+	rowNum := SR
+	file.SetCellValue("Sportsmans", fmt.Sprintf("A%d", rowNum), "Order_id")
+	file.SetCellValue("Sportsmans", fmt.Sprintf("B%d", rowNum), "Order_date")
+	file.SetCellValue("Sportsmans", fmt.Sprintf("C%d", rowNum), "Delivery_Date")
+	file.SetCellValue("Sportsmans", fmt.Sprintf("D%d", rowNum), "Bill_date")
+	file.SetCellValue("Sportsmans", fmt.Sprintf("E%d", rowNum), "City")
+	file.SetCellValue("Sportsmans", fmt.Sprintf("F%d", rowNum), "State")
+	file.SetCellValue("Sportsmans", fmt.Sprintf("G%d", rowNum), "Zip")
+	file.SetCellValue("Sportsmans", fmt.Sprintf("H%d", rowNum), "End City")
+	file.SetCellValue("Sportsmans", fmt.Sprintf("I%d", rowNum), "End State")
+	file.SetCellValue("Sportsmans", fmt.Sprintf("J%d", rowNum), "End Zip")
+	file.SetCellValue("Sportsmans", fmt.Sprintf("K%d", rowNum), "Consignee")
+	file.SetCellValue("Sportsmans", fmt.Sprintf("L%d", rowNum), "Miles")
+	file.SetCellValue("Sportsmans", fmt.Sprintf("M%d", rowNum), "BOL Number")
+	file.SetCellValue("Sportsmans", fmt.Sprintf("N%d", rowNum), "Commodity")
+	file.SetCellValue("Sportsmans", fmt.Sprintf("O%d", rowNum), "Weight")
+	file.SetCellValue("Sportsmans", fmt.Sprintf("P%d", rowNum), "Movement")
+	file.SetCellValue("Sportsmans", fmt.Sprintf("Q%d", rowNum), "Total Pallets")
+	file.SetCellValue("Sportsmans", fmt.Sprintf("R%d", rowNum), "Pallets_Droped")
+	file.SetCellValue("Sportsmans", fmt.Sprintf("S%d", rowNum), "Pallets_Picked")
+	file.SetCellValue("Sportsmans", fmt.Sprintf("T%d", rowNum), "Linehaul") // Freight Charges
+	file.SetCellValue("Sportsmans", fmt.Sprintf("U%d", rowNum), "Fuel surcharge")
+	file.SetCellValue("Sportsmans", fmt.Sprintf("V%d", rowNum), "Extra drops")
+	file.SetCellValue("Sportsmans", fmt.Sprintf("W%d", rowNum), "Extra pickups")
+	file.SetCellValue("Sportsmans", fmt.Sprintf("X%d", rowNum), "Other charges")
+	file.SetCellValue("Sportsmans", fmt.Sprintf("Y%d", rowNum), "Other charge total")
+	file.SetCellValue("Sportsmans", fmt.Sprintf("Z%d", rowNum), "Total Charges")
+	file.SetCellValue("Sportsmans", fmt.Sprintf("AA%d", rowNum), "Fuel per pallet")
+	file.SetCellValue("Sportsmans", fmt.Sprintf("AB%d", rowNum), "Freight per pallet")
+
+	preiviousRow := ""
+	color := "D9EAF7"
+	for i, row := range data {
+		rowNum := i + SR + 2
+		if preiviousRow != row.Order_id {
+			color = swapColor(color)
+		}
+		file.SetCellValue("Sportsmans", fmt.Sprintf("A%d", rowNum), row.Order_id)
+		file.SetCellValue("Sportsmans", fmt.Sprintf("B%d", rowNum), row.Order_date)
+		file.SetCellValue("Sportsmans", fmt.Sprintf("C%d", rowNum), row.Delivery_Date)
+		file.SetCellValue("Sportsmans", fmt.Sprintf("D%d", rowNum), row.Bill_date)
+		file.SetCellValue("Sportsmans", fmt.Sprintf("E%d", rowNum), row.City)
+		file.SetCellValue("Sportsmans", fmt.Sprintf("F%d", rowNum), row.State)
+		file.SetCellValue("Sportsmans", fmt.Sprintf("G%d", rowNum), row.Zip)
+		file.SetCellValue("Sportsmans", fmt.Sprintf("H%d", rowNum), row.End_City)
+		file.SetCellValue("Sportsmans", fmt.Sprintf("I%d", rowNum), row.End_State)
+		file.SetCellValue("Sportsmans", fmt.Sprintf("J%d", rowNum), row.End_Zip)
+		file.SetCellValue("Sportsmans", fmt.Sprintf("K%d", rowNum), row.Consignee)
+		file.SetCellValue("Sportsmans", fmt.Sprintf("L%d", rowNum), row.Miles)
+		file.SetCellValue("Sportsmans", fmt.Sprintf("M%d", rowNum), row.BOL_Number)
+		file.SetCellValue("Sportsmans", fmt.Sprintf("N%d", rowNum), row.Commodity)
+		file.SetCellValue("Sportsmans", fmt.Sprintf("O%d", rowNum), row.Weight)
+		file.SetCellValue("Sportsmans", fmt.Sprintf("P%d", rowNum), row.Movement)
+		file.SetCellValue("Sportsmans", fmt.Sprintf("Q%d", rowNum), row.Total_Pallets)
+		file.SetCellValue("Sportsmans", fmt.Sprintf("R%d", rowNum), row.Pallets_Droped)
+		file.SetCellValue("Sportsmans", fmt.Sprintf("S%d", rowNum), row.Pallets_Picked)
+		file.SetCellValue("Sportsmans", fmt.Sprintf("T%d", rowNum), row.Freight_Charges) // Freight Charges
+		file.SetCellValue("Sportsmans", fmt.Sprintf("U%d", rowNum), row.Fuel_Surcharge)
+		file.SetCellValue("Sportsmans", fmt.Sprintf("V%d", rowNum), row.Extra_drops)
+		file.SetCellValue("Sportsmans", fmt.Sprintf("W%d", rowNum), row.Extra_pickup)
+		file.SetCellValue("Sportsmans", fmt.Sprintf("X%d", rowNum), row.OtherCharges)
+		file.SetCellValue("Sportsmans", fmt.Sprintf("Y%d", rowNum), row.Other_charge_total)
+		file.SetCellValue("Sportsmans", fmt.Sprintf("Z%d", rowNum), row.Total_Charges)
+		file.SetCellValue("Sportsmans", fmt.Sprintf("AA%d", rowNum), row.Fuel_per_pallet)
+		file.SetCellValue("Sportsmans", fmt.Sprintf("AB%d", rowNum), row.Freight_per_pallet)
+
+		style, err := file.NewStyle(&excelize.Style{
+			Fill: excelize.Fill{
+				Type:    "pattern",
+				Pattern: 1, // Solid fill
+				Color:   []string{color},
+			},
+		})
+
+		if err != nil {
+			fmt.Println("Error creating style:", err)
+			return nil
+		}
+
+		err = file.SetCellStyle("Sportsmans", fmt.Sprintf("A%d", rowNum), fmt.Sprintf("AB%d", rowNum), style)
+		if err != nil {
+			fmt.Println(err)
+			return nil
+		}
+
+		preiviousRow = row.Order_id
+	}
+
+	// Set the active sheet to the first sheet
+	file.SetActiveSheet(index)
+
+	// Save the Excel file to disk
+	var buf bytes.Buffer
+	if err := file.Write(&buf); err != nil {
+		fmt.Println("Error writing to buffer:", err)
+		return nil
+	}
+
+	fmt.Println("Excel file created successfully: ", orderNumber)
+	return buf.Bytes()
+
+}
+
+func swapColor(color string) string {
+	if color == "D9EAF7" {
+		color = "D9F7D9"
+	} else {
+		color = "D9EAF7"
+	}
+	return color
+}
+
+func createHeader(file *excelize.File, sheetName string, loadCount int, Total float64, orderNumber string) {
+	file.SetCellValue(sheetName, "A2", "Manifest Pro No "+orderNumber)
+	file.SetCellValue(sheetName, "A4", "Remit To:")
+	file.SetCellValue(sheetName, "A5", "Sharp Transportation")
+	file.SetCellValue(sheetName, "A6", "390 N 900 E")
+	file.SetCellValue(sheetName, "A7", "Wellsvile, UT 84339")
+	file.SetCellValue(sheetName, "A8", "PO Box 3432")
+	file.SetCellValue(sheetName, "A9", "Tel: 435-245-6053")
+
+	file.SetCellValue(sheetName, "I3", "SPORTSMAN'S WAREHOUSE WEEKLY BILLING REPORT")
+
+	file.SetCellValue(sheetName, "A15", "Total ")
+	file.SetCellValue(sheetName, "B15", Total)
+
+	file.SetCellValue(sheetName, "A16", "Load Count ")
+	file.SetCellValue(sheetName, "B16", loadCount)
+
+}
+
+func getInfoFromData(data []models.SportsmanData) (loadCount int, Total float64) {
+	var preiviousRow string
+	for _, row := range data {
+		if preiviousRow != row.Order_id {
+			loadCount++
+			Total += row.Total_Charges
+		}
+		preiviousRow = row.Order_id
+	}
+	return
 }

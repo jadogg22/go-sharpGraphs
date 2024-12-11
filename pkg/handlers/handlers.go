@@ -435,3 +435,46 @@ func SportsmanWithDates(c *gin.Context) {
 	})
 
 }
+
+type SportsmansRequest struct {
+	OrderNumber string
+	StartDate   string
+	EndDate     string
+}
+
+func Generate_Sportsmans(c *gin.Context) {
+	var request SportsmansRequest
+
+	if err := c.ShouldBindJSON(&request); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	date1, err := time.Parse("2006-01-02T15:04:05Z", request.StartDate)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Message": "Invalid Startdate format",
+		})
+		return
+	}
+
+	date2, err := time.Parse("2006-01-02T15:04:05Z", request.EndDate)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Message": "Invalid Enddate format",
+		})
+		return
+	}
+
+	// format the dates to be strings in the correct format "2024-11-14"
+	dateStr1 := date1.Format("2006-01-02")
+	dateStr2 := date2.Format("2006-01-02")
+
+	// get the sportsman of the week
+	myData := getdata.GetSportsmanFromDB(dateStr1, dateStr2)
+	spreadSheetData := helpers.GenerateSportsmansSpreadsheet(myData, request.OrderNumber)
+
+	// Send back the excel file
+	c.Header("Content-Description", "attachment; filename=Sportsman.xlsx")
+	c.Data(http.StatusOK, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", spreadSheetData)
+}
