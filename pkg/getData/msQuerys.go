@@ -383,6 +383,9 @@ func MakeStackedMilesQuery(startDate, endDate time.Time) string {
 }
 
 // New query for the sportsmans loads report with price breakdown and pallets
+// Mcloud has a database bug that causes the pallets_picked_up and pallets_dropped to be switched
+
+// If they ever fix this bug, swap the two fields in the query and remove the AS statements
 func MakeSportsmansQuery(startDate, endDate string) string {
 
 	return fmt.Sprintf(`SELECT 
@@ -399,8 +402,12 @@ func MakeSportsmansQuery(startDate, endDate string) string {
     o.commodity,
     s.weight,
     s.movement_sequence,
-    s.pallets_dropped,
-    s.pallets_picked_up,
+
+    --mcloud database bug
+
+    s.pallets_picked_up as pallets_dropped,
+    s.pallets_dropped as pallets_picked_up,
+
     o.freight_charge,
     o.otherchargetotal,
     o.total_charge,

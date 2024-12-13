@@ -622,8 +622,7 @@ func GetSportsmanFromDB(date1, date2 string) ([]models.SportsmanData, error) {
 	var MovementSequence, PalletsDropped, PalletsPickedUp, TotalPallets sql.NullInt64
 	var FreightCharge, fuel_surcharge, extra_drops, extra_pickup, other_charge, OtherChargeTotal, TotalCharge, per_pallet_fuel, per_pallet_freight sql.NullFloat64
 
-	// Need per pallet charge
-	//
+	totalPalletsPickedUp := make(map[string]int64)
 
 	for rows.Next() {
 		err := rows.Scan(&OrderID, &OrderedDate, &DelDate, &BillDate, &EndCity, &EndState, &EndZip, &Consignee, &Miles, &BolNumber, &Commodity, &Weight, &MovementSequence, &PalletsDropped, &PalletsPickedUp, &FreightCharge, &OtherChargeTotal, &TotalCharge, &fuel_surcharge, &extra_drops, &extra_pickup, &other_charge, &per_pallet_fuel, &per_pallet_freight)
@@ -634,17 +633,59 @@ func GetSportsmanFromDB(date1, date2 string) ([]models.SportsmanData, error) {
 		}
 
 		if MovementSequence.Valid && MovementSequence.Int64 == 1 {
-			TotalPallets = PalletsDropped
+			TotalPallets = PalletsPickedUp
 			StartCity = EndCity
 			StartState = EndState
 			StartZip = EndZip
-
-			continue
 		}
+
+		// if pallets is not null add to the total pallets for the order
+		if PalletsPickedUp.Valid && OrderID.Valid {
+			myOrder := OrderID.String
+			//strip the whitespace
+			myOrder = strings.TrimSpace(myOrder)
+			myPallets := PalletsPickedUp.Int64
+			totalPalletsPickedUp[myOrder] += myPallets
+		}
+
+		//
 
 		myData := models.NewSportsmanData(OrderID, OrderedDate, DelDate, BillDate, StartCity, StartState, StartZip, EndCity, EndState, EndZip, Consignee, Miles, BolNumber, Commodity, Weight, MovementSequence, PalletsDropped, PalletsPickedUp, TotalPallets, FreightCharge, fuel_surcharge, extra_drops, extra_pickup, other_charge, OtherChargeTotal, TotalCharge, per_pallet_fuel, per_pallet_freight)
 
 		dbData = append(dbData, *myData)
+	}
+
+	fmt.Println("Total Pallets Picked Up: ")
+	for key, val := range totalPalletsPickedUp {
+		fmt.Printf("Order ID: %s, pallets: %d\n", key, val)
+	}
+
+	// Second pass to update totals and per-pallet charges
+	// Probally should have done a pointer to sructs buttt idc
+	for i, d := range dbData {
+
+		// Retrieve the total pickups for this order
+		totalPickups := totalPalletsPickedUp[d.Order_id]
+
+		// Avoid division by zero
+		var pickupPercentage float64
+
+		if totalPickups > 0 {
+			pickupPercentage = float64(d.Pallets_Droped) / float64(totalPickups)
+		} else {
+			pickupPercentage = 0
+		}
+
+		// Calculate the per-pallet charges
+		freightPerPallet := d.Freight_Charges * pickupPercentage
+		fuelPerPallet := d.Fuel_Surcharge * pickupPercentage
+
+		// Update the struct with the calculated values
+		d.Freight_per_pallet = freightPerPallet
+		d.Fuel_per_pallet = fuelPerPallet
+		d.Total_Pallets = totalPickups
+
+		dbData[i] = d
 	}
 
 	return dbData, nil

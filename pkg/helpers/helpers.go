@@ -1005,7 +1005,7 @@ func GenerateSportsmansSpreadsheet(data []models.SportsmanData, orderNumber stri
 		file.SetCellValue("Sportsmans", fmt.Sprintf("Q%d", rowNum), row.Total_Pallets)
 		file.SetCellValue("Sportsmans", fmt.Sprintf("R%d", rowNum), row.Pallets_Droped)
 		file.SetCellValue("Sportsmans", fmt.Sprintf("S%d", rowNum), row.Pallets_Picked)
-		file.SetCellValue("Sportsmans", fmt.Sprintf("T%d", rowNum), row.Freight_Charges) // Freight Charges
+		file.SetCellValue("Sportsmans", fmt.Sprintf("T%d", rowNum), row.Freight_Charges)
 		file.SetCellValue("Sportsmans", fmt.Sprintf("U%d", rowNum), row.Fuel_Surcharge)
 		file.SetCellValue("Sportsmans", fmt.Sprintf("V%d", rowNum), row.Extra_drops)
 		file.SetCellValue("Sportsmans", fmt.Sprintf("W%d", rowNum), row.Extra_pickup)
@@ -1049,7 +1049,6 @@ func GenerateSportsmansSpreadsheet(data []models.SportsmanData, orderNumber stri
 
 	fmt.Println("Excel file created successfully: ", orderNumber)
 	return buf.Bytes(), nil
-
 }
 
 func swapColor(color string) string {

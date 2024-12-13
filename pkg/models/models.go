@@ -506,6 +506,7 @@ type SportsmanData struct {
 func nullStringToStr(ns sql.NullString, defaultVal string) string {
 	if ns.Valid {
 
+		// remove all white spaces
 		return strings.TrimRight(ns.String, " ")
 	}
 	return defaultVal
