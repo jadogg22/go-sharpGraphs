@@ -622,10 +622,12 @@ func GetSportsmanFromDB(date1, date2 string) ([]models.SportsmanData, error) {
 	var MovementSequence, PalletsDropped, PalletsPickedUp, TotalPallets sql.NullInt64
 	var FreightCharge, fuel_surcharge, extra_drops, extra_pickup, other_charge, OtherChargeTotal, TotalCharge, per_pallet_fuel, per_pallet_freight sql.NullFloat64
 
+	var TrailerNumber sql.NullString
+
 	totalPalletsPickedUp := make(map[string]int64)
 
 	for rows.Next() {
-		err := rows.Scan(&OrderID, &OrderedDate, &DelDate, &BillDate, &EndCity, &EndState, &EndZip, &Consignee, &Miles, &BolNumber, &Commodity, &Weight, &MovementSequence, &PalletsDropped, &PalletsPickedUp, &FreightCharge, &OtherChargeTotal, &TotalCharge, &fuel_surcharge, &extra_drops, &extra_pickup, &other_charge, &per_pallet_fuel, &per_pallet_freight)
+		err := rows.Scan(&OrderID, &OrderedDate, &DelDate, &BillDate, &EndCity, &EndState, &EndZip, &Consignee, &Miles, &BolNumber, &Commodity, &Weight, &MovementSequence, &PalletsDropped, &PalletsPickedUp, &FreightCharge, &OtherChargeTotal, &TotalCharge, &fuel_surcharge, &extra_drops, &extra_pickup, &other_charge, &per_pallet_fuel, &per_pallet_freight, &TrailerNumber)
 
 		if err != nil {
 			fmt.Println("Error scanning row: " + err.Error())
@@ -650,7 +652,7 @@ func GetSportsmanFromDB(date1, date2 string) ([]models.SportsmanData, error) {
 
 		//
 
-		myData := models.NewSportsmanData(OrderID, OrderedDate, DelDate, BillDate, StartCity, StartState, StartZip, EndCity, EndState, EndZip, Consignee, Miles, BolNumber, Commodity, Weight, MovementSequence, PalletsDropped, PalletsPickedUp, TotalPallets, FreightCharge, fuel_surcharge, extra_drops, extra_pickup, other_charge, OtherChargeTotal, TotalCharge, per_pallet_fuel, per_pallet_freight)
+		myData := models.NewSportsmanData(OrderID, OrderedDate, DelDate, BillDate, StartCity, StartState, StartZip, EndCity, EndState, EndZip, Consignee, Miles, BolNumber, Commodity, Weight, MovementSequence, PalletsDropped, PalletsPickedUp, TotalPallets, FreightCharge, fuel_surcharge, extra_drops, extra_pickup, other_charge, OtherChargeTotal, TotalCharge, per_pallet_fuel, per_pallet_freight, TrailerNumber)
 
 		dbData = append(dbData, *myData)
 	}
@@ -689,4 +691,109 @@ func GetSportsmanFromDB(date1, date2 string) ([]models.SportsmanData, error) {
 	}
 
 	return dbData, nil
+}
+
+type FreightRecord struct {
+	FreightCharge    float64   `db:"freight_charge"`     // Freight charge amount
+	OtherChargeTotal float64   `db:"otherchargetotal"`   // Other charges
+	TotalCharge      float64   `db:"total_charge"`       // Total charge
+	Xferred2Billing  *float64  `db:"xferred2billing"`    // Transfer to billing (nullable)
+	ID               string    `db:"id"`                 // ID of the order
+	CityName         string    `db:"city_name"`          // City name
+	State            string    `db:"state"`              // State code
+	ActualArrival    time.Time `db:"actual_arrival"`     // Actual arrival timestamp
+	SchedArriveEarly time.Time `db:"sched_arrive_early"` // Scheduled early arrival timestamp
+	RevenueCodeID    string    `db:"revenue_code_id"`    // Revenue code ID
+	BillDistance     float64   `db:"bill_distance"`      // Billable distance
+}
+
+func GetDashboardStats() (float64, float64) {
+	date1 := "2024-12-18 00:00:00"
+	date2 := "2024-12-18 23:59:59"
+
+	query := DashboardQuery(date1, date2)
+
+	rows, err := conn.Query(query)
+	if err != nil {
+		fmt.Println("Error querying database: " + err.Error())
+		return 0, 0
+	}
+
+	// Initialize an empty slice to hold FreightRecords
+	var freightRecords []FreightRecord
+	var totalCharge float64
+	var totalDistance float64
+
+	// Loop through the rows returned from the query
+	for rows.Next() {
+		var rec FreightRecord
+		var totalChargeStr, billDistanceStr, xferred2BillingStr string
+		var actualArrivalStr, schedArriveEarlyStr string
+
+		// Scan the row data into variables
+		err := rows.Scan(
+			&rec.ID,
+			&totalChargeStr,
+			&billDistanceStr,
+			&xferred2BillingStr,
+			&rec.CityName,
+			&rec.State,
+			&actualArrivalStr,
+			&schedArriveEarlyStr,
+			&rec.RevenueCodeID,
+			&totalChargeStr,
+		)
+		if err != nil {
+			fmt.Println("Error scanning row: " + err.Error())
+			continue
+		}
+
+		// Convert string fields to the appropriate types
+		rec.TotalCharge, err = strconv.ParseFloat(totalChargeStr, 64)
+		if err != nil {
+			rec.TotalCharge = 0
+		}
+
+		rec.BillDistance, err = strconv.ParseFloat(billDistanceStr, 64)
+		if err != nil {
+			rec.BillDistance = 0
+		}
+
+		// If Xferred2Billing is not empty, parse it
+		if xferred2BillingStr != "" {
+			xferred2Billing, err := strconv.ParseFloat(xferred2BillingStr, 64)
+			if err != nil {
+				rec.Xferred2Billing = nil
+			} else {
+				rec.Xferred2Billing = &xferred2Billing
+			}
+		}
+
+		// Convert the arrival dates into time
+		rec.ActualArrival, err = time.Parse("2006-01-02 15:04:05", actualArrivalStr)
+		if err != nil {
+			rec.ActualArrival = time.Time{}
+		}
+
+		rec.SchedArriveEarly, err = time.Parse("2006-01-02 15:04:05", schedArriveEarlyStr)
+		if err != nil {
+			rec.SchedArriveEarly = time.Time{}
+		}
+
+		// Add the FreightRecord to the array
+		freightRecords = append(freightRecords, rec)
+
+		// Accumulate totals (if needed)
+		totalCharge += rec.FreightCharge
+		totalDistance += rec.BillDistance
+	}
+
+	// Handle any errors that occurred while iterating the rows
+	if err = rows.Err(); err != nil {
+		fmt.Println("Error iterating over rows: " + err.Error())
+		return 0, 0
+	}
+
+	// Return the total charge and total distance
+	return totalCharge, totalDistance
 }

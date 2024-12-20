@@ -500,6 +500,7 @@ type SportsmanData struct {
 	Total_Charges      float64
 	Fuel_per_pallet    float64
 	Freight_per_pallet float64
+	TrailerNumber      string
 }
 
 // Helper function to handle NullString to default "N/A"
@@ -528,7 +529,7 @@ func nullFloat64ToFloat(n sql.NullFloat64, defaultVal float64) float64 {
 	return defaultVal
 }
 
-func NewSportsmanData(order_id, ordered_date, delivery_date, bill_date, city, state, zip, end_city, end_state, end_zip, consignee, miles, bol_number, commodity, weight sql.NullString, movement, pallets_droped, pallets_picked, TotalPallets sql.NullInt64, freight_charges, fuel_surcharge, extra_drops, extra_pickup, other_charge, other_charge_total, total_charges, per_pallet_fuel, per_pallet_freight sql.NullFloat64) *SportsmanData {
+func NewSportsmanData(order_id, ordered_date, delivery_date, bill_date, city, state, zip, end_city, end_state, end_zip, consignee, miles, bol_number, commodity, weight sql.NullString, movement, pallets_droped, pallets_picked, TotalPallets sql.NullInt64, freight_charges, fuel_surcharge, extra_drops, extra_pickup, other_charge, other_charge_total, total_charges, per_pallet_fuel, per_pallet_freight sql.NullFloat64, TrailerNumber sql.NullString) *SportsmanData {
 	return &SportsmanData{
 		Order_id:           nullStringToStr(order_id, "N/A"),
 		Order_date:         nullStringToStr(ordered_date, "N/A"),
@@ -558,5 +559,6 @@ func NewSportsmanData(order_id, ordered_date, delivery_date, bill_date, city, st
 		Total_Charges:      nullFloat64ToFloat(total_charges, 0),
 		Fuel_per_pallet:    nullFloat64ToFloat(per_pallet_fuel, 0),
 		Freight_per_pallet: nullFloat64ToFloat(per_pallet_freight, 0),
+		TrailerNumber:      nullStringToStr(TrailerNumber, "N/A"),
 	}
 }

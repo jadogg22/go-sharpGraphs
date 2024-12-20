@@ -403,7 +403,7 @@ func MakeSportsmansQuery(startDate, endDate string) string {
     s.weight,
     s.movement_sequence,
 
-    --mcloud database bug
+    -- mcloud database bug
 
     s.pallets_picked_up as pallets_dropped,
     s.pallets_dropped as pallets_picked_up,
@@ -422,11 +422,10 @@ func MakeSportsmansQuery(startDate, endDate string) string {
 
     -- Calculate per pallet dropped costs
     ROUND(SUM(CASE WHEN oc.charge_id = 'FUD' THEN oc.amount ELSE 0 END) / NULLIF(s.pallets_picked_up, 0), 2) AS per_pallet_dropped_fuel_surcharge,  -- Fuel surcharge per pallet dropped
-    ROUND(o.freight_charge / NULLIF(s.pallets_picked_up, 0), 2) AS per_pallet_dropped_freight_charge  -- Freight charge per pallet dropped
+    ROUND(o.freight_charge / NULLIF(s.pallets_picked_up, 0), 2) AS per_pallet_dropped_freight_charge,  -- Freight charge per pallet dropped
 
-    -- Handling NULL charge_id and amount by replacing them with default values
-    --COALESCE(MAX(oc.charge_id), 'NA') AS charge_id,  -- Replacing NULL with 'NA'
-    --COALESCE(MAX(oc.amount), 0) AS amount  -- Replacing NULL with 0
+    -- Add the carrier_trailer from the movement table
+    m.carrier_trailer  -- Carrier trailer information from movement table
 
 FROM 
     orders o
@@ -434,6 +433,8 @@ JOIN
     stop s ON o.id = s.order_id AND o.company_id = s.company_id
 LEFT OUTER JOIN 
     other_charge oc ON oc.order_id = o.id AND oc.company_id = 'TMS'  -- Join to get the charges (FUD, EDR, EPU, and others)
+LEFT OUTER JOIN 
+    movement m ON o.curr_movement_id = m.id  -- Join the movement table using the cur_movement_id
 WHERE 
     -- Make sure to handle possible time issues with bill_date and include records where charge_id could be NULL
     CAST(o.bill_date AS DATE) between '%s' and '%s'  -- Remove time portion from bill_date
@@ -446,9 +447,17 @@ WHERE
 GROUP BY 
     o.id, s.actual_arrival, o.ordered_date, o.bill_date, s.city_name, s.state, s.zip_code, 
     s.location_name, o.bill_distance, o.blnum, o.commodity, s.weight, s.movement_sequence, 
-    s.pallets_dropped, s.pallets_picked_up, o.freight_charge, o.otherchargetotal, o.total_charge
+    s.pallets_dropped, s.pallets_picked_up, o.freight_charge, o.otherchargetotal, o.total_charge,
+    m.carrier_trailer  
 
 ORDER BY 
     o.id, s.movement_sequence, o.bill_date;
 `, startDate, endDate)
+}
+
+func DashboardQuery(date1, date2 string) string {
+	return fmt.Sprintf(`select freight_charge, otherchargetotal, total_charge, xferred2billing, orders.id, city_name, state, actual_arrival, sched_arrive_early, revenue_code_id, bill_distance from orders ,stop 
+where orders.company_id = 'TMS' and orders.status <> 'V' and orders.status <> 'Q' and (orders.subject_order_status is null or orders.subject_order_status <> 'S')
+and actual_arrival between {ts '%s'} and {ts '%s'}
+and stop.id=orders.shipper_stop_id and stop.company_id = 'TMS' order by revenue_code_id, orders.id`, date1, date2)
 }

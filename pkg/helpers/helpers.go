@@ -978,6 +978,7 @@ func GenerateSportsmansSpreadsheet(data []models.SportsmanData, orderNumber stri
 	file.SetCellValue("Sportsmans", fmt.Sprintf("Z%d", rowNum), "Total Charges")
 	file.SetCellValue("Sportsmans", fmt.Sprintf("AA%d", rowNum), "Fuel per pallet")
 	file.SetCellValue("Sportsmans", fmt.Sprintf("AB%d", rowNum), "Freight per pallet")
+	file.SetCellValue("Sportsmans", fmt.Sprintf("AC%d", rowNum), "Trailer Number")
 
 	preiviousRow := ""
 	color := "D9EAF7"
@@ -1014,6 +1015,7 @@ func GenerateSportsmansSpreadsheet(data []models.SportsmanData, orderNumber stri
 		file.SetCellValue("Sportsmans", fmt.Sprintf("Z%d", rowNum), row.Total_Charges)
 		file.SetCellValue("Sportsmans", fmt.Sprintf("AA%d", rowNum), row.Fuel_per_pallet)
 		file.SetCellValue("Sportsmans", fmt.Sprintf("AB%d", rowNum), row.Freight_per_pallet)
+		file.SetCellValue("Sportsmans", fmt.Sprintf("AC%d", rowNum), row.TrailerNumber)
 
 		style, err := file.NewStyle(&excelize.Style{
 			Fill: excelize.Fill{
@@ -1028,7 +1030,7 @@ func GenerateSportsmansSpreadsheet(data []models.SportsmanData, orderNumber stri
 			return nil, err
 		}
 
-		err = file.SetCellStyle("Sportsmans", fmt.Sprintf("A%d", rowNum), fmt.Sprintf("AB%d", rowNum), style)
+		err = file.SetCellStyle("Sportsmans", fmt.Sprintf("A%d", rowNum), fmt.Sprintf("AC%d", rowNum), style)
 		if err != nil {
 			fmt.Println(err)
 			return nil, err
