@@ -404,51 +404,51 @@ func MakeSportsmansQuery(startDate, endDate string) string {
     s.movement_sequence,
 
     -- mcloud database bug
-
-    s.pallets_picked_up as pallets_dropped,
-    s.pallets_dropped as pallets_picked_up,
+    s.pallets_picked_up AS pallets_dropped,
+    s.pallets_dropped AS pallets_picked_up,
 
     o.freight_charge,
     o.otherchargetotal,
     o.total_charge,
     
     -- Separate charge sums for FUD, EDR, EPU
-    SUM(CASE WHEN oc.charge_id = 'FUD' THEN oc.amount ELSE 0 END) AS fuel_surcharge,  -- FUD
-    SUM(CASE WHEN oc.charge_id = 'EDR' THEN oc.amount ELSE 0 END) AS extra_drops,  -- EDR
-    SUM(CASE WHEN oc.charge_id = 'EPU' THEN oc.amount ELSE 0 END) AS extra_pickup,  -- EPU
+    SUM(CASE WHEN oc.charge_id = 'FUD' THEN oc.amount ELSE 0 END) AS fuel_surcharge,
+    SUM(CASE WHEN oc.charge_id = 'EDR' THEN oc.amount ELSE 0 END) AS extra_drops,
+    SUM(CASE WHEN oc.charge_id = 'EPU' THEN oc.amount ELSE 0 END) AS extra_pickup,
     
     -- Group all other charge codes under 'other_charge'
-    SUM(CASE WHEN oc.charge_id NOT IN ('FUD', 'EDR', 'EPU') THEN oc.amount ELSE 0 END) AS other_charge,  -- All other charges
+    SUM(CASE WHEN oc.charge_id NOT IN ('FUD', 'EDR', 'EPU') THEN oc.amount ELSE 0 END) AS other_charge,
 
     -- Calculate per pallet dropped costs
-    ROUND(SUM(CASE WHEN oc.charge_id = 'FUD' THEN oc.amount ELSE 0 END) / NULLIF(s.pallets_picked_up, 0), 2) AS per_pallet_dropped_fuel_surcharge,  -- Fuel surcharge per pallet dropped
-    ROUND(o.freight_charge / NULLIF(s.pallets_picked_up, 0), 2) AS per_pallet_dropped_freight_charge,  -- Freight charge per pallet dropped
+    ROUND(SUM(CASE WHEN oc.charge_id = 'FUD' THEN oc.amount ELSE 0 END) / NULLIF(s.pallets_picked_up, 0), 2) AS per_pallet_dropped_fuel_surcharge,
+    ROUND(o.freight_charge / NULLIF(s.pallets_picked_up, 0), 2) AS per_pallet_dropped_freight_charge,
 
-    -- Add the carrier_trailer from the movement table
-    m.carrier_trailer  -- Carrier trailer information from movement table
+    -- Combine carrier trailer from movement or equipment_item
+    COALESCE(m.carrier_trailer, ei.equipment_id) AS carrier_trailer  -- Use movement first, fallback to equipment_item
 
 FROM 
     orders o
 JOIN 
     stop s ON o.id = s.order_id AND o.company_id = s.company_id
 LEFT OUTER JOIN 
-    other_charge oc ON oc.order_id = o.id AND oc.company_id = 'TMS'  -- Join to get the charges (FUD, EDR, EPU, and others)
+    other_charge oc ON oc.order_id = o.id AND oc.company_id = 'TMS'
 LEFT OUTER JOIN 
-    movement m ON o.curr_movement_id = m.id  -- Join the movement table using the cur_movement_id
+    movement m ON o.curr_movement_id = m.id
+LEFT OUTER JOIN 
+    equipment_item ei ON m.equipment_group_id = ei.equipment_group_id 
+    AND ei.company_id = 'TMS' 
+    AND ei.equipment_type_id = 'T'
+
 WHERE 
-    -- Make sure to handle possible time issues with bill_date and include records where charge_id could be NULL
-    CAST(o.bill_date AS DATE) between '%s' and '%s'  -- Remove time portion from bill_date
-    
+    CAST(o.bill_date AS DATE) BETWEEN '%s' AND '%s'
     AND o.customer_id = 'SPORTSUT'
-    
-    -- Allow for NULL charge_id if no matching charges exist
     AND (oc.charge_id IN ('FUD', 'EDR', 'EPU') OR oc.charge_id IS NULL)
     
 GROUP BY 
     o.id, s.actual_arrival, o.ordered_date, o.bill_date, s.city_name, s.state, s.zip_code, 
     s.location_name, o.bill_distance, o.blnum, o.commodity, s.weight, s.movement_sequence, 
     s.pallets_dropped, s.pallets_picked_up, o.freight_charge, o.otherchargetotal, o.total_charge,
-    m.carrier_trailer  
+    m.carrier_trailer, ei.equipment_id  -- Include both carrier_trailer and equipment_id
 
 ORDER BY 
     o.id, s.movement_sequence, o.bill_date;

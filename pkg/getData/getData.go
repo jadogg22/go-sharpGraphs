@@ -626,8 +626,28 @@ func GetSportsmanFromDB(date1, date2 string) ([]models.SportsmanData, error) {
 
 	totalPalletsPickedUp := make(map[string]int64)
 
+	cols, err := rows.Columns()
+	if err != nil {
+		fmt.Println("Error fetching columns: " + err.Error())
+		return dbData, err
+	}
+
+	fmt.Println("Columns: ", cols)
+
 	for rows.Next() {
-		err := rows.Scan(&OrderID, &OrderedDate, &DelDate, &BillDate, &EndCity, &EndState, &EndZip, &Consignee, &Miles, &BolNumber, &Commodity, &Weight, &MovementSequence, &PalletsDropped, &PalletsPickedUp, &FreightCharge, &OtherChargeTotal, &TotalCharge, &fuel_surcharge, &extra_drops, &extra_pickup, &other_charge, &per_pallet_fuel, &per_pallet_freight, &TrailerNumber)
+		err := rows.Scan(&OrderID, &OrderedDate,
+			&DelDate, &BillDate,
+			&EndCity, &EndState,
+			&EndZip, &Consignee,
+			&Miles, &BolNumber,
+			&Commodity, &Weight,
+			&MovementSequence,
+			&PalletsDropped, &PalletsPickedUp,
+			&FreightCharge, &OtherChargeTotal,
+			&TotalCharge, &fuel_surcharge,
+			&extra_drops, &extra_pickup,
+			&other_charge, &per_pallet_fuel,
+			&per_pallet_freight, &TrailerNumber)
 
 		if err != nil {
 			fmt.Println("Error scanning row: " + err.Error())
@@ -655,11 +675,6 @@ func GetSportsmanFromDB(date1, date2 string) ([]models.SportsmanData, error) {
 		myData := models.NewSportsmanData(OrderID, OrderedDate, DelDate, BillDate, StartCity, StartState, StartZip, EndCity, EndState, EndZip, Consignee, Miles, BolNumber, Commodity, Weight, MovementSequence, PalletsDropped, PalletsPickedUp, TotalPallets, FreightCharge, fuel_surcharge, extra_drops, extra_pickup, other_charge, OtherChargeTotal, TotalCharge, per_pallet_fuel, per_pallet_freight, TrailerNumber)
 
 		dbData = append(dbData, *myData)
-	}
-
-	fmt.Println("Total Pallets Picked Up: ")
-	for key, val := range totalPalletsPickedUp {
-		fmt.Printf("Order ID: %s, pallets: %d\n", key, val)
 	}
 
 	// Second pass to update totals and per-pallet charges
