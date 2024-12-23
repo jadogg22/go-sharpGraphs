@@ -412,15 +412,18 @@ func MakeSportsmansQuery(startDate, endDate string) string {
     o.total_charge,
     
     -- Separate charge sums for FUD, EDR, EPU
-    SUM(CASE WHEN oc.charge_id = 'FUD' THEN oc.amount ELSE 0 END) AS fuel_surcharge,
-    SUM(CASE WHEN oc.charge_id = 'EDR' THEN oc.amount ELSE 0 END) AS extra_drops,
-    SUM(CASE WHEN oc.charge_id = 'EPU' THEN oc.amount ELSE 0 END) AS extra_pickup,
-    
-    -- Group all other charge codes under 'other_charge'
-    SUM(CASE WHEN oc.charge_id NOT IN ('FUD', 'EDR', 'EPU') THEN oc.amount ELSE 0 END) AS other_charge,
+    SUM(CASE WHEN oc.charge_id = 'FUD' THEN COALESCE(oc.amount, 0) ELSE 0 END) AS fuel_surcharge,
+    SUM(CASE WHEN oc.charge_id = 'EDR' THEN COALESCE(oc.amount, 0) ELSE 0 END) AS extra_drops,
+    SUM(CASE WHEN oc.charge_id = 'EPU' THEN COALESCE(oc.amount, 0) ELSE 0 END) AS extra_pickup,
+
+    -- Calculate 'other_charge' as the residual of otherchargetotal minus the sum of FUD, EDR, and EPU
+    ROUND(o.otherchargetotal 
+        - SUM(CASE WHEN oc.charge_id = 'FUD' THEN COALESCE(oc.amount, 0) ELSE 0 END)
+        - SUM(CASE WHEN oc.charge_id = 'EDR' THEN COALESCE(oc.amount, 0) ELSE 0 END)
+        - SUM(CASE WHEN oc.charge_id = 'EPU' THEN COALESCE(oc.amount, 0) ELSE 0 END), 2) AS other_charge,
 
     -- Calculate per pallet dropped costs
-    ROUND(SUM(CASE WHEN oc.charge_id = 'FUD' THEN oc.amount ELSE 0 END) / NULLIF(s.pallets_picked_up, 0), 2) AS per_pallet_dropped_fuel_surcharge,
+    ROUND(SUM(CASE WHEN oc.charge_id = 'FUD' THEN COALESCE(oc.amount, 0) ELSE 0 END) / NULLIF(s.pallets_picked_up, 0), 2) AS per_pallet_dropped_fuel_surcharge,
     ROUND(o.freight_charge / NULLIF(s.pallets_picked_up, 0), 2) AS per_pallet_dropped_freight_charge,
 
     -- Combine carrier trailer from movement or equipment_item
