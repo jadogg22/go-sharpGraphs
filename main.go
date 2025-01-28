@@ -39,6 +39,7 @@ func main() {
 			TransportationGroup.GET("/get_coded_revenue/:when", handlers.Trans_coded_revenue)
 			TransportationGroup.GET("/Daily_Ops", handlers.Daily_Ops)
 			TransportationGroup.POST("/Generate_Sportsmans", handlers.Generate_Sportsmans)
+			TransportationGroup.GET("/DriverManager", handlers.DriverManager)
 		}
 		// ---------- Logisitics Handlers ----------
 		LogisticsGroup := apiGroup.Group("/Logistics")

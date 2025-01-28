@@ -490,3 +490,19 @@ func Generate_Sportsmans(c *gin.Context) {
 	c.Header("Content-Description", "attachment; filename=Sportsman.xlsx")
 	c.Data(http.StatusOK, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", spreadSheetData)
 }
+
+func DriverManager(c *gin.Context) {
+	// get the data from the database
+	data, err := getdata.GetDriverManagerData()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"Message": "Error getting data from the database",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"Data": data,
+	})
+}

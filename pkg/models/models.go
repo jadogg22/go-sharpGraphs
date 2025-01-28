@@ -562,3 +562,10 @@ func NewSportsmanData(order_id, ordered_date, delivery_date, bill_date, city, st
 		TrailerNumber:      nullStringToStr(TrailerNumber, "N/A"),
 	}
 }
+
+type Driver struct {
+	DriverID     string `json:"driver_id"`
+	DriverName   string `json:"driver_name"`
+	FleetManager string `json:"fleet_manager"`
+	Miles        []int  `json:"summaries"`
+}

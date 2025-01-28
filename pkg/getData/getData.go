@@ -812,3 +812,67 @@ func GetDashboardStats() (float64, float64) {
 	// Return the total charge and total distance
 	return totalCharge, totalDistance
 }
+
+func GetDriverManagerData() ([]models.Driver, error) {
+	// Get the query
+	query := GetDriverManagerQuery()
+
+	// Execute the query
+	rows, err := conn.Query(query)
+	if err != nil {
+		fmt.Println("Error querying database: " + err.Error())
+		return nil, err
+	}
+	defer rows.Close()
+
+	// Map to store drivers and their summaries
+	driversMap := make(map[string]*models.Driver)
+
+	// Iterate through rows
+	for rows.Next() {
+		var driverID, fleetManager, monthName string
+		var weekNumber, monthOrder int
+		var totalMoveDistance float64
+
+		// Scan the row
+		if err := rows.Scan(&driverID, &fleetManager, &weekNumber, &monthName, &monthOrder, &totalMoveDistance); err != nil {
+			return nil, fmt.Errorf("failed to scan row: %v", err)
+		}
+
+		// Check if driver exists in the map
+		driver, exists := driversMap[driverID]
+		if !exists {
+			// Create a new driver if not already in the map
+			driver = &models.Driver{
+				DriverID:     driverID,
+				FleetManager: fleetManager,
+				Miles:        make([]int, 0), // Initialize an empty array for miles
+			}
+			driversMap[driverID] = driver
+		}
+
+		// Calculate the "global week index" based on monthOrder and weekNumber
+		globalWeekIndex := (monthOrder-1)*4 + (weekNumber - 1) // Assuming 4 weeks per month
+
+		// Expand the array size if needed
+		for len(driver.Miles) <= globalWeekIndex {
+			driver.Miles = append(driver.Miles, 0) // Fill missing weeks with 0 miles
+		}
+
+		// Store the miles in the correct position
+		driver.Miles[globalWeekIndex] = int(totalMoveDistance)
+	}
+
+	// Check for errors during iteration
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating rows: %v", err)
+	}
+
+	// Convert map to a slice
+	drivers := make([]models.Driver, 0, len(driversMap))
+	for _, driver := range driversMap {
+		drivers = append(drivers, *driver)
+	}
+
+	return drivers, nil
+}

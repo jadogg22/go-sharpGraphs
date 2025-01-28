@@ -464,3 +464,36 @@ where orders.company_id = 'TMS' and orders.status <> 'V' and orders.status <> 'Q
 and actual_arrival between {ts '%s'} and {ts '%s'}
 and stop.id=orders.shipper_stop_id and stop.company_id = 'TMS' order by revenue_code_id, orders.id`, date1, date2)
 }
+
+func GetDriverManagerQuery() string {
+	return `SELECT 
+    COALESCE(d.id, 'Unknown') AS driver_id,         -- Replace NULL driver_id with 'Unknown'
+    COALESCE(d.fleet_manager, 'Unassigned') AS fleet_manager, -- Replace NULL fleet_manager with 'Unassigned'
+    DATEPART(week, c.actual_arrival) AS week_number,
+    DATENAME(MONTH, c.actual_arrival) AS month_name,
+    DATEPART(month, c.actual_arrival) AS month_order,
+    SUM(m.move_distance) AS total_move_distance
+FROM 
+    movement AS m
+INNER JOIN 
+    continuity AS c ON c.movement_id = m.id
+INNER JOIN 
+    driver AS d ON d.id = c.equipment_id
+WHERE 
+    d.is_active = 'y'
+    AND d.company_id = 'TMS'
+    AND c.equipment_type_id = 'd'
+    AND c.actual_arrival BETWEEN '2025-01-01' AND GETDATE() + 1
+    AND m.status <> 'V'
+GROUP BY 
+    COALESCE(d.id, 'Unknown'),
+    COALESCE(d.fleet_manager, 'Unassigned'),
+    DATEPART(week, c.actual_arrival), 
+    DATENAME(MONTH, c.actual_arrival), 
+    DATEPART(month, c.actual_arrival)
+ORDER BY 
+    COALESCE(d.id, 'Unknown'),
+    month_order, 
+    week_number;
+`
+}

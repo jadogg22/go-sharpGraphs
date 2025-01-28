@@ -21,8 +21,7 @@ Thinking bout it I need to go even more indepth with the server config. The rust
 
 ### New Implementation
 
-I'm think the new implementation Is going to use another new table! But I think that it makes way more sence too. I think it makes the most sence to have all of those numbers that I caculate just stored into a db as | ID | Revenue | Week | Quarter | Year | I think that is all the information that I need to send because then all I need to do is select * all the records and convert them into my data structure that I'll be using to send the json but also ill just add like a clause to check what week it is currently, and any week or weeks that are not added we can search that from the table of records and sum up that week and get that information we need. I wanna add some psudocode here just to make my point come accross
-
+I'm think the new implementation Is going to use another new table! But I think that it makes way more sence too. I think it makes the most sence to have all of those numbers that I caculate just stored into a db as | ID | Revenue | Week | Quarter | Year | I think that is all the information that I need to send because then all I need to do is select * all the records and convert them into my data structure that I'll be using to send the json but also ill just add like a clause to check what week it is currently, and any week or weeks that are not added we can search that from the table of records and sum up that week and get that information we need. 
 ```go
 // models
 
@@ -41,4 +40,6 @@ type YearlyRevenue struct {
 
 Now that its all said and done. I've moved off of a rasberry pi and Now I just have an old laptop running all the servers. We have 3 instances running on the same machine. First we have the golang server odviously, but then we have the postgress database running and this is the key to get it all working. firstly I have a direct in memory cache for the quickest retrival. This was pretty easy to implement, but one of the problems came from wanting to get every single record avalable from the last few years. This was not a quick calculation. So what I implemented the postgress database to store each weeks total revenue. I don't want to really create a new table and mess with things on their server so i've pretty much been read only for that one. On my server I've added a table for the year week and revenue. then we search the mcloud for the last database entry too today. that way we are really relaxing the servers and not having to pull tens of thousands of records. Then if we got over a week from their server we create a new database entry to cache. then finally updating our in memory cache so we dont need to do any fetching. So yeah I think this is the best way to do it but i'm just kinda doing what I know and I dont know what I dont know so if there is a better method I would love to hear it. 
 
-```go
+Its 2025 now! time flies. One thing I need to figure out is how to edit this data so that it works no matter what year creating that struct worked well for the year the latest year was 2024 but now that its 2025 I need to figure out how to make it so that it works no matter what year it is. I might have to move away from a struct and use a map? I'll have to do some testing.
+
+

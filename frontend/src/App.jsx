@@ -9,6 +9,7 @@ import LogisticsMTD from './LogisticsMTD';
 import RevPie from './RevPie';
 import Dashboard from './Dashboard';
 import OrdersPage from './OrdersPage';
+import TransDrivers from './TransDrivers';
 
 const App = () => {
   return (
@@ -84,6 +85,15 @@ const App = () => {
               </li>
               <li>
                 <NavLink
+                  to="/DriverManagers"
+                  activeClassName="bg-gray-700"
+                  className="block py-2 px-4 hover:bg-gray-700"
+                >
+                  Drivers' Miles
+                </NavLink>
+              </li>
+              <li>
+                <NavLink
                   to="/logisticsWeekly"
                   activeClassName="bg-gray-700"
                   className="block py-2 px-4 hover:bg-gray-700"
@@ -112,6 +122,7 @@ const App = () => {
             <Route path="/RevenuePie" element={<RevPie />} />
             <Route path="/LogisticsMTD" element={<LogisticsMTD />} />
             <Route path="/EmptyMiles" element={<EmptyMilesWrapper />} />
+            <Route path="/DriverManagers" element={<TransDrivers />} />
             <Route path="/Orders" element={<OrdersPage />} />
           </Routes>
         </div>
