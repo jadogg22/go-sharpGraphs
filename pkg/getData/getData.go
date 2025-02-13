@@ -828,6 +828,10 @@ func GetDriverManagerData() ([]models.Driver, error) {
 	// Map to store drivers and their summaries
 	driversMap := make(map[string]*models.Driver)
 
+	// get the time
+	now := time.Now()
+	_, week := now.ISOWeek()
+
 	// Iterate through rows
 	for rows.Next() {
 		var driverID, fleetManager, monthName string
@@ -846,21 +850,18 @@ func GetDriverManagerData() ([]models.Driver, error) {
 			driver = &models.Driver{
 				DriverID:     driverID,
 				FleetManager: fleetManager,
-				Miles:        make([]int, 0), // Initialize an empty array for miles
+				Miles:        make([]int, week), // Initialize an empty array for miles
 			}
 			driversMap[driverID] = driver
 		}
 
-		// Calculate the "global week index" based on monthOrder and weekNumber
-		globalWeekIndex := (monthOrder-1)*4 + (weekNumber - 1) // Assuming 4 weeks per month
-
 		// Expand the array size if needed
-		for len(driver.Miles) <= globalWeekIndex {
+		for len(driver.Miles) <= week {
 			driver.Miles = append(driver.Miles, 0) // Fill missing weeks with 0 miles
 		}
 
 		// Store the miles in the correct position
-		driver.Miles[globalWeekIndex] = int(totalMoveDistance)
+		driver.Miles[weekNumber-1] = int(totalMoveDistance)
 	}
 
 	// Check for errors during iteration
