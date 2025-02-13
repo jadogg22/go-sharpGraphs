@@ -856,7 +856,7 @@ func GetDriverManagerData() ([]models.Driver, error) {
 		}
 
 		// Expand the array size if needed
-		for len(driver.Miles) <= week {
+		for len(driver.Miles) < week {
 			driver.Miles = append(driver.Miles, 0) // Fill missing weeks with 0 miles
 		}
 
