@@ -850,7 +850,7 @@ func GetDriverManagerData() ([]models.Driver, error) {
 			driver = &models.Driver{
 				DriverID:     driverID,
 				FleetManager: fleetManager,
-				Miles:        make([]int, week), // Initialize an empty array for miles
+				Miles:        make([]int, (week - 1)), // Initialize an empty array for miles
 			}
 			driversMap[driverID] = driver
 		}
