@@ -472,12 +472,24 @@ func Generate_Sportsmans(c *gin.Context) {
 
 	// get the sportsman of the week
 	myData, err := getdata.GetSportsmanFromDB(dateStr1, dateStr2)
-	if err != nil || len(myData) == 0 {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"Message": "Error getting data from the database",
-			"error":   err,
-		})
+	if err != nil {
+		if len(myData) < 1 {
+			errMessage := fmt.Sprintf("No data found for the selected dates (Are you sure %s is the right bill date?)", dateStr1)
+			c.JSON(http.StatusBadRequest, gin.H{
+				"Message": errMessage,
+				"error":   err,
+			})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"Message": "Error getting data from the database",
+				"error":   err,
+			})
+		}
+		return
 	}
+
+	// Generate the excel file
+	fmt.Println("Generating the excel file")
 	spreadSheetData, err := helpers.GenerateSportsmansSpreadsheet(myData, request.OrderNumber)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{

@@ -12,6 +12,8 @@ const OrdersPage = () => {
   const downloadFile = async () => {
     setLoading(true);
     setError(""); // Reset error before trying to fetch
+    let errorMsg = "An unexpected error occurred"; // Default error message
+
     try {
       // Ensure startDate and endDate are in the correct format (ISO 8601 format).
       const formattedStartDate = new Date(startDate).toISOString();
@@ -30,22 +32,30 @@ const OrdersPage = () => {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to generate Excel file");
+        // Attempt to extract the error message from the response body
+        try {
+          const errorData = await response.json();
+          errorMsg = errorData.Message || "Failed to generate Excel file"; // Fallback if the message is missing
+        } catch (error) {
+          errorMsg = response.statusText || "Failed to generate Excel file"; // Fallback to response status text
+        }
+        throw new Error(errorMsg); // Throw the error message
       }
 
+      // If the response is successful, handle the blob download
       const blob = await response.blob();
       const link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
       link.download = "Sportsmans_" + orderNumber + ".xlsx";
       link.click();
+
     } catch (error) {
       console.error("Error downloading file:", error);
-      setError(error.message);
+      setError(error.message); // Display the error message
     } finally {
       setLoading(false);
     }
   };
-
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-50">
       <div className="bg-white p-8 rounded-lg shadow-lg w-96">

@@ -1,10 +1,10 @@
 package main
 
 import (
-	"fmt"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/jadogg22/go-sharpGraphs/pkg/handlers"
-	"net/http"
+	"time"
 )
 
 // main function to display different endpoints for ease of use.
@@ -28,7 +28,14 @@ func main() {
 	r.GET("/api2/Sportsman/:date1/:date2", handlers.SportsmanWithDates)
 
 	apiGroup := r.Group("/api")
-	apiGroup.Use(CORSMiddleware())
+	apiGroup.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"http://localhost:5173", "http://192.168.0.62"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
+	}))
 	{
 		// ---------- Transportation Handlers ----------
 		TransportationGroup := apiGroup.Group("/Transportation")
@@ -38,7 +45,7 @@ func main() {
 			TransportationGroup.GET("/Stacked_miles/:when", handlers.Trans_stacked_miles)
 			TransportationGroup.GET("/get_coded_revenue/:when", handlers.Trans_coded_revenue)
 			TransportationGroup.GET("/Daily_Ops", handlers.Daily_Ops)
-			TransportationGroup.POST("/Generate_Sportsmans", handlers.Generate_Sportsmans)
+			TransportationGroup.Any("/Generate_Sportsmans", handlers.Generate_Sportsmans)
 			TransportationGroup.GET("/DriverManager", handlers.DriverManager)
 		}
 		// ---------- Logisitics Handlers ----------
@@ -56,56 +63,4 @@ func main() {
 
 	r.Run(":5000")
 
-}
-
-// CORS middleware handler
-// CORSMiddleware is a middleware handler that adds CORS headers to requests
-// make sure that the request is coming from the correct origin of my proxy server.
-func CORSMiddleware() gin.HandlerFunc {
-	return func(c *gin.Context) {
-
-		fmt.Println("CORSMiddleware")
-		origin := c.Request.Header.Get("Origin")
-		fmt.Println(origin)
-		if origin == "" || origin == "http://localhost:5173" {
-			c.Next()
-		}
-
-		// Allow cors from my proxy
-		allowedOrigins := "http://192.168.0.62"
-
-		if origin != allowedOrigins {
-			c.AbortWithStatus(http.StatusForbidden)
-			return
-		} else {
-			c.Header("Access-Control-Allow-Origin", origin)
-		}
-
-		c.Header("Access-Control-Allow-Origin", allowedOrigins)
-		c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-		c.Header("Access-Control-Allow-Headers", "Origin, Content-Type")
-		c.Header("Access-Control-Allow-Credentials", "True")
-
-		if c.Request.Method == "OPTIONS" {
-			// Handle preflight requests
-			c.AbortWithStatus(http.StatusOK)
-			return
-		}
-
-		// Continue processing request
-		c.Next()
-	}
-}
-
-func checkAllowedOrigin(origin string) bool {
-	allowedOrigins := []string{"", "localhost", "http://localhost:5173", "http://192.168.0.62", "127.0.0.1"}
-	fmt.Println("Checking Origin")
-	fmt.Println(origin)
-	for _, allowedOrigin := range allowedOrigins {
-		if origin == allowedOrigin {
-
-			return true
-		}
-	}
-	return false
 }

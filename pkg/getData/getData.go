@@ -626,13 +626,11 @@ func GetSportsmanFromDB(date1, date2 string) ([]models.SportsmanData, error) {
 
 	totalPalletsPickedUp := make(map[string]int64)
 
-	cols, err := rows.Columns()
+	_, err = rows.Columns()
 	if err != nil {
 		fmt.Println("Error fetching columns: " + err.Error())
 		return dbData, err
 	}
-
-	fmt.Println("Columns: ", cols)
 
 	for rows.Next() {
 		err := rows.Scan(&OrderID, &OrderedDate,
@@ -703,6 +701,12 @@ func GetSportsmanFromDB(date1, date2 string) ([]models.SportsmanData, error) {
 		d.Total_Pallets = totalPickups
 
 		dbData[i] = d
+	}
+
+	if len(dbData) < 1 {
+		fmt.Println("No data returned from the query")
+		err := errors.New("No data returned from the query")
+		return dbData, err
 	}
 
 	return dbData, nil
