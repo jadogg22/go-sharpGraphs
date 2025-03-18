@@ -11,10 +11,12 @@ services:
     depends_on:
       - go-backend
 
+    restart: unless-stopped
   go-backend:
     build:
       context: .
       dockerfile: Dockerfile.go-backend
     container_name: go-backend
     ports:
-      - "5000:5000"
+      - "5000:5000" 
+    restart: unless-stopped
