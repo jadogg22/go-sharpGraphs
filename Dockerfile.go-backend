@@ -1,5 +1,5 @@
 # Stage 1: Build Go application
-FROM golang:1.21.6 AS go-builder
+FROM golang:1.23.1 AS go-builder
 
 WORKDIR /app
 
@@ -13,7 +13,7 @@ COPY . .
 RUN go build -o /app/server .
 
 # Stage 2: Final image for the Go server
-FROM golang:1.21.6
+FROM golang:1.23.1
 
 WORKDIR /app
 
