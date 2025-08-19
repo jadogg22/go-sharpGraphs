@@ -268,6 +268,60 @@ func OldTrandportaionOrdersQuery(startDateStr, endDateStr string) string {
 			or dest.actual_arrival is null and dest.sched_arrive_early <= {ts '2024-08-15 23:59:59'}) and origin.id = orders.shipper_stop_id  and  origin.company_id = 'TMS' and dest.id = orders.consignee_stop_id  and  dest.company_id = 'TMS' order by revenue_code_id, order_id, movement_id`, startDateStr, endDateStr)
 }
 
+func GetLaneProfit1(startDate, endDate time.Time) string {
+	startdateStr := startDate.Format("2006-01-02")
+	endDateStr := endDate.Format("2006-01-02")
+
+	return fmt.Sprintf(`SELECT
+    orders.id AS order_id,
+    orders.bill_date AS ship_date,
+    origin.city_name + ', ' + origin.state AS origin,
+    dest.city_name + ', ' + dest.state AS destination,
+    prorated_orderdist.empty_distance + prorated_orderdist.loaded_distance AS total_miles,
+    orders.freight_charge AS total_revenue,
+    customer.name AS customer,
+    customer.category AS customer_category,
+    prorated_orderdist.empty_distance * 1.0 / NULLIF((prorated_orderdist.empty_distance + prorated_orderdist.loaded_distance), 0) AS empty_pct
+FROM orders
+LEFT JOIN customer
+    ON customer.id = orders.customer_id
+    AND customer.company_id = 'TMS'
+LEFT JOIN prorated_orderdist
+    ON prorated_orderdist.order_id = orders.id
+    AND prorated_orderdist.company_id = 'TMS'
+LEFT JOIN movement_order
+    ON movement_order.order_id = orders.id
+    AND movement_order.company_id = 'TMS'
+LEFT JOIN movement
+    ON movement.id = movement_order.movement_id
+    AND movement.company_id = 'TMS'
+JOIN stop origin
+    ON origin.id = orders.shipper_stop_id
+    AND origin.company_id = 'TMS'
+JOIN stop dest
+    ON dest.id = orders.consignee_stop_id
+    AND dest.company_id = 'TMS'
+WHERE
+    orders.company_id = 'TMS'
+    AND orders.status NOT IN ('Q', 'V')
+    AND (orders.subject_order_status IS NULL OR orders.subject_order_status <> 'S')
+    AND orders.freight_charge > 0
+    AND (prorated_orderdist.empty_distance + prorated_orderdist.loaded_distance) > 0
+    AND movement.loaded = 'L'
+    AND (
+        (origin.actual_arrival IS NOT NULL AND origin.actual_arrival >= {ts '%s 00:00:00'})
+        OR (origin.actual_arrival IS NULL AND origin.sched_arrive_early >= {ts '%s 00:00:00'})
+    )
+    AND (
+        (origin.actual_arrival IS NOT NULL AND origin.actual_arrival <= {ts '%s 23:59:59'})
+        OR (origin.actual_arrival IS NULL AND origin.sched_arrive_early <= {ts '%s 23:59:59'})
+    )
+ORDER BY orders.id
+`, startdateStr, startdateStr, endDateStr, endDateStr)
+}
+
+
+
 func GetVacationHoursByCompanyQuery(companyID string) string {
 	if companyID == "drivers" {
 		return DriversVacationHoursQuery()

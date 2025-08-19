@@ -10,6 +10,7 @@ import RevPie from './RevPie';
 import Dashboard from './Dashboard';
 import OrdersPage from './OrdersPage';
 import TransDrivers from './TransDrivers';
+import LaneProfitability from './LaneProfitability';
 
 const App = () => {
   return (
@@ -110,6 +111,15 @@ const App = () => {
                   Sportsmans Invoice
                 </NavLink>
               </li>
+              <li>
+                <NavLink
+                  to="/lane-profitability"
+                  activeClassName="bg-gray-700"
+                  className="block py-2 px-4 hover:bg-gray-700"
+                >
+                  Lane Profitability
+                </NavLink>
+              </li>
             </ul>
           </nav>
         </div>
@@ -124,6 +134,7 @@ const App = () => {
             <Route path="/EmptyMiles" element={<EmptyMilesWrapper />} />
             <Route path="/DriverManagers" element={<TransDrivers />} />
             <Route path="/Orders" element={<OrdersPage />} />
+            <Route path="/lane-profitability" element={<LaneProfitability />} />
           </Routes>
         </div>
       </div>

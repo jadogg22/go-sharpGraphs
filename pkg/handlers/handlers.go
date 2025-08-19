@@ -224,6 +224,55 @@ func Daily_Ops(c *gin.Context) {
 	c.JSON(200, data)
 }
 
+func LaneProfit(c *gin.Context) {
+	startDateStr := c.Query("startDate")
+	endDateStr := c.Query("endDate")
+
+	// For now, hardcode the base state to "UT". This could be made configurable later.
+	baseState := "UT"
+
+	if startDateStr == "" || endDateStr == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "startDate and endDate are required"})
+		return
+	}
+
+	startDate, err := time.Parse("2006-01-02", startDateStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid startDate format"})
+		return
+	}
+
+	endDate, err := time.Parse("2006-01-02", endDateStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid endDate format"})
+		return
+	}
+
+	// 1. Get the raw data from the database
+	rawData, err := getdata.GetLaneData(startDate, endDate)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"Message": "Error getting data from the database",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	// 2. Process and enrich the data
+	processedData := helpers.ProcessLaneData(rawData)
+
+	// 3. Analyze round-trip profitability
+	roundTripLanes := helpers.AnalyzeRoundTripProfitability(processedData, baseState)
+
+	// 4. Calculate Lane Quality Score
+	scoredLanes := helpers.CalculateCustomLaneScore(roundTripLanes)
+
+	// 5. Return the analyzed data
+	c.JSON(http.StatusOK, gin.H{
+		"data": scoredLanes,
+	})
+}
+
 // ---------- Logisitics Handlers ----------
 func Log_year_by_year(c *gin.Context) {
 

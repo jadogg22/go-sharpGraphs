@@ -3,6 +3,7 @@ package helpers
 import (
 	"bytes"
 	"fmt"
+	"math"
 	"slices"
 	"sort"
 	"strconv"
@@ -1090,5 +1091,238 @@ func getInfoFromData(data []models.SportsmanData) (loadCount int, Total float64)
 		}
 		preiviousRow = row.Order_id
 	}
+	return
+}
+
+// --- Lane Profitability Analysis ---
+
+// extractState takes a location string (e.g., "LOGAN, UT") and returns the state code.
+func extractState(location string) string {
+	parts := strings.Split(location, ",")
+	if len(parts) == 2 {
+		return strings.TrimSpace(parts[1])
+	}
+	return ""
+}
+
+// ProcessLaneData takes the raw lane profit data and enriches it.
+func ProcessLaneData(data []models.LaneProfit) []models.ProcessedLaneData {
+	var processedData []models.ProcessedLaneData
+
+	for _, d := range data {
+		if d.TotalMiles <= 0 || d.TotalRevenue <= 0 {
+			continue
+		}
+
+		// Handle sql.NullTime for ShipDate
+		var shipDate time.Time
+		if d.ShipDate.Valid {
+			shipDate = d.ShipDate.Time
+		} else {
+			// If ShipDate is null, you might want to skip this record or assign a default value
+			// For now, we'll assign a zero time.Time
+			shipDate = time.Time{}
+		}
+
+		originState := extractState(d.Origin)
+		destState := extractState(d.Destination)
+
+		if originState == "" || destState == "" || originState == destState {
+			continue
+		}
+
+		brokered := "Direct"
+		if d.CustomerCategory == "BRK - BROKER" {
+			brokered = "Brokered"
+		}
+
+		p := models.ProcessedLaneData{
+			LaneProfit:     d,
+			OriginState:    originState,
+			DestState:      destState,
+			RevenuePerMile: d.TotalRevenue / d.TotalMiles,
+			Route:          fmt.Sprintf("%s → %s", originState, destState),
+			Brokered:       brokered,
+		}
+		// Update the ShipDate in the processed data to the extracted time.Time value
+		p.ShipDate.Time = shipDate
+		p.ShipDate.Valid = d.ShipDate.Valid
+		processedData = append(processedData, p)
+	}
+
+	return processedData
+}
+
+type oneWayLaneStats struct {
+	AvgRevPerMile float64
+	TripCount     int
+	AvgEmptyPct   float64
+}
+
+// AnalyzeRoundTripProfitability aggregates the processed data to calculate profitability for round-trip lanes.
+func AnalyzeRoundTripProfitability(data []models.ProcessedLaneData, baseState string) []models.RoundTripLane {
+	oneWayStats := make(map[string]map[string]*oneWayLaneStats) // OriginState -> DestState -> Stats
+
+	// Calculate stats for each one-way lane
+	for _, d := range data {
+		if _, ok := oneWayStats[d.OriginState]; !ok {
+			oneWayStats[d.OriginState] = make(map[string]*oneWayLaneStats)
+		}
+		if _, ok := oneWayStats[d.OriginState][d.DestState]; !ok {
+			oneWayStats[d.OriginState][d.DestState] = &oneWayLaneStats{}
+		}
+		stats := oneWayStats[d.OriginState][d.DestState]
+		stats.AvgRevPerMile += d.RevenuePerMile
+		stats.AvgEmptyPct += d.EmptyPct
+		stats.TripCount++
+	}
+
+	// Finalize one-way averages
+	for origin, destMap := range oneWayStats {
+		for dest, stats := range destMap {
+			if stats.TripCount > 0 {
+				stats.AvgRevPerMile /= float64(stats.TripCount)
+				stats.AvgEmptyPct /= float64(stats.TripCount)
+			}
+			oneWayStats[origin][dest] = stats
+		}
+	}
+
+	var roundTripLanes []models.RoundTripLane
+
+	// Identify outbound from baseState and inbound to baseState
+	outboundFromBase := oneWayStats[baseState]
+	for otherState, outboundStats := range outboundFromBase {
+		inboundToBase := oneWayStats[otherState][baseState]
+
+		if inboundToBase != nil {
+			// Found a round trip
+			avgRoundTripRevenue := (outboundStats.AvgRevPerMile + inboundToBase.AvgRevPerMile) / 2
+			totalTrips := outboundStats.TripCount + inboundToBase.TripCount
+			avgEmptyPct := ((outboundStats.AvgEmptyPct * float64(outboundStats.TripCount)) +
+				(inboundToBase.AvgEmptyPct * float64(inboundToBase.TripCount))) / float64(totalTrips)
+
+			roundTripLanes = append(roundTripLanes, models.RoundTripLane{
+				OtherState:          otherState,
+				AvgRoundTripRevenue: avgRoundTripRevenue,
+				TotalTrips:          totalTrips,
+				AvgEmptyPct:         avgEmptyPct,
+			})
+		}
+	}
+
+	// Sort by AvgRoundTripRevenue (highest to lowest)
+	sort.Slice(roundTripLanes, func(i, j int) bool {
+		return roundTripLanes[i].AvgRoundTripRevenue > roundTripLanes[j].AvgRoundTripRevenue
+	})
+
+	return roundTripLanes
+}
+
+// AnalyzeStateProfitability aggregates the processed data to calculate profitability by state.
+// This function is now deprecated in favor of AnalyzeRoundTripProfitability.
+func AnalyzeStateProfitability(data []models.ProcessedLaneData) []models.StateProfitability {
+	stateStats := make(map[string]*models.StateProfitability)
+
+	for _, d := range data {
+		// Aggregate by destination state
+		if _, ok := stateStats[d.DestState]; !ok {
+			stateStats[d.DestState] = &models.StateProfitability{State: d.DestState}
+		}
+		stats := stateStats[d.DestState]
+		stats.TotalTrips++
+		stats.TotalRevenue += d.TotalRevenue
+		stats.AverageRevenuePerMile += d.RevenuePerMile // Sum up for now, will average later
+	}
+
+	// Finalize calculations and convert map to slice
+	var result []models.StateProfitability
+	for _, stats := range stateStats {
+		if stats.TotalTrips > 0 {
+			stats.AverageRevenuePerMile /= float64(stats.TotalTrips)
+		}
+		result = append(result, *stats)
+	}
+
+	// Sort by AverageRevenuePerMile (highest to lowest)
+	sort.Slice(result, func(i, j int) bool {
+		return result[i].AverageRevenuePerMile > result[j].AverageRevenuePerMile
+	})
+
+	return result
+}
+
+// CalculateCustomLaneScore calculates a custom Lane Quality Score based on standardized features.
+func CalculateCustomLaneScore(lanes []models.RoundTripLane) []models.RoundTripLane {
+	if len(lanes) == 0 {
+		return lanes
+	}
+
+	// Extract features into slices
+	var avgRevPerMileOutbound, avgRevPerMileInbound, totalTrips, avgEmptyPct []float64
+	for _, lane := range lanes {
+		// These values are not directly available in RoundTripLane, they are part of the one-way stats.
+		// For now, I will use AvgRoundTripRevenue for both outbound and inbound for simplicity
+		// and TotalTrips and AvgEmptyPct directly from RoundTripLane.
+		avgRevPerMileOutbound = append(avgRevPerMileOutbound, lane.AvgRoundTripRevenue)
+		avgRevPerMileInbound = append(avgRevPerMileInbound, lane.AvgRoundTripRevenue)
+		totalTrips = append(totalTrips, float64(lane.TotalTrips))
+		avgEmptyPct = append(avgEmptyPct, lane.AvgEmptyPct)
+	}
+
+	// Calculate means and standard deviations
+	meanAvgRevPerMileOutbound, stdDevAvgRevPerMileOutbound := calculateMeanAndStdDev(avgRevPerMileOutbound)
+	meanAvgRevPerMileInbound, stdDevAvgRevPerMileInbound := calculateMeanAndStdDev(avgRevPerMileInbound)
+	meanTotalTrips, stdDevTotalTrips := calculateMeanAndStdDev(totalTrips)
+	meanAvgEmptyPct, stdDevAvgEmptyPct := calculateMeanAndStdDev(avgEmptyPct)
+
+	// Define weights
+	weights := map[string]float64{
+		"AvgRevPerMileOutbound": 1,
+		"AvgRevPerMileInbound":  1,
+		"TotalTrips":            1,
+		"AvgEmptyPct":           0.5,
+	}
+
+	// Calculate scores
+	for i := range lanes {
+		scaledAvgRevPerMileOutbound := (avgRevPerMileOutbound[i] - meanAvgRevPerMileOutbound) / stdDevAvgRevPerMileOutbound
+		scaledAvgRevPerMileInbound := (avgRevPerMileInbound[i] - meanAvgRevPerMileInbound) / stdDevAvgRevPerMileInbound
+		scaledTotalTrips := (totalTrips[i] - meanTotalTrips) / stdDevTotalTrips
+		scaledAvgEmptyPct := (avgEmptyPct[i] - meanAvgEmptyPct) / stdDevAvgEmptyPct
+
+		// Invert AvgEmptyPct
+		scaledAvgEmptyPct *= -1
+
+		lanes[i].LaneQualityScore = (
+			scaledAvgRevPerMileOutbound*weights["AvgRevPerMileOutbound"] +
+			scaledAvgRevPerMileInbound*weights["AvgRevPerMileInbound"] +
+			scaledTotalTrips*weights["TotalTrips"] +
+			scaledAvgEmptyPct*weights["AvgEmptyPct"]) / (weights["AvgRevPerMileOutbound"] + weights["AvgRevPerMileInbound"] + weights["TotalTrips"] + weights["AvgEmptyPct"])
+	}
+
+	return lanes
+}
+
+// calculateMeanAndStdDev is a helper function to calculate mean and standard deviation.
+func calculateMeanAndStdDev(data []float64) (mean, stdDev float64) {
+	if len(data) == 0 {
+		return 0, 0
+	}
+
+	// Calculate mean
+	sum := 0.0
+	for _, v := range data {
+		sum += v
+	}
+	mean = sum / float64(len(data))
+
+	// Calculate standard deviation
+	sumSqDiff := 0.0
+	for _, v := range data {
+		sumSqDiff += (v - mean) * (v - mean)
+	}
+	stdDev = math.Sqrt(sumSqDiff / float64(len(data)))
+
 	return
 }

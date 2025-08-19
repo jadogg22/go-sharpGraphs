@@ -569,3 +569,45 @@ type Driver struct {
 	FleetManager string `json:"fleet_manager"`
 	Miles        []int  `json:"summaries"`
 }
+
+type LaneProfit struct {
+	OrderID          string       `json:"order_id"`
+	ShipDate         sql.NullTime `json:"ship_date"`
+	Origin           string    `json:"origin"`
+	Destination      string    `json:"destination"`
+	TotalMiles       float64   `json:"total_miles"`
+	TotalRevenue     float64   `json:"total_revenue"`
+	Customer         string    `json:"customer"`
+	CustomerCategory string    `json:"customer_category"`
+	EmptyPct         float64   `json:"empty_pct"`
+}
+
+// ProcessedLaneData holds the enriched lane data after initial processing.
+
+type ProcessedLaneData struct {
+	LaneProfit
+	OriginState    string  `json:"origin_state"`
+	DestState      string  `json:"dest_state"`
+	RevenuePerMile float64 `json:"revenue_per_mile"`
+	Route          string  `json:"route"`
+	Brokered       string  `json:"brokered"`
+}
+
+// StateProfitability holds the aggregated profitability stats for a state.
+
+type StateProfitability struct {
+	State                string  `json:"state"`
+	TotalTrips           int     `json:"total_trips"`
+	TotalRevenue         float64 `json:"total_revenue"`
+	AverageRevenuePerMile float64 `json:"average_revenue_per_mile"`
+}
+
+// RoundTripLane holds the aggregated profitability stats for a round-trip lane.
+
+type RoundTripLane struct {
+	OtherState            string  `json:"other_state"`
+	AvgRoundTripRevenue   float64 `json:"avg_round_trip_revenue"`
+	TotalTrips            int     `json:"total_trips"`
+	AvgEmptyPct           float64 `json:"avg_empty_pct"`
+	LaneQualityScore      float64 `json:"lane_quality_score"`
+}

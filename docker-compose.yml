@@ -18,5 +18,5 @@ services:
       dockerfile: Dockerfile.go-backend
     container_name: go-backend
     ports:
-      - "5000:5000" 
+      - "5001:5000" 
     restart: unless-stopped

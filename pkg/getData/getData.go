@@ -36,7 +36,8 @@ func init() {
 		fmt.Println(err)
 	}
 
-	for {
+	// Search for the .env file in the current directory and up to 3 parent directories.
+	for i := 0; i < 4; i++ {
 		if _, err := os.Stat(filepath.Join(dir, ".env")); err == nil {
 			err := godotenv.Load(filepath.Join(dir, ".env"))
 			if err != nil {
@@ -44,13 +45,7 @@ func init() {
 			}
 			break
 		}
-
-		parent := filepath.Dir(dir)
-		if parent == dir {
-			fmt.Println("Error finding .env file")
-			break
-		}
-		dir = parent
+		dir = filepath.Dir(dir)
 	}
 
 	SQL_USER = os.Getenv("SQL_USER")
@@ -410,6 +405,40 @@ func GetTransportationDailyOps(startDate, endDate time.Time) ([]*models.DailyOps
 
 	rows.Close()
 	return myData, nil
+}
+
+func GetLaneData(startDate, endDate time.Time) ([]models.LaneProfit, error) {
+	query := GetLaneProfit1(startDate, endDate)
+	rows, err := conn.Query(query)
+	if err != nil {
+		return nil, fmt.Errorf("error querying database: %w", err)
+	}
+	defer rows.Close()
+
+	var laneProfits []models.LaneProfit
+	for rows.Next() {
+		var lp models.LaneProfit
+		if err := rows.Scan(
+			&lp.OrderID,
+			&lp.ShipDate,
+			&lp.Origin,
+			&lp.Destination,
+			&lp.TotalMiles,
+			&lp.TotalRevenue,
+			&lp.Customer,
+			&lp.CustomerCategory,
+			&lp.EmptyPct,
+		); err != nil {
+			return nil, fmt.Errorf("error scanning row: %w", err)
+		}
+		laneProfits = append(laneProfits, lp)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating rows: %w", err)
+	}
+
+	return laneProfits, nil
 }
 
 func GetVacationFromDB(companyId string) ([]models.VacationHours, error) {
