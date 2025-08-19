@@ -173,7 +173,7 @@ const TransDrivers = () => {
               }}
             />
             <Tooltip
-              formatter={(value, name) => [`${value} miles`, name]}
+              formatter={(value, name) => [`${Math.round(value)} miles`, name]}
               labelFormatter={(label) => `Week: ${label}`}
             />
             <Legend />
