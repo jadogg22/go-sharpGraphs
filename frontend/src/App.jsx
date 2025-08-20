@@ -106,8 +106,7 @@ const App = () => {
               <li>
                 <NavLink
                   to="/lane-profitability"
-                  activeClassName="bg-gray-700"
-                  className="block py-2 px-4 hover:bg-gray-700"
+                  className={({ isActive }) => isActive ? "bg-gray-700" : "block py-2 px-4 hover:bg-gray-700"}
                 >
                   Lane Profitability
                 </NavLink>

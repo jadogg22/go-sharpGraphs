@@ -82,7 +82,7 @@ func main() {
 			TransportationGroup.GET("/Daily_Ops", handlers.Daily_Ops)
 			TransportationGroup.Any("/Generate_Sportsmans", handlers.Generate_Sportsmans)
 			TransportationGroup.GET("/DriverManager", handlers.DriverManager)
-			TransportationGroup.GET("/LaneProfit", handlers.LaneProfit)
+			TransportationGroup.GET("/statistics/laneprofitability/report", handlers.LaneProfit)
 		}
 		// ---------- Logisitics Handlers ----------
 		LogisticsGroup := apiGroup.Group("/Logistics")
