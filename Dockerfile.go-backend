@@ -2,19 +2,11 @@
 FROM golang:1.23.1 AS go-builder
 
 # Install Python and pip
-RUN apt-get update && apt-get install -y python3 python3-pip
-
-WORKDIR /app
-
-# Copy Go source code and dependencies
-COPY go.mod go.sum ./
-RUN go mod download
-
-COPY . .
+# RUN apt-get update && apt-get install -y python3 python3-pip
 
 # Install Python dependencies
-COPY statistics/requirements.txt statistics/requirements.txt
-RUN pip3 install -r statistics/requirements.txt
+# COPY statistics/requirements.txt statistics/requirements.txt
+# RUN pip3 install -r statistics/requirements.txt
 
 # Build the Go application
 RUN go build -o /app/server .
