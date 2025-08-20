@@ -6,3 +6,10 @@ node_modules/
 
 tmp/
 
+pkg/getData/reports/
+Statistics/.Rhistory
+Statistics/*.csv
+Statistics/lane_quality_score_summary.md
+Statistics/*.zip
+statistics/reports/
+pkg/getData/temp_test.go

@@ -3,6 +3,7 @@ package helpers
 import (
 	"bytes"
 	"fmt"
+	"log"
 	"math"
 	"slices"
 	"sort"
@@ -654,7 +655,10 @@ func FindLatestDateFromRevenueData(data []models.WeeklyRevenue) (time.Time, erro
 	}
 	for i := year; i >= 2020; i-- {
 		for j := week; j >= 1; j-- {
-			revenueStruct := data[j]
+			if j > len(data) {
+				continue
+			}
+			revenueStruct := data[j-1]
 			rev := revenueStruct.GetRevenue(i)
 
 			if rev == nil {
@@ -725,54 +729,55 @@ func GenerateDateRanges(startDate time.Time) []*DateRange {
 }
 
 func UpdateWeeklyRevenue(weeklyRevenues []models.WeeklyRevenue, dateRanges []*DateRange) {
+	log.Printf("UpdateWeeklyRevenue called. weeklyRevenues length: %d, dateRanges length: %d", len(weeklyRevenues), len(dateRanges))
 	for _, dateRange := range dateRanges {
 		year, weekNumber := dateRange.StartDate.ISOWeek() // Get the ISO week number
 
-		// Update the revenue field based on the year
-		switch year {
-		case 2021:
-			weeklyRevenues[weekNumber-1].Revenue2021 = new(float64)
-			*weeklyRevenues[weekNumber-1].Revenue2021 = dateRange.Amount
-		case 2022:
-			weeklyRevenues[weekNumber-1].Revenue2022 = new(float64)
-			*weeklyRevenues[weekNumber-1].Revenue2022 = dateRange.Amount
-		case 2023:
-			weeklyRevenues[weekNumber-1].Revenue2023 = new(float64)
-			*weeklyRevenues[weekNumber-1].Revenue2023 = dateRange.Amount
-		case 2024:
-			weeklyRevenues[weekNumber-1].Revenue2024 = new(float64)
-			*weeklyRevenues[weekNumber-1].Revenue2024 = dateRange.Amount
-		default:
-			fmt.Println("Year not in range")
-			continue // Skip if the year is not in the range
+		log.Printf("Processing dateRange: Week %d, Year %d, Amount %f", weekNumber, year, dateRange.Amount)
+
+		// Find the week in the slice
+		foundWeek := false
+		for i, week := range weeklyRevenues {
+			if week.Name == weekNumber {
+				foundWeek = true
+				// Update the revenue for the year
+				key := fmt.Sprintf("%d Revenue", year)
+				if weeklyRevenues[i].Revenues == nil {
+					weeklyRevenues[i].Revenues = make(map[string]*float64)
+				}
+				weeklyRevenues[i].Revenues[key] = &dateRange.Amount
+				log.Printf("Updated weeklyRevenues[%d] for week %d, year %d with amount %f", i, weekNumber, year, dateRange.Amount)
+				break
+			}
+		}
+		if !foundWeek {
+			log.Printf("Warning: Week %d not found in weeklyRevenues slice. Year: %d, Amount: %f", weekNumber, year, dateRange.Amount)
 		}
 	}
 
 	// if there are 53 weeks then we're going to remove it and apeend the results to the next year
 	if len(weeklyRevenues) == 53 {
+		log.Printf("Handling 53rd week data.")
 		// remove the last week
 		endOfYear := weeklyRevenues[52]
 		weeklyRevenues = weeklyRevenues[:52]
 
-		// remove 2021 week one
-		weeklyRevenues[0].Revenue2021 = nil
+		currentYear := time.Now().Year()
+		for year := 2021; year <= currentYear; year++ {
+			key := fmt.Sprintf("%d Revenue", year)
+			prevYearKey := fmt.Sprintf("%d Revenue", year-1)
 
-		if endOfYear.Revenue2021 != nil {
-			*weeklyRevenues[0].Revenue2022 += *endOfYear.Revenue2021
+			if endOfYear.Revenues[prevYearKey] != nil {
+				if weeklyRevenues[0].Revenues[key] == nil {
+					weeklyRevenues[0].Revenues[key] = new(float64)
+				}
+				*weeklyRevenues[0].Revenues[key] += *endOfYear.Revenues[prevYearKey]
+				log.Printf("Appended 53rd week revenue from %s to %s for week 1.", prevYearKey, key)
+			}
 		}
-
-		if endOfYear.Revenue2022 != nil {
-			*weeklyRevenues[0].Revenue2023 = *endOfYear.Revenue2022
-		}
-
-		if endOfYear.Revenue2023 != nil {
-			*weeklyRevenues[0].Revenue2024 += *endOfYear.Revenue2023
-		}
-
 	}
 
-	fmt.Println("Updated weekly revenues")
-
+	log.Printf("UpdateWeeklyRevenue finished.")
 }
 
 func CombineStackedMilesData(when string, data []models.StackedMilesData) []models.StackedMilesData {
@@ -1294,8 +1299,7 @@ func CalculateCustomLaneScore(lanes []models.RoundTripLane) []models.RoundTripLa
 		// Invert AvgEmptyPct
 		scaledAvgEmptyPct *= -1
 
-		lanes[i].LaneQualityScore = (
-			scaledAvgRevPerMileOutbound*weights["AvgRevPerMileOutbound"] +
+		lanes[i].LaneQualityScore = (scaledAvgRevPerMileOutbound*weights["AvgRevPerMileOutbound"] +
 			scaledAvgRevPerMileInbound*weights["AvgRevPerMileInbound"] +
 			scaledTotalTrips*weights["TotalTrips"] +
 			scaledAvgEmptyPct*weights["AvgEmptyPct"]) / (weights["AvgRevPerMileOutbound"] + weights["AvgRevPerMileInbound"] + weights["TotalTrips"] + weights["AvgEmptyPct"])

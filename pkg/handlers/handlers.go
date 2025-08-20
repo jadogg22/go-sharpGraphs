@@ -2,7 +2,10 @@ package handlers
 
 import (
 	"fmt"
+	"log"
 	"net/http"
+	"os"
+	"os/exec"
 	"time"
 
 	"github.com/jadogg22/go-sharpGraphs/pkg/cache"
@@ -43,35 +46,40 @@ func Dashboard(c *gin.Context) {
 // This is the handler function for the transportation yearly revenue data, this function will return
 // 52 weeks per year of the revenue earned to compair and contrast.
 func Trans_year_by_year(c *gin.Context) {
-	// Now that we have the cache lets use it and not hit the db everytime
+	log.Printf("Trans_year_by_year handler called.")
 	cacheKey := "transportationYearByYear"
-	cachedData, typeID, found := cache.MyCache.Get(cacheKey)
-	if found {
-		if typeID == "[]models.WeeklyRevenue" {
-			if cachedData, ok := cachedData.([]models.WeeklyRevenue); ok {
-				c.JSON(200, gin.H{"Data": cachedData, "Message": "Data from the cache"})
+	
 
-				return
-			}
-		}
-		fmt.Println("Error casting the data")
+	log.Printf("Performing database health check.")
+	err := database.CheckTransWeeklyRevHealth()
+	if err != nil {
+		log.Printf("Database health check failed: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"Message": "Database health check failed",
+			"Error":   err.Error(),
+		})
+		return
 	}
+	log.Printf("Database health check passed.")
 
-	// First lets get the cached weekly revunue data
+	log.Printf("Attempting to get weekly revenue data from database.")
 	data, err := database.GetWeeklyRevenueData()
 	if err != nil {
+		log.Printf("Error getting data from database: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"Message": "Error getting data from the database",
 			"Error":   err,
 		})
+		return
 	}
+	log.Printf("Successfully retrieved %d weekly revenue entries from database.", len(data))
 
-	// Because its not very likly that we are at the end of the week
-	// and we want to show the most recent data we need to check the
-	// Transportation table and get the most recent data from the ms sql server
-
+	log.Printf("Attempting to update transportation revenue data.")
 	getdata.UpdateTransRevData(data)
+	log.Printf("Finished updating transportation revenue data.")
+
 	if len(data) == 0 {
+		log.Printf("No data found for the week after update.")
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"Message": "Error getting data from the database",
 			"Error":   "No data found for the week",
@@ -80,11 +88,13 @@ func Trans_year_by_year(c *gin.Context) {
 	}
 
 	if len(data) == 53 {
+		log.Printf("Data length is 53, trimming to 52.")
 		data = data[:52]
 	}
 
-	// Set the cache
+	log.Printf("Setting cache for key: %s", cacheKey)
 	cache.MyCache.Set(cacheKey, data, "[]models.WeeklyRevenue", time.Hour*2)
+	log.Printf("Cache set successfully.")
 
 	c.JSON(200, gin.H{
 		"Data": data,
@@ -228,49 +238,49 @@ func LaneProfit(c *gin.Context) {
 	startDateStr := c.Query("startDate")
 	endDateStr := c.Query("endDate")
 
-	// For now, hardcode the base state to "UT". This could be made configurable later.
-	baseState := "UT"
-
 	if startDateStr == "" || endDateStr == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "startDate and endDate are required"})
 		return
 	}
 
-	startDate, err := time.Parse("2006-01-02", startDateStr)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid startDate format"})
-		return
-	}
-
-	endDate, err := time.Parse("2006-01-02", endDateStr)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid endDate format"})
-		return
-	}
-
-	// 1. Get the raw data from the database
-	rawData, err := getdata.GetLaneData(startDate, endDate)
+	// 1. Get the data as a CSV file
+	csvFilePath, err := getdata.GetOrderRevenueReportDataAsCSV(startDateStr, endDateStr)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"Message": "Error getting data from the database",
+			"Message": "Error getting data as CSV",
 			"error":   err.Error(),
 		})
 		return
 	}
+	defer os.Remove(csvFilePath) // Clean up the CSV file
 
-	// 2. Process and enrich the data
-	processedData := helpers.ProcessLaneData(rawData)
+	// 2. Create a temporary file for the PDF output
+	pdfFile, err := os.CreateTemp("", "report-*.pdf")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"Message": "Error creating temporary PDF file",
+			"error":   err.Error(),
+		})
+		return
+	}
+	pdfFilePath := pdfFile.Name()
+	pdfFile.Close()
+	defer os.Remove(pdfFilePath) // Clean up the PDF file
 
-	// 3. Analyze round-trip profitability
-	roundTripLanes := helpers.AnalyzeRoundTripProfitability(processedData, baseState)
+	// 3. Execute the Python script
+	cmd := exec.Command("python", "statistics/main.py", csvFilePath, pdfFilePath)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"Message": "Error executing Python script",
+			"error":   err.Error(),
+			"output":  string(output),
+		})
+		return
+	}
 
-	// 4. Calculate Lane Quality Score
-	scoredLanes := helpers.CalculateCustomLaneScore(roundTripLanes)
-
-	// 5. Return the analyzed data
-	c.JSON(http.StatusOK, gin.H{
-		"data": scoredLanes,
-	})
+	// 4. Send the PDF file to the client
+	c.File(pdfFilePath)
 }
 
 // ---------- Logisitics Handlers ----------

@@ -2,6 +2,7 @@ package models
 
 import (
 	"database/sql"
+	"fmt"
 	"strings"
 	"time"
 )
@@ -432,27 +433,16 @@ type OTWTDStats struct {
 }
 
 type WeeklyRevenue struct {
-	Name        int      `json:"Name"`
-	Revenue2021 *float64 `json:"2021 Revenue,omitempty"`
-	Revenue2022 *float64 `json:"2022 Revenue,omitempty"`
-	Revenue2023 *float64 `json:"2023 Revenue,omitempty"`
-	Revenue2024 *float64 `json:"2024 Revenue,omitempty"`
-	Revenue2025 *float64 `json:"2025 Revenue,omitempty"`
+	Name     int                `json:"Name"`
+	Revenues map[string]*float64 `json:"Revenues"`
 }
 
 func (wr *WeeklyRevenue) GetRevenue(year int) *float64 {
-	switch year {
-	case 2021:
-		return wr.Revenue2021
-	case 2022:
-		return wr.Revenue2022
-	case 2023:
-		return wr.Revenue2023
-	case 2024:
-		return wr.Revenue2024
-	default:
-		return nil
+	key := fmt.Sprintf("%d Revenue", year)
+	if revenue, ok := wr.Revenues[key]; ok {
+		return revenue
 	}
+	return nil
 }
 
 type VacationHours struct {

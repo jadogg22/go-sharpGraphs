@@ -320,8 +320,6 @@ ORDER BY orders.id
 `, startdateStr, startdateStr, endDateStr, endDateStr)
 }
 
-
-
 func GetVacationHoursByCompanyQuery(companyID string) string {
 	if companyID == "drivers" {
 		return DriversVacationHoursQuery()
@@ -550,4 +548,73 @@ ORDER BY
     month_order, 
     week_number;
 `
+}
+
+// this is pretty much the same as the OrderRevenueReport but it is used for mcloud
+func OrderRevenueReport(startDate, endDate string) string {
+	return fmt.Sprintf(`
+		select
+			orders.id order_id,
+			orders.operations_user operations_user,
+			orders.revenue_code_id revenue_code_id,
+			orders.freight_charge freight_charge,
+			orders.bill_distance bill_miles,
+			orders.bill_date bill_date,
+			orders.ctrl_party_id controlling_party,
+			orders.commodity_id commodity,
+			orders.order_type_id order_type,
+			orders.equipment_type_id order_trailer_type,
+			origin.state origin_value,
+			dest.state destination_value,
+			customer.id customer_id,
+			customer.name customer_name,
+			customer.category customer_category,
+			category.descr category_descr,
+			movement.id movement_id,
+			loaded,
+			move_distance,
+			movement.brokerage,
+			trailer.trailer_type trailer_type,
+			origin.city_name origin_city,
+			origin.state origin_state,
+			dest.city_name dest_city,
+			dest.state dest_state,
+			other_charge.amount oc_amount,
+			charge_code.is_fuel_surcharge is_fuel_surcharge,
+			dest.sched_arrive_early report_date,
+			dest.actual_arrival actual_date,
+			prorated_orderdist.empty_distance empty_miles,
+			prorated_orderdist.loaded_distance loaded_miles,
+			(prorated_orderdist.empty_distance+prorated_orderdist.loaded_distance) total_miles,
+			orders.total_charge total_revenue,
+			revenue_code_id detail_id
+		from orders
+		left outer join customer on customer.id = orders.customer_id and customer.company_id = 'TMS'
+		left outer join category on category.id = customer.category and category.company_id = 'TMS'
+		left outer join movement_order on movement_order.order_id = orders.id and movement_order.company_id = 'TMS'
+		left outer join movement on movement.id = movement_order.movement_id and movement.company_id = 'TMS'
+		left outer join continuity trailercont on (movement.id = trailercont.movement_id) and (trailercont.equipment_type_id='L') and trailercont.company_id = 'TMS'
+		left outer join trailer on trailer.id = trailercont.equipment_id and trailer.company_id = 'TMS'
+		left outer join other_charge on other_charge.order_id = orders.id and other_charge.company_id = 'TMS'
+		left outer join charge_code on charge_code.id = other_charge.charge_id
+		left outer join prorated_orderdist on prorated_orderdist.order_id = orders.id and prorated_orderdist.company_id = 'TMS',
+		stop origin,
+		stop dest
+		where orders.company_id = 'TMS'
+		and orders.status <> 'Q'
+		and orders.status <> 'V'
+		and (orders.subject_order_status is null or orders.subject_order_status <> 'S')
+		and loaded = 'L'
+		and (
+			(dest.actual_arrival is not null and dest.actual_arrival >= '%s')
+			or (dest.actual_arrival is null and dest.sched_arrive_early >= '%s')
+		)
+		and (
+			(dest.actual_arrival is not null and dest.actual_arrival <= '%s')
+			or (dest.actual_arrival is null and dest.sched_arrive_early <= '%s')
+		)
+		and origin.id = orders.shipper_stop_id and origin.company_id = 'TMS'
+		and dest.id = orders.consignee_stop_id and dest.company_id = 'TMS'
+		order by revenue_code_id, order_id, movement_id
+	`, startDate, startDate, endDate, endDate)
 }

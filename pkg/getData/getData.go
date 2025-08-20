@@ -2,8 +2,10 @@ package getdata
 
 import (
 	"database/sql"
+	"encoding/csv"
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -148,7 +150,7 @@ func getTransportationTractorRevenue(conn *sql.DB) {
 		} else {
 			user = "NULL"
 		}
-		fmt.Printf("Move_ID: %d, username: %s\n", d.MoveID, user)
+		fmt.Printf("Move_ID: %d, username: %s", d.MoveID, user)
 	}
 }
 
@@ -213,58 +215,63 @@ func UpdateDateRangeAmounts(dateRanges []*helpers.DateRange) error {
 		EndDateStr := dateRange.EndDate.Format("2006-01-02 00:00:00")
 
 		query := fmt.Sprintf("SELECT SUM(total_charge) from orders where company_id = 'tms' and bol_recv_date between '%s' and '%s'", startDateStr, EndDateStr)
+		log.Printf("Querying original DB for date range %s to %s: %s", startDateStr, EndDateStr, query)
 
 		var amount sql.NullFloat64
 
 		err := conn.QueryRow(query).Scan(&amount)
 		if err != nil {
 			if err == sql.ErrNoRows {
-				fmt.Println("No rows returned from query")
+				log.Printf("No rows returned from query for date range %s to %s", startDateStr, EndDateStr)
 				dateRange.Amount = 0
 			} else {
-				fmt.Println("Error querying database: " + err.Error())
+				log.Printf("Error querying original database for date range %s to %s: %v", startDateStr, EndDateStr, err)
 				return err
 			}
 		}
 
 		if amount.Valid {
 			dateRange.Amount = amount.Float64
+			log.Printf("Fetched amount %f for date range %s to %s", dateRange.Amount, startDateStr, EndDateStr)
 		} else {
 			dateRange.Amount = 0
+			log.Printf("Fetched null/invalid amount for date range %s to %s. Setting to 0.", startDateStr, EndDateStr)
 		}
 	}
 	return nil
 }
 
 func UpdateTransRevData(data []models.WeeklyRevenue) {
+	log.Printf("UpdateTransRevData called with %d data entries.", len(data))
 
 	latestDataDate, err := helpers.FindLatestDateFromRevenueData(data)
 	if err != nil {
-		err := errors.New("Error finding latest date from revenue data" + err.Error())
-		fmt.Println(err)
+		log.Printf("Error finding latest date from revenue data: %v", err)
+		return // Add return here to prevent further execution with an error
 	}
+
+	log.Printf("Latest data date: %v", latestDataDate)
 
 	var dateRanges []*helpers.DateRange
 	dateRanges = helpers.GenerateDateRanges(latestDataDate)
+	log.Printf("Generated %d date ranges.", len(dateRanges))
 	if len(dateRanges) < 1 {
-		fmt.Println("No date ranges found")
+		log.Printf("No date ranges found.")
+		return // Add return here to prevent further execution with no date ranges
 	}
 
-	// Update the date range amounts
-
+	log.Printf("Attempting to update date range amounts.")
 	if err := UpdateDateRangeAmounts(dateRanges); err != nil {
-		err := errors.New("Error updating date range amounts " + err.Error())
-		fmt.Println(err)
+		log.Printf("Error updating date range amounts: %v", err)
+		return // Add return here to prevent further execution with an error
 	}
+	log.Printf("Successfully updated date range amounts.")
 
-	if len(dateRanges) < 3 {
-		// take the first weeks up the the last 3 weeks
-		newDateRanges := dateRanges[:3]
-		//update my database with the new data
-		database.UpdateMyDatabase(newDateRanges)
-	}
+	database.UpdateMyDatabase(dateRanges)
 
+	log.Printf("Attempting to update weekly revenue in helpers.")
 	helpers.UpdateWeeklyRevenue(data, dateRanges)
+	log.Printf("Successfully updated weekly revenue in helpers.")
 }
 
 type revenueData struct {
@@ -909,4 +916,158 @@ func GetDriverManagerData() ([]models.Driver, error) {
 	}
 
 	return drivers, nil
+}
+
+// InitializeDatabaseData ensures the trans_weekly_rev table is populated with historical data.
+func InitializeDatabaseData() {
+	log.Println("Initializing trans_weekly_rev data...")
+
+	var rowCount int
+	err := database.DB.QueryRow("SELECT COUNT(*) FROM transportation_weekly_revenue").Scan(&rowCount)
+	if err != nil {
+		log.Printf("Error checking transportation_weekly_revenue table row count: %v", err)
+		return
+	}
+
+	if rowCount == 0 {
+		log.Println("transportation_weekly_revenue table is empty. Preparing to populate from START_YEAR.")
+
+		startDate := time.Date(database.START_YEAR, time.January, 1, 0, 0, 0, 0, time.UTC)
+		// Adjust to the Sunday of the first week of START_YEAR
+		for startDate.Weekday() != time.Sunday {
+			startDate = startDate.AddDate(0, 0, -1)
+		}
+
+		dateRanges := helpers.GenerateDateRanges(startDate)
+		log.Printf("Generated %d date ranges for initial population.", len(dateRanges))
+
+		if err := UpdateDateRangeAmounts(dateRanges); err != nil {
+			log.Printf("Error updating date range amounts during initialization: %v", err)
+			return
+		}
+		log.Println("Successfully updated date range amounts during initialization.")
+
+		log.Println("Calling database.UpdateMyDatabase with generated date ranges...")
+		database.UpdateMyDatabase(dateRanges)
+		log.Println("Successfully populated transportation_weekly_revenue table.")
+
+	} else {
+		log.Println("transportation_weekly_revenue table already contains data. Performing incremental update.")
+		// Get existing data from the database for incremental update
+		data, err := database.GetWeeklyRevenueData()
+		if err != nil {
+			log.Printf("Error getting existing weekly revenue data for incremental update: %v", err)
+			return
+		}
+		UpdateTransRevData(data)
+	}
+	log.Println("Finished initializing trans_weekly_rev data.")
+}
+
+func GetOrderRevenueReportDataAsCSV(startDate, endDate string) (string, error) {
+    query := OrderRevenueReport(startDate, endDate)
+    rows, err := conn.Query(query)
+    if err != nil {
+        return "", fmt.Errorf("error querying database: %w", err)
+    }
+    defer rows.Close()
+
+    // Create a temporary CSV file
+    csvFile, err := os.CreateTemp("", "report-*.csv")
+    if err != nil {
+        return "", fmt.Errorf("failed to create temp csv file: %w", err)
+    }
+    defer csvFile.Close()
+
+    writer := csv.NewWriter(csvFile)
+    defer writer.Flush()
+
+    // Write headers
+    cols, err := rows.Columns()
+    if err != nil {
+        return "", fmt.Errorf("failed to get column names: %w", err)
+    }
+    if err := writer.Write(cols); err != nil {
+        return "", fmt.Errorf("failed to write csv headers: %w", err)
+    }
+
+    // Prepare value holders
+    colCount := len(cols)
+    values := make([]interface{}, colCount)
+    valuePtrs := make([]interface{}, colCount)
+
+    for rows.Next() {
+        for i := range values {
+            valuePtrs[i] = &values[i]
+        }
+        if err := rows.Scan(valuePtrs...); err != nil {
+            return "", fmt.Errorf("row scan failed: %w", err)
+        }
+
+        record := make([]string, colCount)
+        for i, val := range values {
+            if val == nil {
+                record[i] = ""
+            } else {
+                switch v := val.(type) {
+                case []byte:
+                    record[i] = string(v)
+                case time.Time:
+                    record[i] = v.Format("2006-01-02 15:04:05")
+                default:
+                    record[i] = fmt.Sprintf("%v", v)
+                }
+            }
+        }
+
+        if err := writer.Write(record); err != nil {
+            return "", fmt.Errorf("failed to write csv record: %w", err)
+        }
+    }
+
+    if err = rows.Err(); err != nil {
+        return "", fmt.Errorf("error iterating rows: %w", err)
+    }
+
+    return csvFile.Name(), nil
+}
+
+func ExecuteOrderRevenueReportQuery(startDate, endDate string) ([]map[string]interface{}, error) {
+    query := OrderRevenueReport(startDate, endDate)
+    rows, err := conn.Query(query)
+    if err != nil {
+        return nil, fmt.Errorf("error querying database: %w", err)
+    }
+    defer rows.Close()
+
+    cols, err := rows.Columns()
+    if err != nil {
+        return nil, fmt.Errorf("failed to get columns: %w", err)
+    }
+
+    var results []map[string]interface{}
+    for rows.Next() {
+        columns := make([]interface{}, len(cols))
+        columnPointers := make([]interface{}, len(cols))
+        for i := range columns {
+            columnPointers[i] = &columns[i]
+        }
+
+        if err := rows.Scan(columnPointers...); err != nil {
+            return nil, fmt.Errorf("failed to scan row: %w", err)
+        }
+
+        m := make(map[string]interface{})
+        for i, colName := range cols {
+            val := columnPointers[i].(*interface{})
+            m[colName] = *val
+        }
+        results = append(results, m)
+    }
+
+    if err = rows.Err(); err != nil {
+        return nil, fmt.Errorf("error during iteration: %w", err)
+    }
+
+    return results, nil
 }

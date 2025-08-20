@@ -39,6 +39,39 @@ const LaneProfitability = () => {
       });
   };
 
+  const downloadReport = () => {
+    if (!startDate || !endDate) {
+      setError('Please select both a start and end date.');
+      return;
+    }
+    setLoading(true);
+    setError(null);
+
+    const url = `/api/statistics/laneprofitability/report?startDate=${startDate}&endDate=${endDate}`;
+
+    fetch(url)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        return response.blob();
+      })
+      .then(blob => {
+        const url = window.URL.createObjectURL(new Blob([blob]));
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `lane_profitability_report_${startDate}_${endDate}.pdf`);
+        document.body.appendChild(link);
+        link.click();
+        link.parentNode.removeChild(link);
+        setLoading(false);
+      })
+      .catch(error => {
+        setError(error.message);
+        setLoading(false);
+      });
+  };
+
   return (
     <div className="p-4 pt-64">
       <h1 className="text-2xl font-bold mb-4">Lane Profitability Analysis</h1>
@@ -69,6 +102,13 @@ const LaneProfitability = () => {
           className="mt-5 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400"
         >
           {loading ? 'Loading...' : 'Analyze'}
+        </button>
+        <button
+          onClick={downloadReport}
+          disabled={loading}
+          className="mt-5 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-400"
+        >
+          {loading ? 'Downloading...' : 'Download Report'}
         </button>
       </div>
 

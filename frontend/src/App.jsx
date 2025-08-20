@@ -22,8 +22,7 @@ const App = () => {
               <li>
                 <NavLink
                   to="/Dashboard"
-                  activeClassName="p-4 bg-gray-700"
-                  className="block py-2 px-4 hover:bg-gray-700"
+                  className={({ isActive }) => isActive ? "p-4 bg-gray-700" : "block py-2 px-4 hover:bg-gray-700"}
                 >
                   Dashboard
                 </NavLink>
@@ -32,8 +31,7 @@ const App = () => {
                 <NavLink
                   end
                   to="/"
-                  activeClassName="p-4 bg-gray-700"
-                  className="block py-2 px-4 hover:bg-gray-700"
+                  className={({ isActive }) => isActive ? "p-4 bg-gray-700" : "block py-2 px-4 hover:bg-gray-700"}
                 >
                   Transporation Weekly Revenue
                 </NavLink>
@@ -42,8 +40,7 @@ const App = () => {
                 <NavLink
                   end
                   to="/LogisticsYearly"
-                  activeClassName="p-4 bg-gray-700"
-                  className="block py-2 px-4 hover:bg-gray-700"
+                  className={({ isActive }) => isActive ? "p-4 bg-gray-700" : "block py-2 px-4 hover:bg-gray-700"}
                 >
                   Logistics Weekly Revenue
                 </NavLink>
@@ -51,8 +48,7 @@ const App = () => {
               <li>
                 <NavLink
                   to="/dailyOps"
-                  activeClassName="bg-gray-700"
-                  className="block py-2 px-4 hover:bg-gray-700"
+                  className={({ isActive }) => isActive ? "bg-gray-700" : "block py-2 px-4 hover:bg-gray-700"}
                 >
                   Daily Ops
                 </NavLink>
@@ -60,8 +56,7 @@ const App = () => {
               <li>
                 <NavLink
                   to="/RevenuePie"
-                  activeClassName="bg-gray-700"
-                  className="block py-2 px-4 hover:bg-gray-700"
+                  className={({ isActive }) => isActive ? "bg-gray-700" : "block py-2 px-4 hover:bg-gray-700"}
                 >
                   Revenue Pie
                 </NavLink>
@@ -69,8 +64,7 @@ const App = () => {
               <li>
                 <NavLink
                   to="/LogisticsMTD"
-                  activeClassName="bg-gray-700"
-                  className="block py-2 px-4 hover:bg-gray-700"
+                  className={({ isActive }) => isActive ? "bg-gray-700" : "block py-2 px-4 hover:bg-gray-700"}
                 >
                   Logistics Month to Date
                 </NavLink>
@@ -78,8 +72,7 @@ const App = () => {
               <li>
                 <NavLink
                   to="/EmptyMiles"
-                  activeClassName="bg-gray-700"
-                  className="block py-2 px-4 hover:bg-gray-700"
+                  className={({ isActive }) => isActive ? "bg-gray-700" : "block py-2 px-4 hover:bg-gray-700"}
                 >
                   Empty Miles
                 </NavLink>
@@ -87,8 +80,7 @@ const App = () => {
               <li>
                 <NavLink
                   to="/DriverManagers"
-                  activeClassName="bg-gray-700"
-                  className="block py-2 px-4 hover:bg-gray-700"
+                  className={({ isActive }) => isActive ? "bg-gray-700" : "block py-2 px-4 hover:bg-gray-700"}
                 >
                   Drivers' Miles
                 </NavLink>

@@ -3,7 +3,11 @@ package main
 import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/jadogg22/go-sharpGraphs/pkg/getData"
 	"github.com/jadogg22/go-sharpGraphs/pkg/handlers"
+	"github.com/joho/godotenv"
+	"log"
+	"os"
 	"time"
 )
 
@@ -12,6 +16,37 @@ import (
 //
 
 func main() {
+	// Open a log file
+	logFile, err := os.OpenFile("app.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		log.Fatalf("Failed to open log file: %v", err)
+	}
+	defer logFile.Close()
+
+	// Set log output to the file
+	log.SetOutput(logFile)
+
+	// TEMPORARY: Flushing trans_weekly_rev table
+	// log.Println("Attempting to flush trans_weekly_rev table...")
+	// if err := database.FlushTransWeeklyRevTable(); err != nil {
+	// 	log.Fatalf("Error flushing trans_weekly_rev table: %v", err)
+	// }
+	// log.Println("Finished flushing trans_weekly_rev table.")
+	// END TEMPORARY
+
+	// Initialize database data on startup
+	getdata.InitializeDatabaseData()
+
+	err = godotenv.Load()
+	if err != nil {
+		log.Println("No .env file found")
+	}
+
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "5000"
+	}
+
 	r := gin.Default()
 
 	// setup cors middleware
@@ -62,6 +97,6 @@ func main() {
 		}
 	}
 
-	r.Run(":5000")
+	r.Run(":" + port)
 
 }

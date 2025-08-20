@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strconv"
 	"time"
 
 	"github.com/jadogg22/go-sharpGraphs/pkg/helpers"
@@ -23,6 +24,7 @@ var (
 	PG_USER     string
 	PG_PASSWORD string
 	PG_DATABASE string
+	START_YEAR  int
 
 	DB *sql.DB
 )
@@ -30,21 +32,21 @@ var (
 func init() {
 	dir, err := os.Getwd()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("Error getting current directory: %v", err)
 	}
 
 	for {
 		if _, err := os.Stat(filepath.Join(dir, ".env")); err == nil {
 			err := godotenv.Load(filepath.Join(dir, ".env"))
 			if err != nil {
-				log.Fatal("Error loading .env file")
+				log.Fatalf("Error loading .env file: %v", err)
 			}
 			break
 		}
 
 		parent := filepath.Dir(dir)
 		if parent == dir {
-			log.Fatal(".env file not found")
+			log.Fatalf(".env file not found in current or parent directories")
 		}
 		dir = parent
 	}
@@ -55,11 +57,23 @@ func init() {
 	PG_PASSWORD = os.Getenv("PG_PASSWORD")
 	PG_DATABASE = os.Getenv("PG_DATABASE")
 
-	DB, err = PG_Make_connection()
-	if err != nil {
-		fmt.Println("Error connecting to the database")
+	startYearStr := os.Getenv("START_YEAR")
+	if startYearStr == "" {
+		START_YEAR = 2020 // Default value
+	} else {
+		parsedYear, err := strconv.Atoi(startYearStr)
+		if err != nil {
+			log.Fatalf("Error parsing START_YEAR from .env: %v", err)
+		}
+		START_YEAR = parsedYear
 	}
 
+	DB, err = PG_Make_connection()
+	if err != nil {
+		log.Fatalf("Error connecting to the database: %v", err)
+	}
+
+	fmt.Println("Successfully connected to the database.")
 }
 
 /*
@@ -85,18 +99,15 @@ func PG_Make_connection() (*sql.DB, error) {
 
 	db, err := sql.Open("postgres", connectionString)
 	if err != nil {
-		log.Fatal(err)
-		return nil, err
+		return nil, fmt.Errorf("error opening database connection: %w", err)
 	}
-	return db, nil
-}
 
-func test_make_connection(dbPath string) (*sql.DB, error) {
-	db, err := sql.Open("sqlite3", dbPath)
+	// Ping the database to verify the connection
+	err = db.Ping()
 	if err != nil {
-		log.Fatal(err)
-		return nil, err
+		return nil, fmt.Errorf("error pinging database: %w", err)
 	}
+
 	return db, nil
 }
 
@@ -113,7 +124,7 @@ func Add_DailyDriverData(dailyData models.DailyDriverData) error {
 }
 
 func AddCacheData(rev float64, week int, year int) error {
-	query := `INSERT INTO trans_weekly_rev (totalrevenue, week, year) VALUES ($1, $2, $3)`
+	query := `INSERT INTO transportation_weekly_revenue (totalrevenue, week, year) VALUES ($1, $2, $3) ON CONFLICT (week, year) DO UPDATE SET totalrevenue = EXCLUDED.totalrevenue`
 	_, err := DB.Exec(query, rev, week, year)
 	if err != nil {
 		return fmt.Errorf("failed to insert data: %w", err)
@@ -206,18 +217,14 @@ func GetCachedData(company string) ([]models.WeeklyRevenue, error) {
 }
 
 func NewFetchMyCache() ([]models.WeeklyRevenue, int, error) {
-	query := `SELECT 
-    week AS week_number,
-    SUM(CASE WHEN year = 2021 THEN totalrevenue ELSE 0 END) AS "2021_revenue",
-    SUM(CASE WHEN year = 2022 THEN totalrevenue ELSE 0 END) AS "2022_revenue",
-    SUM(CASE WHEN year = 2023 THEN totalrevenue ELSE 0 END) AS "2023_revenue",
-    SUM(CASE WHEN year = 2024 THEN totalrevenue ELSE 0 END) AS "2024_revenue"
-FROM 
-    trans_weekly_rev
-GROUP BY 
-    week
-ORDER BY 
-    week;`
+	currentYear := time.Now().Year()
+	startYear := START_YEAR
+
+	query := "SELECT week AS week_number"
+	for year := startYear; year <= currentYear; year++ {
+		query += fmt.Sprintf(", SUM(CASE WHEN year = %d THEN totalrevenue ELSE 0 END) AS \"%d_revenue\"", year, year)
+	}
+	query += " FROM transportation_weekly_revenue GROUP BY week ORDER BY week;"
 
 	rows, err := DB.Query(query)
 	if err != nil {
@@ -226,32 +233,66 @@ ORDER BY
 
 	defer rows.Close()
 
-	data := make([]models.WeeklyRevenue, 53)
-	newestWeek := 53
+	// Use a map to store data by week number for easier population
+	weeklyDataMap := make(map[int]models.WeeklyRevenue)
 
 	for rows.Next() {
-		var week int
-		var rev2021, rev2022, rev2023, rev2024 sql.NullFloat64
+		var weekNumber int
+		revenues := make([]sql.NullFloat64, currentYear-startYear+1)
+		scanArgs := make([]interface{}, len(revenues)+1)
+		scanArgs[0] = &weekNumber
+		for i := range revenues {
+			scanArgs[i+1] = &revenues[i]
+		}
 
-		if err := rows.Scan(&week, &rev2021, &rev2022, &rev2023, &rev2024); err != nil {
+		err := rows.Scan(scanArgs...)
+		if err != nil {
 			return nil, 0, fmt.Errorf("error scanning row: %v", err)
 		}
 
-		if week < newestWeek && rev2024.Float64 == 0.0 {
-			newestWeek = week
+		revenueMap := make(map[string]*float64)
+		for i, year := 0, startYear; year <= currentYear; i, year = i+1, year+1 {
+			if revenues[i].Valid {
+				val := revenues[i].Float64
+				revenueMap[fmt.Sprintf("%d Revenue", year)] = &val
+			} else {
+				revenueMap[fmt.Sprintf("%d Revenue", year)] = nil
+			}
 		}
 
-		data[week-1] = models.WeeklyRevenue{
-			Name:        week,
-			Revenue2021: &rev2021.Float64,
-			Revenue2022: &rev2022.Float64,
-			Revenue2023: &rev2023.Float64,
-			Revenue2024: &rev2024.Float64,
+		theWeek := models.WeeklyRevenue{
+			Name:     weekNumber,
+			Revenues: revenueMap,
 		}
+		weeklyDataMap[weekNumber] = theWeek
 	}
 
 	if err := rows.Err(); err != nil {
 		return nil, 0, fmt.Errorf("error iterating rows: %v", err)
+	}
+
+	// Now, construct the final slice, only including weeks up to the current week
+	var data []models.WeeklyRevenue
+	newestWeek := 0 // Initialize newestWeek
+
+	for week := 1; week <= 53; week++ {
+		if entry, ok := weeklyDataMap[week]; ok {
+			data = append(data, entry)
+			// Update newestWeek if this week has data for the current year
+			if entry.Revenues[fmt.Sprintf("%d Revenue", currentYear)] != nil {
+				newestWeek = week
+			}
+		} else {
+			// If no data for this week, create an empty entry for the current year
+			emptyRevenueMap := make(map[string]*float64)
+			for year := startYear; year <= currentYear; year++ {
+				emptyRevenueMap[fmt.Sprintf("%d Revenue", year)] = nil
+			}
+			data = append(data, models.WeeklyRevenue{
+				Name:     week,
+				Revenues: emptyRevenueMap,
+			})
+		}
 	}
 
 	return data, newestWeek, nil
@@ -262,14 +303,10 @@ func FetchRevenueDataToWeeklyRevenue(db *sql.DB, dbTable string) ([]models.Weekl
 	query := fmt.Sprintf(`
         SELECT year, week, totalrevenue
         FROM %s
-        WHERE Year BETWEEN $1 AND $2
         ORDER BY Week, Year
     `, dbTable)
 
-	currentYear := 2024
-	startYear := currentYear - 4
-
-	rows, err := db.Query(query, startYear, currentYear)
+	rows, err := db.Query(query)
 	if err != nil {
 		return nil, fmt.Errorf("error executing query: %v", err)
 	}
@@ -289,16 +326,11 @@ func FetchRevenueDataToWeeklyRevenue(db *sql.DB, dbTable string) ([]models.Weekl
 
 		if rev.Valid {
 			revValue := rev.Float64
-			switch year {
-			case 2021:
-				data[week-1].Revenue2021 = &revValue
-			case 2022:
-				data[week-1].Revenue2022 = &revValue
-			case 2023:
-				data[week-1].Revenue2023 = &revValue
-			case 2024:
-				data[week-1].Revenue2024 = &revValue
+			key := fmt.Sprintf("%d Revenue", year)
+			if data[week-1].Revenues == nil {
+				data[week-1].Revenues = make(map[string]*float64)
 			}
+			data[week-1].Revenues[key] = &revValue
 		}
 	}
 
@@ -311,10 +343,22 @@ func FetchRevenueDataToWeeklyRevenue(db *sql.DB, dbTable string) ([]models.Weekl
 
 func UpdateMyDatabase(data []*helpers.DateRange) error {
 	// Create table if it doesn't exist
-	_, err := DB.Exec(`CREATE TABLE IF NOT EXISTS trans_weekly_rev`)
+	_, err := DB.Exec(`CREATE TABLE IF NOT EXISTS transportation_weekly_revenue (totalrevenue REAL, week INTEGER, year INTEGER, UNIQUE(week, year))`) // Ensure table schema is defined
 	if err != nil {
 		return fmt.Errorf("error creating table: %w", err)
 	}
+
+	tx, err := DB.Begin()
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback() // Rollback on error
+
+	stmt, err := tx.Prepare(`INSERT INTO transportation_weekly_revenue (totalrevenue, week, year) VALUES ($1, $2, $3) ON CONFLICT (week, year) DO UPDATE SET totalrevenue = EXCLUDED.totalrevenue`)
+	if err != nil {
+		return fmt.Errorf("failed to prepare statement: %w", err)
+	}
+	defer stmt.Close()
 
 	// Insert data into the table
 	for _, dateRange := range data {
@@ -322,13 +366,13 @@ func UpdateMyDatabase(data []*helpers.DateRange) error {
 			continue
 		}
 		year, week := dateRange.StartDate.ISOWeek()
-		query := `INSERT INTO trans_weekly_rev (totalrevenue, week, year) VALUES ($1, $2, $3)`
-		_, err := DB.Exec(query, dateRange.Amount, week, year)
+		_, err := stmt.Exec(dateRange.Amount, week, year)
 		if err != nil {
-			return fmt.Errorf("error inserting data: %w", err)
+			return fmt.Errorf("error executing statement for week %d, year %d: %w", week, year, err)
 		}
 	}
-	return nil
+
+	return tx.Commit()
 }
 
 func GetYearByYearDataRefactored(data []models.WeeklyRevenue, company string) ([]models.WeeklyRevenue, error) {
@@ -375,16 +419,11 @@ func GetYearByYearDataRefactored(data []models.WeeklyRevenue, company string) ([
 		updated := false
 		for i, entry := range data {
 			if entry.Name == missing.Week {
-				switch missing.Year {
-				case 2021:
-					data[i].Revenue2021 = &revenue
-				case 2022:
-					data[i].Revenue2022 = &revenue
-				case 2023:
-					data[i].Revenue2023 = &revenue
-				case 2024:
-					data[i].Revenue2024 = &revenue
+				key := fmt.Sprintf("%d Revenue", missing.Year)
+				if data[i].Revenues == nil {
+					data[i].Revenues = make(map[string]*float64)
 				}
+				data[i].Revenues[key] = &revenue
 				updated = true
 				break
 			}
@@ -393,16 +432,9 @@ func GetYearByYearDataRefactored(data []models.WeeklyRevenue, company string) ([
 		if !updated {
 			// Week doesn't exist in data slice, append new entry
 			newEntry := models.WeeklyRevenue{Name: missing.Week}
-			switch missing.Year {
-			case 2021:
-				newEntry.Revenue2021 = &revenue
-			case 2022:
-				newEntry.Revenue2022 = &revenue
-			case 2023:
-				newEntry.Revenue2023 = &revenue
-			case 2024:
-				newEntry.Revenue2024 = &revenue
-			}
+			key := fmt.Sprintf("%d Revenue", missing.Year)
+			newEntry.Revenues = make(map[string]*float64)
+			newEntry.Revenues[key] = &revenue
 			data = append(data, newEntry)
 		}
 	}
@@ -420,7 +452,7 @@ func FindMissingData(data []models.WeeklyRevenue) ([]MissingDataPoint, error) {
 	currentYear, currentWeek := time.Now().ISOWeek()
 	var missingData []MissingDataPoint
 
-	for year := 2021; year <= currentYear; year++ {
+	for year := 2020; year <= currentYear; year++ {
 		endWeek := 52
 		if year == currentYear {
 			endWeek = currentWeek
@@ -433,18 +465,8 @@ func FindMissingData(data []models.WeeklyRevenue) ([]MissingDataPoint, error) {
 			for _, entry := range data {
 				if entry.Name == week { // Note: Comparing with week, not weekID
 					found = true
-					isMissing := false
-					switch year {
-					case 2021:
-						isMissing = entry.Revenue2021 == nil
-					case 2022:
-						isMissing = entry.Revenue2022 == nil
-					case 2023:
-						isMissing = entry.Revenue2023 == nil
-					case 2024:
-						isMissing = entry.Revenue2024 == nil
-					}
-					if isMissing {
+					key := fmt.Sprintf("%d Revenue", year)
+					if _, ok := entry.Revenues[key]; !ok {
 						missingData = append(missingData, MissingDataPoint{
 							Year:   year,
 							Week:   week,
@@ -686,66 +708,163 @@ func GetMilesData(when, company string) ([]models.MilesData, error) {
 }
 
 func GetWeeklyRevenueData() ([]models.WeeklyRevenue, error) {
+	currentYear := time.Now().Year()
+	startYear := START_YEAR
 
-	query := `SELECT 
-    week AS week_number,
-    SUM(CASE WHEN year = 2020 THEN totalrevenue ELSE 0 END) AS "2020_revenue",
-    SUM(CASE WHEN year = 2021 THEN totalrevenue ELSE 0 END) AS "2021_revenue",
-    SUM(CASE WHEN year = 2022 THEN totalrevenue ELSE 0 END) AS "2022_revenue",
-    SUM(CASE WHEN year = 2023 THEN totalrevenue ELSE 0 END) AS "2023_revenue",
-    SUM(CASE WHEN year = 2024 THEN totalrevenue ELSE 0 END) AS "2024_revenue"
-FROM 
-    trans_weekly_rev
-GROUP BY 
-    week
-ORDER BY 
-    week;`
+	query := "SELECT week AS week_number"
+	for year := startYear; year <= currentYear; year++ {
+		query += fmt.Sprintf(", SUM(CASE WHEN year = %d THEN totalrevenue ELSE 0 END) AS \"%d_revenue\"", year, year)
+	}
+	query += " FROM transportation_weekly_revenue GROUP BY week ORDER BY week;"
 
+	log.Printf("Attempting to execute query: %s\n", query)
 	rows, err := DB.Query(query)
 	if err != nil {
+		log.Printf("Error executing query: %v\n", err)
 		return nil, err
 	}
 
 	defer rows.Close()
 
-	var data []models.WeeklyRevenue
+	// Use a map to store data by week number for easier population
+	weeklyDataMap := make(map[int]models.WeeklyRevenue)
 
-	var weekNumber int
-	var revenue2020, revenue2024 float64
-
+	rowCount := 0
 	for rows.Next() {
-		// Use pointers for each revenue field
-		var revenue2021Ptr, revenue2022Ptr, revenue2023Ptr, revenue2024Ptr *float64
+		rowCount++
+		var weekNumber int
+		revenues := make([]*float64, currentYear-startYear+1)
+		scanArgs := make([]interface{}, len(revenues)+1)
+		scanArgs[0] = &weekNumber
+		for i := range revenues {
+			scanArgs[i+1] = &revenues[i]
+		}
 
-		// Initialize float64 values and assign their addresses to pointers
-		var revenue2021Value, revenue2022Value, revenue2023Value float64
-		revenue2021Ptr = &revenue2021Value
-		revenue2022Ptr = &revenue2022Value
-		revenue2023Ptr = &revenue2023Value
-
-		// Scan into temporary variables
-		err := rows.Scan(&weekNumber, &revenue2020, revenue2021Ptr, revenue2022Ptr, revenue2023Ptr, &revenue2024)
+		err := rows.Scan(scanArgs...)
 		if err != nil {
+			log.Printf("Error scanning row: %v\n", err)
 			return nil, err
 		}
 
-		// Handle Revenue2024 as an optional field
-		if revenue2024 != 0 {
-			revenue2024Ptr = &revenue2024
-		} else {
-			revenue2024Ptr = nil
+		revenueMap := make(map[string]*float64)
+		for i, year := 0, startYear; year <= currentYear; i, year = i+1, year+1 {
+			revenueMap[fmt.Sprintf("%d Revenue", year)] = revenues[i]
 		}
 
-		// Create WeeklyRevenue struct
 		theWeek := models.WeeklyRevenue{
-			Name:        weekNumber,
-			Revenue2021: revenue2021Ptr,
-			Revenue2022: revenue2022Ptr,
-			Revenue2023: revenue2023Ptr,
-			Revenue2024: revenue2024Ptr,
+			Name:     weekNumber,
+			Revenues: revenueMap,
 		}
-
-		data = append(data, theWeek)
+		weeklyDataMap[weekNumber] = theWeek
 	}
+	log.Printf("Finished processing %d rows from query.\n", rowCount)
+
+	// Now, construct the final slice, only including weeks up to the current week
+	var data []models.WeeklyRevenue
+	for week := 1; week <= 53; week++ { // Iterate only up to the current week
+		if entry, ok := weeklyDataMap[week]; ok {
+			data = append(data, entry)
+		} else {
+			// If no data for this week, create an empty entry for the current year
+			emptyRevenueMap := make(map[string]*float64)
+			for year := startYear; year <= currentYear; year++ {
+				emptyRevenueMap[fmt.Sprintf("%d Revenue", year)] = nil // Explicitly set to nil for no data
+			}
+			data = append(data, models.WeeklyRevenue{
+				Name:     week,
+				Revenues: emptyRevenueMap,
+			})
+		}
+	}
+
 	return data, nil
+}
+
+func CheckTransWeeklyRevHealth() error {
+	log.Println("Performing advanced trans_weekly_rev health check...")
+
+	currentYear := time.Now().Year()
+	yearsToCheck := []int{START_YEAR, currentYear}
+
+	// Add a past year if START_YEAR is not the current year
+	if START_YEAR < currentYear {
+		yearsToCheck = append(yearsToCheck, currentYear-1)
+	}
+
+	weeksToCheck := []int{1, 20, 30, 40, 52} // Check various weeks
+
+	for _, year := range yearsToCheck {
+		for _, week := range weeksToCheck {
+			// Ensure we don't check future weeks for the current year
+			currentISOYear, currentISOWeek := time.Now().ISOWeek()
+			if year == currentISOYear && week > currentISOWeek {
+				continue
+			}
+
+			var totalRevenue sql.NullFloat64
+			query := "SELECT totalrevenue FROM transportation_weekly_revenue WHERE year = $1 AND week = $2"
+			err := DB.QueryRow(query, year, week).Scan(&totalRevenue)
+			if err != nil {
+				if err == sql.ErrNoRows {
+					log.Printf("Health check: No data found for Year=%d, Week=%d", year, week)
+					return fmt.Errorf("health check failed: no data for Year=%d, Week=%d", year, week)
+				} else {
+					log.Printf("Health check: Error querying for Year=%d, Week=%d: %v", year, week, err)
+					return fmt.Errorf("health check failed: query error for Year=%d, Week=%d: %w", year, week, err)
+				}
+			}
+
+			if !totalRevenue.Valid || totalRevenue.Float64 <= 0 {
+				log.Printf("Health check: Invalid or zero revenue for Year=%d, Week=%d (Value: %v)", year, week, totalRevenue)
+				return fmt.Errorf("health check failed: invalid or zero revenue for Year=%d, Week=%d", year, week)
+			}
+			log.Printf("Health check: Data found for Year=%d, Week=%d, Revenue=%.2f", year, week, totalRevenue.Float64)
+		}
+	}
+
+	log.Println("Advanced trans_weekly_rev health check passed.")
+	return nil
+}
+
+func FlushTransWeeklyRevTable() error {
+	// Ensure the table exists before truncating
+	_, err := DB.Exec(`CREATE TABLE IF NOT EXISTS transportation_weekly_revenue (totalrevenue REAL, week INTEGER, year INTEGER, UNIQUE(week, year))`)
+	if err != nil {
+		return fmt.Errorf("error ensuring table exists before truncation: %w", err)
+	}
+
+	_, err = DB.Exec("TRUNCATE TABLE transportation_weekly_revenue;")
+	if err != nil {
+		return fmt.Errorf("error truncating transportation_weekly_revenue table: %w", err)
+	}
+	fmt.Println("transportation_weekly_revenue table truncated successfully.")
+	return nil
+}
+
+// DumpTransWeeklyRevTable temporarily dumps the contents of the table to logs.
+func DumpTransWeeklyRevTable() {
+	log.Println("Dumping trans_weekly_rev table contents...")
+	rows, err := DB.Query("SELECT year, week, totalrevenue FROM trans_weekly_rev ORDER BY year, week")
+	if err != nil {
+		log.Printf("Error dumping trans_weekly_rev table: %v", err)
+		return
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var year, week int
+		var totalRevenue sql.NullFloat64
+		if err := rows.Scan(&year, &week, &totalRevenue); err != nil {
+			log.Printf("Error scanning row while dumping table: %v", err)
+			continue
+		}
+		var revStr string
+		if totalRevenue.Valid {
+			revStr = fmt.Sprintf("%.2f", totalRevenue.Float64)
+		} else {
+			revStr = "NULL"
+		}
+		log.Printf("DB Row: Year=%d, Week=%d, Revenue=%s", year, week, revStr)
+	}
+	log.Println("Finished dumping trans_weekly_rev table contents.")
 }

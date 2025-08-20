@@ -1,0 +1,660 @@
+2025/08/19 19:50:24 Initializing trans_weekly_rev data...
+2025/08/19 19:50:24 Forcing full population from START_YEAR.
+2025/08/19 19:50:24 Generated 295 date ranges for initial population.
+2025/08/19 19:50:24 Querying original DB for date range 2019-12-29 00:00:00 to 2020-01-04 00:00:00: SELECT SUM(total_charge) from orders where company_id = 'tms' and bol_recv_date between '2019-12-29 00:00:00' and '2020-01-04 00:00:00'
+2025/08/19 19:50:25 Fetched amount 622727.490000 for date range 2019-12-29 00:00:00 to 2020-01-04 00:00:00
+2025/08/19 19:50:25 Querying original DB for date range 2020-01-05 00:00:00 to 2020-01-11 00:00:00: SELECT SUM(total_charge) from orders where company_id = 'tms' and bol_recv_date between '2020-01-05 00:00:00' and '2020-01-11 00:00:00'
+2025/08/19 19:50:25 Fetched amount 622473.680000 for date range 2020-01-05 00:00:00 to 2020-01-11 00:00:00
+2025/08/19 19:50:25 Querying original DB for date range 2020-01-12 00:00:00 to 2020-01-18 00:00:00: SELECT SUM(total_charge) from orders where company_id = 'tms' and bol_recv_date between '2020-01-12 00:00:00' and '2020-01-18 00:00:00'
+2025/08/19 19:50:25 Fetched amount 632351.800000 for date range 2020-01-12 00:00:00 to 2020-01-18 00:00:00
+2025/08/19 19:50:25 Querying original DB for date range 2020-01-19 00:00:00 to 2020-01-25 00:00:00: SELECT SUM(total_charge) from orders where company_id = 'tms' and bol_recv_date between '2020-01-19 00:00:00' and '2020-01-25 00:00:00'
+2025/08/19 19:50:25 Fetched amount 619729.050000 for date range 2020-01-19 00:00:00 to 2020-01-25 00:00:00
+2025/08/19 19:50:25 Querying original DB for date range 2020-01-26 00:00:00 to 2020-02-01 00:00:00: SELECT SUM(total_charge) from orders where company_id = 'tms' and bol_recv_date between '2020-01-26 00:00:00' and '2020-02-01 00:00:00'
+2025/08/19 19:50:26 Fetched amount 566513.400000 for date range 2020-01-26 00:00:00 to 2020-02-01 00:00:00
+2025/08/19 19:50:26 Querying original DB for date range 2020-02-02 00:00:00 to 2020-02-08 00:00:00: SELECT SUM(total_charge) from orders where company_id = 'tms' and bol_recv_date between '2020-02-02 00:00:00' and '2020-02-08 00:00:00'
+2025/08/19 19:50:26 Fetched amount 541146.920000 for date range 2020-02-02 00:00:00 to 2020-02-08 00:00:00
+2025/08/19 19:50:26 Querying original DB for date range 2020-02-09 00:00:00 to 2020-02-15 00:00:00: SELECT SUM(total_charge) from orders where company_id = 'tms' and bol_recv_date between '2020-02-09 00:00:00' and '2020-02-15 00:00:00'
+2025/08/19 19:50:26 Fetched amount 466880.670000 for date range 2020-02-09 00:00:00 to 2020-02-15 00:00:00
+2025/08/19 19:50:26 Querying original DB for date range 2020-02-16 00:00:00 to 2020-02-22 00:00:00: SELECT SUM(total_charge) from orders where company_id = 'tms' and bol_recv_date between '2020-02-16 00:00:00' and '2020-02-22 00:00:00'
+2025/08/19 19:50:26 Fetched amount 475403.400000 for date range 2020-02-16 00:00:00 to 2020-02-22 00:00:00
+2025/08/19 19:50:26 Querying original DB for date range 2020-02-23 00:00:00 to 2020-02-29 00:00:00: SELECT SUM(total_charge) from orders where company_id = 'tms' and bol_recv_date between '2020-02-23 00:00:00' and '2020-02-29 00:00:00'
+2025/08/19 19:50:27 Fetched amount 664405.610000 for date range 2020-02-23 00:00:00 to 2020-02-29 00:00:00
+2025/08/19 19:50:27 Querying original DB for date range 2020-03-01 00:00:00 to 2020-03-07 00:00:00: SELECT SUM(total_charge) from orders where company_id = 'tms' and bol_recv_date between '2020-03-01 00:00:00' and '2020-03-07 00:00:00'
+2025/08/19 19:50:27 Fetched amount 658132.270000 for date range 2020-03-01 00:00:00 to 2020-03-07 00:00:00
+2025/08/19 19:50:27 Querying original DB for date range 2020-03-08 00:00:00 to 2020-03-14 00:00:00: SELECT SUM(total_charge) from orders where company_id = 'tms' and bol_recv_date between '2020-03-08 00:00:00' and '2020-03-14 00:00:00'
+2025/08/19 19:50:27 Fetched amount 653012.540000 for date range 2020-03-08 00:00:00 to 2020-03-14 00:00:00
+2025/08/19 19:50:27 Querying original DB for date range 2020-03-15 00:00:00 to 2020-03-21 00:00:00: SELECT SUM(total_charge) from orders where company_id = 'tms' and bol_recv_date between '2020-03-15 00:00:00' and '2020-03-21 00:00:00'
+2025/08/19 19:50:27 Fetched amount 681071.000000 for date range 2020-03-15 00:00:00 to 2020-03-21 00:00:00
+2025/08/19 19:50:27 Querying original DB for date range 2020-03-22 00:00:00 to 2020-03-28 00:00:00: SELECT SUM(total_charge) from orders where company_id = 'tms' and bol_recv_date between '2020-03-22 00:00:00' and '2020-03-28 00:00:00'
+2025/08/19 19:50:28 Fetched amount 573614.270000 for date range 2020-03-22 00:00:00 to 2020-03-28 00:00:00
+2025/08/19 19:50:28 Querying original DB for date range 2020-03-29 00:00:00 to 2020-04-04 00:00:00: SELECT SUM(total_charge) from orders where company_id = 'tms' and bol_recv_date between '2020-03-29 00:00:00' and '2020-04-04 00:00:00'
+2025/08/19 19:50:28 Fetched amount 761527.880000 for date range 2020-03-29 00:00:00 to 2020-04-04 00:00:00
+2025/08/19 19:50:28 Querying original DB for date range 2020-04-05 00:00:00 to 2020-04-11 00:00:00: SELECT SUM(total_charge) from orders where company_id = 'tms' and bol_recv_date between '2020-04-05 00:00:00' and '2020-04-11 00:00:00'
+2025/08/20 15:52:01 Initializing trans_weekly_rev data...
+2025/08/20 15:52:01 transportation_weekly_revenue table already contains data. Performing incremental update.
+2025/08/20 15:52:01 Attempting to execute query: SELECT week AS week_number, SUM(CASE WHEN year = 2020 THEN totalrevenue ELSE 0 END) AS "2020_revenue", SUM(CASE WHEN year = 2021 THEN totalrevenue ELSE 0 END) AS "2021_revenue", SUM(CASE WHEN year = 2022 THEN totalrevenue ELSE 0 END) AS "2022_revenue", SUM(CASE WHEN year = 2023 THEN totalrevenue ELSE 0 END) AS "2023_revenue", SUM(CASE WHEN year = 2024 THEN totalrevenue ELSE 0 END) AS "2024_revenue", SUM(CASE WHEN year = 2025 THEN totalrevenue ELSE 0 END) AS "2025_revenue" FROM transportation_weekly_revenue GROUP BY week ORDER BY week;
+2025/08/20 15:52:01 Finished processing 53 rows from query.
+2025/08/20 15:52:01 UpdateTransRevData called with 53 data entries.
+2025/08/20 15:52:01 Latest data date: 2025-08-10 00:00:00 +0000 UTC
+2025/08/20 15:52:01 Generated 2 date ranges.
+2025/08/20 15:52:01 Attempting to update date range amounts.
+2025/08/20 15:52:01 Querying original DB for date range 2025-08-10 00:00:00 to 2025-08-16 00:00:00: SELECT SUM(total_charge) from orders where company_id = 'tms' and bol_recv_date between '2025-08-10 00:00:00' and '2025-08-16 00:00:00'
+2025/08/20 15:52:01 Fetched amount 953468.990000 for date range 2025-08-10 00:00:00 to 2025-08-16 00:00:00
+2025/08/20 15:52:01 Querying original DB for date range 2025-08-17 00:00:00 to 2025-08-23 00:00:00: SELECT SUM(total_charge) from orders where company_id = 'tms' and bol_recv_date between '2025-08-17 00:00:00' and '2025-08-23 00:00:00'
+2025/08/20 15:52:01 Fetched amount 622099.220000 for date range 2025-08-17 00:00:00 to 2025-08-23 00:00:00
+2025/08/20 15:52:01 Successfully updated date range amounts.
+2025/08/20 15:52:02 Attempting to update weekly revenue in helpers.
+2025/08/20 15:52:02 UpdateWeeklyRevenue called. weeklyRevenues length: 53, dateRanges length: 2
+2025/08/20 15:52:02 Processing dateRange: Week 32, Year 2025, Amount 953468.990000
+2025/08/20 15:52:02 Updated weeklyRevenues[31] for week 32, year 2025 with amount 953468.990000
+2025/08/20 15:52:02 Processing dateRange: Week 33, Year 2025, Amount 622099.220000
+2025/08/20 15:52:02 Updated weeklyRevenues[32] for week 33, year 2025 with amount 622099.220000
+2025/08/20 15:52:02 Handling 53rd week data.
+2025/08/20 15:52:02 Appended 53rd week revenue from 2020 Revenue to 2021 Revenue for week 1.
+2025/08/20 15:52:02 Appended 53rd week revenue from 2021 Revenue to 2022 Revenue for week 1.
+2025/08/20 15:52:02 Appended 53rd week revenue from 2022 Revenue to 2023 Revenue for week 1.
+2025/08/20 15:52:02 Appended 53rd week revenue from 2023 Revenue to 2024 Revenue for week 1.
+2025/08/20 15:52:02 Appended 53rd week revenue from 2024 Revenue to 2025 Revenue for week 1.
+2025/08/20 15:52:02 UpdateWeeklyRevenue finished.
+2025/08/20 15:52:02 Successfully updated weekly revenue in helpers.
+2025/08/20 15:52:02 Finished initializing trans_weekly_rev data.
+2025/08/20 15:52:11 Trans_year_by_year handler called.
+2025/08/20 15:52:11 Performing database health check.
+2025/08/20 15:52:11 Performing advanced trans_weekly_rev health check...
+2025/08/20 15:52:11 Health check: Data found for Year=2020, Week=1, Revenue=622473.70
+2025/08/20 15:52:11 Health check: Data found for Year=2020, Week=20, Revenue=605195.20
+2025/08/20 15:52:11 Health check: Data found for Year=2020, Week=30, Revenue=754091.75
+2025/08/20 15:52:11 Health check: Data found for Year=2020, Week=40, Revenue=729002.80
+2025/08/20 15:52:11 Health check: Data found for Year=2020, Week=52, Revenue=667137.75
+2025/08/20 15:52:11 Health check: Data found for Year=2025, Week=1, Revenue=1083137.90
+2025/08/20 15:52:11 Health check: Data found for Year=2025, Week=20, Revenue=1039792.60
+2025/08/20 15:52:11 Health check: Data found for Year=2025, Week=30, Revenue=1029884.00
+2025/08/20 15:52:11 Health check: Data found for Year=2024, Week=1, Revenue=1120555.50
+2025/08/20 15:52:11 Health check: Data found for Year=2024, Week=20, Revenue=985766.70
+2025/08/20 15:52:11 Health check: Data found for Year=2024, Week=30, Revenue=1077741.80
+2025/08/20 15:52:11 Health check: Data found for Year=2024, Week=40, Revenue=1109470.50
+2025/08/20 15:52:11 Health check: Data found for Year=2024, Week=52, Revenue=1052285.60
+2025/08/20 15:52:11 Advanced trans_weekly_rev health check passed.
+2025/08/20 15:52:11 Database health check passed.
+2025/08/20 15:52:11 Attempting to get weekly revenue data from database.
+2025/08/20 15:52:11 Attempting to execute query: SELECT week AS week_number, SUM(CASE WHEN year = 2020 THEN totalrevenue ELSE 0 END) AS "2020_revenue", SUM(CASE WHEN year = 2021 THEN totalrevenue ELSE 0 END) AS "2021_revenue", SUM(CASE WHEN year = 2022 THEN totalrevenue ELSE 0 END) AS "2022_revenue", SUM(CASE WHEN year = 2023 THEN totalrevenue ELSE 0 END) AS "2023_revenue", SUM(CASE WHEN year = 2024 THEN totalrevenue ELSE 0 END) AS "2024_revenue", SUM(CASE WHEN year = 2025 THEN totalrevenue ELSE 0 END) AS "2025_revenue" FROM transportation_weekly_revenue GROUP BY week ORDER BY week;
+2025/08/20 15:52:11 Finished processing 53 rows from query.
+2025/08/20 15:52:11 Successfully retrieved 53 weekly revenue entries from database.
+2025/08/20 15:52:11 Attempting to update transportation revenue data.
+2025/08/20 15:52:11 UpdateTransRevData called with 53 data entries.
+2025/08/20 15:52:11 Latest data date: 2025-08-10 00:00:00 +0000 UTC
+2025/08/20 15:52:11 Generated 2 date ranges.
+2025/08/20 15:52:11 Attempting to update date range amounts.
+2025/08/20 15:52:11 Querying original DB for date range 2025-08-10 00:00:00 to 2025-08-16 00:00:00: SELECT SUM(total_charge) from orders where company_id = 'tms' and bol_recv_date between '2025-08-10 00:00:00' and '2025-08-16 00:00:00'
+2025/08/20 15:52:12 Fetched amount 953468.990000 for date range 2025-08-10 00:00:00 to 2025-08-16 00:00:00
+2025/08/20 15:52:12 Querying original DB for date range 2025-08-17 00:00:00 to 2025-08-23 00:00:00: SELECT SUM(total_charge) from orders where company_id = 'tms' and bol_recv_date between '2025-08-17 00:00:00' and '2025-08-23 00:00:00'
+2025/08/20 15:52:12 Fetched amount 622099.220000 for date range 2025-08-17 00:00:00 to 2025-08-23 00:00:00
+2025/08/20 15:52:12 Successfully updated date range amounts.
+2025/08/20 15:52:12 Attempting to update weekly revenue in helpers.
+2025/08/20 15:52:12 UpdateWeeklyRevenue called. weeklyRevenues length: 53, dateRanges length: 2
+2025/08/20 15:52:12 Processing dateRange: Week 32, Year 2025, Amount 953468.990000
+2025/08/20 15:52:12 Updated weeklyRevenues[31] for week 32, year 2025 with amount 953468.990000
+2025/08/20 15:52:12 Processing dateRange: Week 33, Year 2025, Amount 622099.220000
+2025/08/20 15:52:12 Updated weeklyRevenues[32] for week 33, year 2025 with amount 622099.220000
+2025/08/20 15:52:12 Handling 53rd week data.
+2025/08/20 15:52:12 Appended 53rd week revenue from 2020 Revenue to 2021 Revenue for week 1.
+2025/08/20 15:52:12 Appended 53rd week revenue from 2021 Revenue to 2022 Revenue for week 1.
+2025/08/20 15:52:12 Appended 53rd week revenue from 2022 Revenue to 2023 Revenue for week 1.
+2025/08/20 15:52:12 Appended 53rd week revenue from 2023 Revenue to 2024 Revenue for week 1.
+2025/08/20 15:52:12 Appended 53rd week revenue from 2024 Revenue to 2025 Revenue for week 1.
+2025/08/20 15:52:12 UpdateWeeklyRevenue finished.
+2025/08/20 15:52:12 Successfully updated weekly revenue in helpers.
+2025/08/20 15:52:12 Finished updating transportation revenue data.
+2025/08/20 15:52:12 Data length is 53, trimming to 52.
+2025/08/20 15:52:12 Setting cache for key: transportationYearByYear
+2025/08/20 15:52:12 Cache set successfully.
+2025/08/20 15:52:12 Trans_year_by_year handler called.
+2025/08/20 15:52:12 Performing database health check.
+2025/08/20 15:52:12 Performing advanced trans_weekly_rev health check...
+2025/08/20 15:52:12 Health check: Data found for Year=2020, Week=1, Revenue=622473.70
+2025/08/20 15:52:12 Health check: Data found for Year=2020, Week=20, Revenue=605195.20
+2025/08/20 15:52:12 Health check: Data found for Year=2020, Week=30, Revenue=754091.75
+2025/08/20 15:52:12 Health check: Data found for Year=2020, Week=40, Revenue=729002.80
+2025/08/20 15:52:12 Health check: Data found for Year=2020, Week=52, Revenue=667137.75
+2025/08/20 15:52:12 Health check: Data found for Year=2025, Week=1, Revenue=1083137.90
+2025/08/20 15:52:12 Health check: Data found for Year=2025, Week=20, Revenue=1039792.60
+2025/08/20 15:52:12 Health check: Data found for Year=2025, Week=30, Revenue=1029884.00
+2025/08/20 15:52:12 Health check: Data found for Year=2024, Week=1, Revenue=1120555.50
+2025/08/20 15:52:12 Health check: Data found for Year=2024, Week=20, Revenue=985766.70
+2025/08/20 15:52:12 Health check: Data found for Year=2024, Week=30, Revenue=1077741.80
+2025/08/20 15:52:12 Health check: Data found for Year=2024, Week=40, Revenue=1109470.50
+2025/08/20 15:52:12 Health check: Data found for Year=2024, Week=52, Revenue=1052285.60
+2025/08/20 15:52:12 Advanced trans_weekly_rev health check passed.
+2025/08/20 15:52:12 Database health check passed.
+2025/08/20 15:52:12 Attempting to get weekly revenue data from database.
+2025/08/20 15:52:12 Attempting to execute query: SELECT week AS week_number, SUM(CASE WHEN year = 2020 THEN totalrevenue ELSE 0 END) AS "2020_revenue", SUM(CASE WHEN year = 2021 THEN totalrevenue ELSE 0 END) AS "2021_revenue", SUM(CASE WHEN year = 2022 THEN totalrevenue ELSE 0 END) AS "2022_revenue", SUM(CASE WHEN year = 2023 THEN totalrevenue ELSE 0 END) AS "2023_revenue", SUM(CASE WHEN year = 2024 THEN totalrevenue ELSE 0 END) AS "2024_revenue", SUM(CASE WHEN year = 2025 THEN totalrevenue ELSE 0 END) AS "2025_revenue" FROM transportation_weekly_revenue GROUP BY week ORDER BY week;
+2025/08/20 15:52:12 Finished processing 53 rows from query.
+2025/08/20 15:52:12 Successfully retrieved 53 weekly revenue entries from database.
+2025/08/20 15:52:12 Attempting to update transportation revenue data.
+2025/08/20 15:52:12 UpdateTransRevData called with 53 data entries.
+2025/08/20 15:52:12 Latest data date: 2025-08-10 00:00:00 +0000 UTC
+2025/08/20 15:52:12 Generated 2 date ranges.
+2025/08/20 15:52:12 Attempting to update date range amounts.
+2025/08/20 15:52:12 Querying original DB for date range 2025-08-10 00:00:00 to 2025-08-16 00:00:00: SELECT SUM(total_charge) from orders where company_id = 'tms' and bol_recv_date between '2025-08-10 00:00:00' and '2025-08-16 00:00:00'
+2025/08/20 15:52:12 Fetched amount 953468.990000 for date range 2025-08-10 00:00:00 to 2025-08-16 00:00:00
+2025/08/20 15:52:12 Querying original DB for date range 2025-08-17 00:00:00 to 2025-08-23 00:00:00: SELECT SUM(total_charge) from orders where company_id = 'tms' and bol_recv_date between '2025-08-17 00:00:00' and '2025-08-23 00:00:00'
+2025/08/20 15:52:13 Fetched amount 622099.220000 for date range 2025-08-17 00:00:00 to 2025-08-23 00:00:00
+2025/08/20 15:52:13 Successfully updated date range amounts.
+2025/08/20 15:52:13 Attempting to update weekly revenue in helpers.
+2025/08/20 15:52:13 UpdateWeeklyRevenue called. weeklyRevenues length: 53, dateRanges length: 2
+2025/08/20 15:52:13 Processing dateRange: Week 32, Year 2025, Amount 953468.990000
+2025/08/20 15:52:13 Updated weeklyRevenues[31] for week 32, year 2025 with amount 953468.990000
+2025/08/20 15:52:13 Processing dateRange: Week 33, Year 2025, Amount 622099.220000
+2025/08/20 15:52:13 Updated weeklyRevenues[32] for week 33, year 2025 with amount 622099.220000
+2025/08/20 15:52:13 Handling 53rd week data.
+2025/08/20 15:52:13 Appended 53rd week revenue from 2020 Revenue to 2021 Revenue for week 1.
+2025/08/20 15:52:13 Appended 53rd week revenue from 2021 Revenue to 2022 Revenue for week 1.
+2025/08/20 15:52:13 Appended 53rd week revenue from 2022 Revenue to 2023 Revenue for week 1.
+2025/08/20 15:52:13 Appended 53rd week revenue from 2023 Revenue to 2024 Revenue for week 1.
+2025/08/20 15:52:13 Appended 53rd week revenue from 2024 Revenue to 2025 Revenue for week 1.
+2025/08/20 15:52:13 UpdateWeeklyRevenue finished.
+2025/08/20 15:52:13 Successfully updated weekly revenue in helpers.
+2025/08/20 15:52:13 Finished updating transportation revenue data.
+2025/08/20 15:52:13 Data length is 53, trimming to 52.
+2025/08/20 15:52:13 Setting cache for key: transportationYearByYear
+2025/08/20 15:52:13 Cache set successfully.
+2025/08/20 15:53:31 Trans_year_by_year handler called.
+2025/08/20 15:53:31 Performing database health check.
+2025/08/20 15:53:31 Performing advanced trans_weekly_rev health check...
+2025/08/20 15:53:31 Health check: Data found for Year=2020, Week=1, Revenue=622473.70
+2025/08/20 15:53:31 Health check: Data found for Year=2020, Week=20, Revenue=605195.20
+2025/08/20 15:53:31 Health check: Data found for Year=2020, Week=30, Revenue=754091.75
+2025/08/20 15:53:31 Health check: Data found for Year=2020, Week=40, Revenue=729002.80
+2025/08/20 15:53:31 Health check: Data found for Year=2020, Week=52, Revenue=667137.75
+2025/08/20 15:53:31 Health check: Data found for Year=2025, Week=1, Revenue=1083137.90
+2025/08/20 15:53:31 Health check: Data found for Year=2025, Week=20, Revenue=1039792.60
+2025/08/20 15:53:31 Health check: Data found for Year=2025, Week=30, Revenue=1029884.00
+2025/08/20 15:53:31 Health check: Data found for Year=2024, Week=1, Revenue=1120555.50
+2025/08/20 15:53:31 Health check: Data found for Year=2024, Week=20, Revenue=985766.70
+2025/08/20 15:53:31 Health check: Data found for Year=2024, Week=30, Revenue=1077741.80
+2025/08/20 15:53:31 Health check: Data found for Year=2024, Week=40, Revenue=1109470.50
+2025/08/20 15:53:31 Health check: Data found for Year=2024, Week=52, Revenue=1052285.60
+2025/08/20 15:53:31 Advanced trans_weekly_rev health check passed.
+2025/08/20 15:53:31 Database health check passed.
+2025/08/20 15:53:31 Attempting to get weekly revenue data from database.
+2025/08/20 15:53:31 Attempting to execute query: SELECT week AS week_number, SUM(CASE WHEN year = 2020 THEN totalrevenue ELSE 0 END) AS "2020_revenue", SUM(CASE WHEN year = 2021 THEN totalrevenue ELSE 0 END) AS "2021_revenue", SUM(CASE WHEN year = 2022 THEN totalrevenue ELSE 0 END) AS "2022_revenue", SUM(CASE WHEN year = 2023 THEN totalrevenue ELSE 0 END) AS "2023_revenue", SUM(CASE WHEN year = 2024 THEN totalrevenue ELSE 0 END) AS "2024_revenue", SUM(CASE WHEN year = 2025 THEN totalrevenue ELSE 0 END) AS "2025_revenue" FROM transportation_weekly_revenue GROUP BY week ORDER BY week;
+2025/08/20 15:53:31 Finished processing 53 rows from query.
+2025/08/20 15:53:31 Successfully retrieved 53 weekly revenue entries from database.
+2025/08/20 15:53:31 Attempting to update transportation revenue data.
+2025/08/20 15:53:31 UpdateTransRevData called with 53 data entries.
+2025/08/20 15:53:31 Latest data date: 2025-08-10 00:00:00 +0000 UTC
+2025/08/20 15:53:31 Generated 2 date ranges.
+2025/08/20 15:53:31 Attempting to update date range amounts.
+2025/08/20 15:53:31 Querying original DB for date range 2025-08-10 00:00:00 to 2025-08-16 00:00:00: SELECT SUM(total_charge) from orders where company_id = 'tms' and bol_recv_date between '2025-08-10 00:00:00' and '2025-08-16 00:00:00'
+2025/08/20 15:53:31 Fetched amount 953468.990000 for date range 2025-08-10 00:00:00 to 2025-08-16 00:00:00
+2025/08/20 15:53:31 Querying original DB for date range 2025-08-17 00:00:00 to 2025-08-23 00:00:00: SELECT SUM(total_charge) from orders where company_id = 'tms' and bol_recv_date between '2025-08-17 00:00:00' and '2025-08-23 00:00:00'
+2025/08/20 15:53:32 Fetched amount 622099.220000 for date range 2025-08-17 00:00:00 to 2025-08-23 00:00:00
+2025/08/20 15:53:32 Successfully updated date range amounts.
+2025/08/20 15:53:32 Attempting to update weekly revenue in helpers.
+2025/08/20 15:53:32 UpdateWeeklyRevenue called. weeklyRevenues length: 53, dateRanges length: 2
+2025/08/20 15:53:32 Processing dateRange: Week 32, Year 2025, Amount 953468.990000
+2025/08/20 15:53:32 Updated weeklyRevenues[31] for week 32, year 2025 with amount 953468.990000
+2025/08/20 15:53:32 Processing dateRange: Week 33, Year 2025, Amount 622099.220000
+2025/08/20 15:53:32 Updated weeklyRevenues[32] for week 33, year 2025 with amount 622099.220000
+2025/08/20 15:53:32 Handling 53rd week data.
+2025/08/20 15:53:32 Appended 53rd week revenue from 2020 Revenue to 2021 Revenue for week 1.
+2025/08/20 15:53:32 Appended 53rd week revenue from 2021 Revenue to 2022 Revenue for week 1.
+2025/08/20 15:53:32 Appended 53rd week revenue from 2022 Revenue to 2023 Revenue for week 1.
+2025/08/20 15:53:32 Appended 53rd week revenue from 2023 Revenue to 2024 Revenue for week 1.
+2025/08/20 15:53:32 Appended 53rd week revenue from 2024 Revenue to 2025 Revenue for week 1.
+2025/08/20 15:53:32 UpdateWeeklyRevenue finished.
+2025/08/20 15:53:32 Successfully updated weekly revenue in helpers.
+2025/08/20 15:53:32 Finished updating transportation revenue data.
+2025/08/20 15:53:32 Data length is 53, trimming to 52.
+2025/08/20 15:53:32 Setting cache for key: transportationYearByYear
+2025/08/20 15:53:32 Cache set successfully.
+2025/08/20 15:53:34 Trans_year_by_year handler called.
+2025/08/20 15:53:34 Performing database health check.
+2025/08/20 15:53:34 Performing advanced trans_weekly_rev health check...
+2025/08/20 15:53:34 Health check: Data found for Year=2020, Week=1, Revenue=622473.70
+2025/08/20 15:53:34 Health check: Data found for Year=2020, Week=20, Revenue=605195.20
+2025/08/20 15:53:34 Health check: Data found for Year=2020, Week=30, Revenue=754091.75
+2025/08/20 15:53:34 Health check: Data found for Year=2020, Week=40, Revenue=729002.80
+2025/08/20 15:53:34 Health check: Data found for Year=2020, Week=52, Revenue=667137.75
+2025/08/20 15:53:34 Health check: Data found for Year=2025, Week=1, Revenue=1083137.90
+2025/08/20 15:53:34 Health check: Data found for Year=2025, Week=20, Revenue=1039792.60
+2025/08/20 15:53:34 Health check: Data found for Year=2025, Week=30, Revenue=1029884.00
+2025/08/20 15:53:34 Health check: Data found for Year=2024, Week=1, Revenue=1120555.50
+2025/08/20 15:53:34 Health check: Data found for Year=2024, Week=20, Revenue=985766.70
+2025/08/20 15:53:34 Health check: Data found for Year=2024, Week=30, Revenue=1077741.80
+2025/08/20 15:53:34 Health check: Data found for Year=2024, Week=40, Revenue=1109470.50
+2025/08/20 15:53:34 Health check: Data found for Year=2024, Week=52, Revenue=1052285.60
+2025/08/20 15:53:34 Advanced trans_weekly_rev health check passed.
+2025/08/20 15:53:34 Database health check passed.
+2025/08/20 15:53:34 Attempting to get weekly revenue data from database.
+2025/08/20 15:53:34 Attempting to execute query: SELECT week AS week_number, SUM(CASE WHEN year = 2020 THEN totalrevenue ELSE 0 END) AS "2020_revenue", SUM(CASE WHEN year = 2021 THEN totalrevenue ELSE 0 END) AS "2021_revenue", SUM(CASE WHEN year = 2022 THEN totalrevenue ELSE 0 END) AS "2022_revenue", SUM(CASE WHEN year = 2023 THEN totalrevenue ELSE 0 END) AS "2023_revenue", SUM(CASE WHEN year = 2024 THEN totalrevenue ELSE 0 END) AS "2024_revenue", SUM(CASE WHEN year = 2025 THEN totalrevenue ELSE 0 END) AS "2025_revenue" FROM transportation_weekly_revenue GROUP BY week ORDER BY week;
+2025/08/20 15:53:34 Finished processing 53 rows from query.
+2025/08/20 15:53:34 Successfully retrieved 53 weekly revenue entries from database.
+2025/08/20 15:53:34 Attempting to update transportation revenue data.
+2025/08/20 15:53:34 UpdateTransRevData called with 53 data entries.
+2025/08/20 15:53:34 Latest data date: 2025-08-10 00:00:00 +0000 UTC
+2025/08/20 15:53:34 Generated 2 date ranges.
+2025/08/20 15:53:34 Attempting to update date range amounts.
+2025/08/20 15:53:34 Querying original DB for date range 2025-08-10 00:00:00 to 2025-08-16 00:00:00: SELECT SUM(total_charge) from orders where company_id = 'tms' and bol_recv_date between '2025-08-10 00:00:00' and '2025-08-16 00:00:00'
+2025/08/20 15:53:34 Fetched amount 953468.990000 for date range 2025-08-10 00:00:00 to 2025-08-16 00:00:00
+2025/08/20 15:53:34 Querying original DB for date range 2025-08-17 00:00:00 to 2025-08-23 00:00:00: SELECT SUM(total_charge) from orders where company_id = 'tms' and bol_recv_date between '2025-08-17 00:00:00' and '2025-08-23 00:00:00'
+2025/08/20 15:53:35 Fetched amount 622099.220000 for date range 2025-08-17 00:00:00 to 2025-08-23 00:00:00
+2025/08/20 15:53:35 Successfully updated date range amounts.
+2025/08/20 15:53:35 Attempting to update weekly revenue in helpers.
+2025/08/20 15:53:35 UpdateWeeklyRevenue called. weeklyRevenues length: 53, dateRanges length: 2
+2025/08/20 15:53:35 Processing dateRange: Week 32, Year 2025, Amount 953468.990000
+2025/08/20 15:53:35 Updated weeklyRevenues[31] for week 32, year 2025 with amount 953468.990000
+2025/08/20 15:53:35 Processing dateRange: Week 33, Year 2025, Amount 622099.220000
+2025/08/20 15:53:35 Updated weeklyRevenues[32] for week 33, year 2025 with amount 622099.220000
+2025/08/20 15:53:35 Handling 53rd week data.
+2025/08/20 15:53:35 Appended 53rd week revenue from 2020 Revenue to 2021 Revenue for week 1.
+2025/08/20 15:53:35 Appended 53rd week revenue from 2021 Revenue to 2022 Revenue for week 1.
+2025/08/20 15:53:35 Appended 53rd week revenue from 2022 Revenue to 2023 Revenue for week 1.
+2025/08/20 15:53:35 Appended 53rd week revenue from 2023 Revenue to 2024 Revenue for week 1.
+2025/08/20 15:53:35 Appended 53rd week revenue from 2024 Revenue to 2025 Revenue for week 1.
+2025/08/20 15:53:35 UpdateWeeklyRevenue finished.
+2025/08/20 15:53:35 Successfully updated weekly revenue in helpers.
+2025/08/20 15:53:35 Finished updating transportation revenue data.
+2025/08/20 15:53:35 Data length is 53, trimming to 52.
+2025/08/20 15:53:35 Setting cache for key: transportationYearByYear
+2025/08/20 15:53:35 Cache set successfully.
+2025/08/20 15:56:11 Trans_year_by_year handler called.
+2025/08/20 15:56:11 Performing database health check.
+2025/08/20 15:56:11 Performing advanced trans_weekly_rev health check...
+2025/08/20 15:56:11 Health check: Data found for Year=2020, Week=1, Revenue=622473.70
+2025/08/20 15:56:11 Health check: Data found for Year=2020, Week=20, Revenue=605195.20
+2025/08/20 15:56:11 Health check: Data found for Year=2020, Week=30, Revenue=754091.75
+2025/08/20 15:56:11 Health check: Data found for Year=2020, Week=40, Revenue=729002.80
+2025/08/20 15:56:11 Health check: Data found for Year=2020, Week=52, Revenue=667137.75
+2025/08/20 15:56:11 Health check: Data found for Year=2025, Week=1, Revenue=1083137.90
+2025/08/20 15:56:11 Health check: Data found for Year=2025, Week=20, Revenue=1039792.60
+2025/08/20 15:56:11 Health check: Data found for Year=2025, Week=30, Revenue=1029884.00
+2025/08/20 15:56:11 Health check: Data found for Year=2024, Week=1, Revenue=1120555.50
+2025/08/20 15:56:11 Health check: Data found for Year=2024, Week=20, Revenue=985766.70
+2025/08/20 15:56:12 Health check: Data found for Year=2024, Week=30, Revenue=1077741.80
+2025/08/20 15:56:12 Health check: Data found for Year=2024, Week=40, Revenue=1109470.50
+2025/08/20 15:56:12 Health check: Data found for Year=2024, Week=52, Revenue=1052285.60
+2025/08/20 15:56:12 Advanced trans_weekly_rev health check passed.
+2025/08/20 15:56:12 Database health check passed.
+2025/08/20 15:56:12 Attempting to get weekly revenue data from database.
+2025/08/20 15:56:12 Attempting to execute query: SELECT week AS week_number, SUM(CASE WHEN year = 2020 THEN totalrevenue ELSE 0 END) AS "2020_revenue", SUM(CASE WHEN year = 2021 THEN totalrevenue ELSE 0 END) AS "2021_revenue", SUM(CASE WHEN year = 2022 THEN totalrevenue ELSE 0 END) AS "2022_revenue", SUM(CASE WHEN year = 2023 THEN totalrevenue ELSE 0 END) AS "2023_revenue", SUM(CASE WHEN year = 2024 THEN totalrevenue ELSE 0 END) AS "2024_revenue", SUM(CASE WHEN year = 2025 THEN totalrevenue ELSE 0 END) AS "2025_revenue" FROM transportation_weekly_revenue GROUP BY week ORDER BY week;
+2025/08/20 15:56:12 Finished processing 53 rows from query.
+2025/08/20 15:56:12 Successfully retrieved 53 weekly revenue entries from database.
+2025/08/20 15:56:12 Attempting to update transportation revenue data.
+2025/08/20 15:56:12 UpdateTransRevData called with 53 data entries.
+2025/08/20 15:56:12 Latest data date: 2025-08-10 00:00:00 +0000 UTC
+2025/08/20 15:56:12 Generated 2 date ranges.
+2025/08/20 15:56:12 Attempting to update date range amounts.
+2025/08/20 15:56:12 Querying original DB for date range 2025-08-10 00:00:00 to 2025-08-16 00:00:00: SELECT SUM(total_charge) from orders where company_id = 'tms' and bol_recv_date between '2025-08-10 00:00:00' and '2025-08-16 00:00:00'
+2025/08/20 15:56:12 Fetched amount 953468.990000 for date range 2025-08-10 00:00:00 to 2025-08-16 00:00:00
+2025/08/20 15:56:12 Querying original DB for date range 2025-08-17 00:00:00 to 2025-08-23 00:00:00: SELECT SUM(total_charge) from orders where company_id = 'tms' and bol_recv_date between '2025-08-17 00:00:00' and '2025-08-23 00:00:00'
+2025/08/20 15:56:12 Fetched amount 621996.820000 for date range 2025-08-17 00:00:00 to 2025-08-23 00:00:00
+2025/08/20 15:56:12 Successfully updated date range amounts.
+2025/08/20 15:56:12 Attempting to update weekly revenue in helpers.
+2025/08/20 15:56:12 UpdateWeeklyRevenue called. weeklyRevenues length: 53, dateRanges length: 2
+2025/08/20 15:56:12 Processing dateRange: Week 32, Year 2025, Amount 953468.990000
+2025/08/20 15:56:12 Updated weeklyRevenues[31] for week 32, year 2025 with amount 953468.990000
+2025/08/20 15:56:12 Processing dateRange: Week 33, Year 2025, Amount 621996.820000
+2025/08/20 15:56:12 Updated weeklyRevenues[32] for week 33, year 2025 with amount 621996.820000
+2025/08/20 15:56:12 Handling 53rd week data.
+2025/08/20 15:56:12 Appended 53rd week revenue from 2020 Revenue to 2021 Revenue for week 1.
+2025/08/20 15:56:12 Appended 53rd week revenue from 2021 Revenue to 2022 Revenue for week 1.
+2025/08/20 15:56:12 Appended 53rd week revenue from 2022 Revenue to 2023 Revenue for week 1.
+2025/08/20 15:56:12 Appended 53rd week revenue from 2023 Revenue to 2024 Revenue for week 1.
+2025/08/20 15:56:12 Appended 53rd week revenue from 2024 Revenue to 2025 Revenue for week 1.
+2025/08/20 15:56:12 UpdateWeeklyRevenue finished.
+2025/08/20 15:56:12 Successfully updated weekly revenue in helpers.
+2025/08/20 15:56:12 Finished updating transportation revenue data.
+2025/08/20 15:56:12 Data length is 53, trimming to 52.
+2025/08/20 15:56:12 Setting cache for key: transportationYearByYear
+2025/08/20 15:56:12 Cache set successfully.
+2025/08/20 15:56:19 Trans_year_by_year handler called.
+2025/08/20 15:56:19 Performing database health check.
+2025/08/20 15:56:19 Performing advanced trans_weekly_rev health check...
+2025/08/20 15:56:19 Health check: Data found for Year=2020, Week=1, Revenue=622473.70
+2025/08/20 15:56:19 Health check: Data found for Year=2020, Week=20, Revenue=605195.20
+2025/08/20 15:56:19 Health check: Data found for Year=2020, Week=30, Revenue=754091.75
+2025/08/20 15:56:19 Health check: Data found for Year=2020, Week=40, Revenue=729002.80
+2025/08/20 15:56:19 Health check: Data found for Year=2020, Week=52, Revenue=667137.75
+2025/08/20 15:56:19 Health check: Data found for Year=2025, Week=1, Revenue=1083137.90
+2025/08/20 15:56:19 Health check: Data found for Year=2025, Week=20, Revenue=1039792.60
+2025/08/20 15:56:19 Health check: Data found for Year=2025, Week=30, Revenue=1029884.00
+2025/08/20 15:56:19 Health check: Data found for Year=2024, Week=1, Revenue=1120555.50
+2025/08/20 15:56:19 Health check: Data found for Year=2024, Week=20, Revenue=985766.70
+2025/08/20 15:56:19 Health check: Data found for Year=2024, Week=30, Revenue=1077741.80
+2025/08/20 15:56:19 Health check: Data found for Year=2024, Week=40, Revenue=1109470.50
+2025/08/20 15:56:19 Health check: Data found for Year=2024, Week=52, Revenue=1052285.60
+2025/08/20 15:56:19 Advanced trans_weekly_rev health check passed.
+2025/08/20 15:56:19 Database health check passed.
+2025/08/20 15:56:19 Attempting to get weekly revenue data from database.
+2025/08/20 15:56:19 Attempting to execute query: SELECT week AS week_number, SUM(CASE WHEN year = 2020 THEN totalrevenue ELSE 0 END) AS "2020_revenue", SUM(CASE WHEN year = 2021 THEN totalrevenue ELSE 0 END) AS "2021_revenue", SUM(CASE WHEN year = 2022 THEN totalrevenue ELSE 0 END) AS "2022_revenue", SUM(CASE WHEN year = 2023 THEN totalrevenue ELSE 0 END) AS "2023_revenue", SUM(CASE WHEN year = 2024 THEN totalrevenue ELSE 0 END) AS "2024_revenue", SUM(CASE WHEN year = 2025 THEN totalrevenue ELSE 0 END) AS "2025_revenue" FROM transportation_weekly_revenue GROUP BY week ORDER BY week;
+2025/08/20 15:56:19 Finished processing 53 rows from query.
+2025/08/20 15:56:19 Successfully retrieved 53 weekly revenue entries from database.
+2025/08/20 15:56:19 Attempting to update transportation revenue data.
+2025/08/20 15:56:19 UpdateTransRevData called with 53 data entries.
+2025/08/20 15:56:19 Latest data date: 2025-08-10 00:00:00 +0000 UTC
+2025/08/20 15:56:19 Generated 2 date ranges.
+2025/08/20 15:56:19 Attempting to update date range amounts.
+2025/08/20 15:56:19 Querying original DB for date range 2025-08-10 00:00:00 to 2025-08-16 00:00:00: SELECT SUM(total_charge) from orders where company_id = 'tms' and bol_recv_date between '2025-08-10 00:00:00' and '2025-08-16 00:00:00'
+2025/08/20 15:56:19 Fetched amount 953468.990000 for date range 2025-08-10 00:00:00 to 2025-08-16 00:00:00
+2025/08/20 15:56:19 Querying original DB for date range 2025-08-17 00:00:00 to 2025-08-23 00:00:00: SELECT SUM(total_charge) from orders where company_id = 'tms' and bol_recv_date between '2025-08-17 00:00:00' and '2025-08-23 00:00:00'
+2025/08/20 15:56:20 Fetched amount 621996.820000 for date range 2025-08-17 00:00:00 to 2025-08-23 00:00:00
+2025/08/20 15:56:20 Successfully updated date range amounts.
+2025/08/20 15:56:20 Attempting to update weekly revenue in helpers.
+2025/08/20 15:56:20 UpdateWeeklyRevenue called. weeklyRevenues length: 53, dateRanges length: 2
+2025/08/20 15:56:20 Processing dateRange: Week 32, Year 2025, Amount 953468.990000
+2025/08/20 15:56:20 Updated weeklyRevenues[31] for week 32, year 2025 with amount 953468.990000
+2025/08/20 15:56:20 Processing dateRange: Week 33, Year 2025, Amount 621996.820000
+2025/08/20 15:56:20 Updated weeklyRevenues[32] for week 33, year 2025 with amount 621996.820000
+2025/08/20 15:56:20 Handling 53rd week data.
+2025/08/20 15:56:20 Appended 53rd week revenue from 2020 Revenue to 2021 Revenue for week 1.
+2025/08/20 15:56:20 Appended 53rd week revenue from 2021 Revenue to 2022 Revenue for week 1.
+2025/08/20 15:56:20 Appended 53rd week revenue from 2022 Revenue to 2023 Revenue for week 1.
+2025/08/20 15:56:20 Appended 53rd week revenue from 2023 Revenue to 2024 Revenue for week 1.
+2025/08/20 15:56:20 Appended 53rd week revenue from 2024 Revenue to 2025 Revenue for week 1.
+2025/08/20 15:56:20 UpdateWeeklyRevenue finished.
+2025/08/20 15:56:20 Successfully updated weekly revenue in helpers.
+2025/08/20 15:56:20 Finished updating transportation revenue data.
+2025/08/20 15:56:20 Data length is 53, trimming to 52.
+2025/08/20 15:56:20 Setting cache for key: transportationYearByYear
+2025/08/20 15:56:20 Cache set successfully.
+2025/08/20 15:57:46 Trans_year_by_year handler called.
+2025/08/20 15:57:46 Performing database health check.
+2025/08/20 15:57:46 Performing advanced trans_weekly_rev health check...
+2025/08/20 15:57:46 Health check: Data found for Year=2020, Week=1, Revenue=622473.70
+2025/08/20 15:57:46 Health check: Data found for Year=2020, Week=20, Revenue=605195.20
+2025/08/20 15:57:46 Health check: Data found for Year=2020, Week=30, Revenue=754091.75
+2025/08/20 15:57:46 Health check: Data found for Year=2020, Week=40, Revenue=729002.80
+2025/08/20 15:57:46 Health check: Data found for Year=2020, Week=52, Revenue=667137.75
+2025/08/20 15:57:46 Health check: Data found for Year=2025, Week=1, Revenue=1083137.90
+2025/08/20 15:57:46 Health check: Data found for Year=2025, Week=20, Revenue=1039792.60
+2025/08/20 15:57:46 Health check: Data found for Year=2025, Week=30, Revenue=1029884.00
+2025/08/20 15:57:46 Health check: Data found for Year=2024, Week=1, Revenue=1120555.50
+2025/08/20 15:57:46 Health check: Data found for Year=2024, Week=20, Revenue=985766.70
+2025/08/20 15:57:46 Health check: Data found for Year=2024, Week=30, Revenue=1077741.80
+2025/08/20 15:57:46 Health check: Data found for Year=2024, Week=40, Revenue=1109470.50
+2025/08/20 15:57:46 Health check: Data found for Year=2024, Week=52, Revenue=1052285.60
+2025/08/20 15:57:46 Advanced trans_weekly_rev health check passed.
+2025/08/20 15:57:46 Database health check passed.
+2025/08/20 15:57:46 Attempting to get weekly revenue data from database.
+2025/08/20 15:57:46 Attempting to execute query: SELECT week AS week_number, SUM(CASE WHEN year = 2020 THEN totalrevenue ELSE 0 END) AS "2020_revenue", SUM(CASE WHEN year = 2021 THEN totalrevenue ELSE 0 END) AS "2021_revenue", SUM(CASE WHEN year = 2022 THEN totalrevenue ELSE 0 END) AS "2022_revenue", SUM(CASE WHEN year = 2023 THEN totalrevenue ELSE 0 END) AS "2023_revenue", SUM(CASE WHEN year = 2024 THEN totalrevenue ELSE 0 END) AS "2024_revenue", SUM(CASE WHEN year = 2025 THEN totalrevenue ELSE 0 END) AS "2025_revenue" FROM transportation_weekly_revenue GROUP BY week ORDER BY week;
+2025/08/20 15:57:46 Finished processing 53 rows from query.
+2025/08/20 15:57:46 Successfully retrieved 53 weekly revenue entries from database.
+2025/08/20 15:57:46 Attempting to update transportation revenue data.
+2025/08/20 15:57:46 UpdateTransRevData called with 53 data entries.
+2025/08/20 15:57:46 Latest data date: 2025-08-10 00:00:00 +0000 UTC
+2025/08/20 15:57:46 Generated 2 date ranges.
+2025/08/20 15:57:46 Attempting to update date range amounts.
+2025/08/20 15:57:46 Querying original DB for date range 2025-08-10 00:00:00 to 2025-08-16 00:00:00: SELECT SUM(total_charge) from orders where company_id = 'tms' and bol_recv_date between '2025-08-10 00:00:00' and '2025-08-16 00:00:00'
+2025/08/20 15:57:47 Fetched amount 953468.990000 for date range 2025-08-10 00:00:00 to 2025-08-16 00:00:00
+2025/08/20 15:57:47 Querying original DB for date range 2025-08-17 00:00:00 to 2025-08-23 00:00:00: SELECT SUM(total_charge) from orders where company_id = 'tms' and bol_recv_date between '2025-08-17 00:00:00' and '2025-08-23 00:00:00'
+2025/08/20 15:57:47 Fetched amount 621996.820000 for date range 2025-08-17 00:00:00 to 2025-08-23 00:00:00
+2025/08/20 15:57:47 Successfully updated date range amounts.
+2025/08/20 15:57:47 Attempting to update weekly revenue in helpers.
+2025/08/20 15:57:47 UpdateWeeklyRevenue called. weeklyRevenues length: 53, dateRanges length: 2
+2025/08/20 15:57:47 Processing dateRange: Week 32, Year 2025, Amount 953468.990000
+2025/08/20 15:57:47 Updated weeklyRevenues[31] for week 32, year 2025 with amount 953468.990000
+2025/08/20 15:57:47 Processing dateRange: Week 33, Year 2025, Amount 621996.820000
+2025/08/20 15:57:47 Updated weeklyRevenues[32] for week 33, year 2025 with amount 621996.820000
+2025/08/20 15:57:47 Handling 53rd week data.
+2025/08/20 15:57:47 Appended 53rd week revenue from 2020 Revenue to 2021 Revenue for week 1.
+2025/08/20 15:57:47 Appended 53rd week revenue from 2021 Revenue to 2022 Revenue for week 1.
+2025/08/20 15:57:47 Appended 53rd week revenue from 2022 Revenue to 2023 Revenue for week 1.
+2025/08/20 15:57:47 Appended 53rd week revenue from 2023 Revenue to 2024 Revenue for week 1.
+2025/08/20 15:57:47 Appended 53rd week revenue from 2024 Revenue to 2025 Revenue for week 1.
+2025/08/20 15:57:47 UpdateWeeklyRevenue finished.
+2025/08/20 15:57:47 Successfully updated weekly revenue in helpers.
+2025/08/20 15:57:47 Finished updating transportation revenue data.
+2025/08/20 15:57:47 Data length is 53, trimming to 52.
+2025/08/20 15:57:47 Setting cache for key: transportationYearByYear
+2025/08/20 15:57:47 Cache set successfully.
+2025/08/20 15:58:06 Trans_year_by_year handler called.
+2025/08/20 15:58:06 Performing database health check.
+2025/08/20 15:58:06 Performing advanced trans_weekly_rev health check...
+2025/08/20 15:58:06 Health check: Data found for Year=2020, Week=1, Revenue=622473.70
+2025/08/20 15:58:06 Health check: Data found for Year=2020, Week=20, Revenue=605195.20
+2025/08/20 15:58:06 Health check: Data found for Year=2020, Week=30, Revenue=754091.75
+2025/08/20 15:58:06 Health check: Data found for Year=2020, Week=40, Revenue=729002.80
+2025/08/20 15:58:06 Health check: Data found for Year=2020, Week=52, Revenue=667137.75
+2025/08/20 15:58:06 Health check: Data found for Year=2025, Week=1, Revenue=1083137.90
+2025/08/20 15:58:06 Health check: Data found for Year=2025, Week=20, Revenue=1039792.60
+2025/08/20 15:58:06 Health check: Data found for Year=2025, Week=30, Revenue=1029884.00
+2025/08/20 15:58:06 Health check: Data found for Year=2024, Week=1, Revenue=1120555.50
+2025/08/20 15:58:06 Health check: Data found for Year=2024, Week=20, Revenue=985766.70
+2025/08/20 15:58:06 Health check: Data found for Year=2024, Week=30, Revenue=1077741.80
+2025/08/20 15:58:06 Health check: Data found for Year=2024, Week=40, Revenue=1109470.50
+2025/08/20 15:58:06 Health check: Data found for Year=2024, Week=52, Revenue=1052285.60
+2025/08/20 15:58:06 Advanced trans_weekly_rev health check passed.
+2025/08/20 15:58:06 Database health check passed.
+2025/08/20 15:58:06 Attempting to get weekly revenue data from database.
+2025/08/20 15:58:06 Attempting to execute query: SELECT week AS week_number, SUM(CASE WHEN year = 2020 THEN totalrevenue ELSE 0 END) AS "2020_revenue", SUM(CASE WHEN year = 2021 THEN totalrevenue ELSE 0 END) AS "2021_revenue", SUM(CASE WHEN year = 2022 THEN totalrevenue ELSE 0 END) AS "2022_revenue", SUM(CASE WHEN year = 2023 THEN totalrevenue ELSE 0 END) AS "2023_revenue", SUM(CASE WHEN year = 2024 THEN totalrevenue ELSE 0 END) AS "2024_revenue", SUM(CASE WHEN year = 2025 THEN totalrevenue ELSE 0 END) AS "2025_revenue" FROM transportation_weekly_revenue GROUP BY week ORDER BY week;
+2025/08/20 15:58:06 Finished processing 53 rows from query.
+2025/08/20 15:58:06 Successfully retrieved 53 weekly revenue entries from database.
+2025/08/20 15:58:06 Attempting to update transportation revenue data.
+2025/08/20 15:58:06 UpdateTransRevData called with 53 data entries.
+2025/08/20 15:58:06 Latest data date: 2025-08-10 00:00:00 +0000 UTC
+2025/08/20 15:58:06 Generated 2 date ranges.
+2025/08/20 15:58:06 Attempting to update date range amounts.
+2025/08/20 15:58:06 Querying original DB for date range 2025-08-10 00:00:00 to 2025-08-16 00:00:00: SELECT SUM(total_charge) from orders where company_id = 'tms' and bol_recv_date between '2025-08-10 00:00:00' and '2025-08-16 00:00:00'
+2025/08/20 15:58:07 Fetched amount 953468.990000 for date range 2025-08-10 00:00:00 to 2025-08-16 00:00:00
+2025/08/20 15:58:07 Querying original DB for date range 2025-08-17 00:00:00 to 2025-08-23 00:00:00: SELECT SUM(total_charge) from orders where company_id = 'tms' and bol_recv_date between '2025-08-17 00:00:00' and '2025-08-23 00:00:00'
+2025/08/20 15:58:07 Fetched amount 621996.820000 for date range 2025-08-17 00:00:00 to 2025-08-23 00:00:00
+2025/08/20 15:58:07 Successfully updated date range amounts.
+2025/08/20 15:58:07 Attempting to update weekly revenue in helpers.
+2025/08/20 15:58:07 UpdateWeeklyRevenue called. weeklyRevenues length: 53, dateRanges length: 2
+2025/08/20 15:58:07 Processing dateRange: Week 32, Year 2025, Amount 953468.990000
+2025/08/20 15:58:07 Updated weeklyRevenues[31] for week 32, year 2025 with amount 953468.990000
+2025/08/20 15:58:07 Processing dateRange: Week 33, Year 2025, Amount 621996.820000
+2025/08/20 15:58:07 Updated weeklyRevenues[32] for week 33, year 2025 with amount 621996.820000
+2025/08/20 15:58:07 Handling 53rd week data.
+2025/08/20 15:58:07 Appended 53rd week revenue from 2020 Revenue to 2021 Revenue for week 1.
+2025/08/20 15:58:07 Appended 53rd week revenue from 2021 Revenue to 2022 Revenue for week 1.
+2025/08/20 15:58:07 Appended 53rd week revenue from 2022 Revenue to 2023 Revenue for week 1.
+2025/08/20 15:58:07 Appended 53rd week revenue from 2023 Revenue to 2024 Revenue for week 1.
+2025/08/20 15:58:07 Appended 53rd week revenue from 2024 Revenue to 2025 Revenue for week 1.
+2025/08/20 15:58:07 UpdateWeeklyRevenue finished.
+2025/08/20 15:58:07 Successfully updated weekly revenue in helpers.
+2025/08/20 15:58:07 Finished updating transportation revenue data.
+2025/08/20 15:58:07 Data length is 53, trimming to 52.
+2025/08/20 15:58:07 Setting cache for key: transportationYearByYear
+2025/08/20 15:58:07 Cache set successfully.
+2025/08/20 17:09:16 Trans_year_by_year handler called.
+2025/08/20 17:09:16 Performing database health check.
+2025/08/20 17:09:16 Trans_year_by_year handler called.
+2025/08/20 17:09:16 Performing database health check.
+2025/08/20 17:09:16 Performing advanced trans_weekly_rev health check...
+2025/08/20 17:09:16 Performing advanced trans_weekly_rev health check...
+2025/08/20 17:09:16 Health check: Data found for Year=2020, Week=1, Revenue=622473.70
+2025/08/20 17:09:16 Health check: Data found for Year=2020, Week=20, Revenue=605195.20
+2025/08/20 17:09:16 Health check: Data found for Year=2020, Week=30, Revenue=754091.75
+2025/08/20 17:09:16 Health check: Data found for Year=2020, Week=1, Revenue=622473.70
+2025/08/20 17:09:16 Health check: Data found for Year=2020, Week=40, Revenue=729002.80
+2025/08/20 17:09:16 Health check: Data found for Year=2020, Week=20, Revenue=605195.20
+2025/08/20 17:09:16 Health check: Data found for Year=2020, Week=52, Revenue=667137.75
+2025/08/20 17:09:16 Health check: Data found for Year=2020, Week=30, Revenue=754091.75
+2025/08/20 17:09:16 Health check: Data found for Year=2025, Week=1, Revenue=1083137.90
+2025/08/20 17:09:16 Health check: Data found for Year=2020, Week=40, Revenue=729002.80
+2025/08/20 17:09:16 Health check: Data found for Year=2025, Week=20, Revenue=1039792.60
+2025/08/20 17:09:16 Health check: Data found for Year=2020, Week=52, Revenue=667137.75
+2025/08/20 17:09:16 Health check: Data found for Year=2025, Week=30, Revenue=1029884.00
+2025/08/20 17:09:16 Health check: Data found for Year=2025, Week=1, Revenue=1083137.90
+2025/08/20 17:09:16 Health check: Data found for Year=2024, Week=1, Revenue=1120555.50
+2025/08/20 17:09:16 Health check: Data found for Year=2025, Week=20, Revenue=1039792.60
+2025/08/20 17:09:16 Health check: Data found for Year=2024, Week=20, Revenue=985766.70
+2025/08/20 17:09:16 Health check: Data found for Year=2025, Week=30, Revenue=1029884.00
+2025/08/20 17:09:16 Health check: Data found for Year=2024, Week=1, Revenue=1120555.50
+2025/08/20 17:09:16 Health check: Data found for Year=2024, Week=30, Revenue=1077741.80
+2025/08/20 17:09:16 Health check: Data found for Year=2024, Week=40, Revenue=1109470.50
+2025/08/20 17:09:16 Health check: Data found for Year=2024, Week=20, Revenue=985766.70
+2025/08/20 17:09:16 Health check: Data found for Year=2024, Week=30, Revenue=1077741.80
+2025/08/20 17:09:16 Health check: Data found for Year=2024, Week=52, Revenue=1052285.60
+2025/08/20 17:09:16 Advanced trans_weekly_rev health check passed.
+2025/08/20 17:09:16 Database health check passed.
+2025/08/20 17:09:16 Attempting to get weekly revenue data from database.
+2025/08/20 17:09:16 Attempting to execute query: SELECT week AS week_number, SUM(CASE WHEN year = 2020 THEN totalrevenue ELSE 0 END) AS "2020_revenue", SUM(CASE WHEN year = 2021 THEN totalrevenue ELSE 0 END) AS "2021_revenue", SUM(CASE WHEN year = 2022 THEN totalrevenue ELSE 0 END) AS "2022_revenue", SUM(CASE WHEN year = 2023 THEN totalrevenue ELSE 0 END) AS "2023_revenue", SUM(CASE WHEN year = 2024 THEN totalrevenue ELSE 0 END) AS "2024_revenue", SUM(CASE WHEN year = 2025 THEN totalrevenue ELSE 0 END) AS "2025_revenue" FROM transportation_weekly_revenue GROUP BY week ORDER BY week;
+2025/08/20 17:09:16 Finished processing 53 rows from query.
+2025/08/20 17:09:16 Successfully retrieved 53 weekly revenue entries from database.
+2025/08/20 17:09:16 Attempting to update transportation revenue data.
+2025/08/20 17:09:16 UpdateTransRevData called with 53 data entries.
+2025/08/20 17:09:16 Latest data date: 2025-08-10 00:00:00 +0000 UTC
+2025/08/20 17:09:16 Generated 2 date ranges.
+2025/08/20 17:09:16 Attempting to update date range amounts.
+2025/08/20 17:09:16 Querying original DB for date range 2025-08-10 00:00:00 to 2025-08-16 00:00:00: SELECT SUM(total_charge) from orders where company_id = 'tms' and bol_recv_date between '2025-08-10 00:00:00' and '2025-08-16 00:00:00'
+2025/08/20 17:09:16 Health check: Data found for Year=2024, Week=40, Revenue=1109470.50
+2025/08/20 17:09:16 Health check: Data found for Year=2024, Week=52, Revenue=1052285.60
+2025/08/20 17:09:16 Advanced trans_weekly_rev health check passed.
+2025/08/20 17:09:16 Database health check passed.
+2025/08/20 17:09:16 Attempting to get weekly revenue data from database.
+2025/08/20 17:09:16 Attempting to execute query: SELECT week AS week_number, SUM(CASE WHEN year = 2020 THEN totalrevenue ELSE 0 END) AS "2020_revenue", SUM(CASE WHEN year = 2021 THEN totalrevenue ELSE 0 END) AS "2021_revenue", SUM(CASE WHEN year = 2022 THEN totalrevenue ELSE 0 END) AS "2022_revenue", SUM(CASE WHEN year = 2023 THEN totalrevenue ELSE 0 END) AS "2023_revenue", SUM(CASE WHEN year = 2024 THEN totalrevenue ELSE 0 END) AS "2024_revenue", SUM(CASE WHEN year = 2025 THEN totalrevenue ELSE 0 END) AS "2025_revenue" FROM transportation_weekly_revenue GROUP BY week ORDER BY week;
+2025/08/20 17:09:16 Finished processing 53 rows from query.
+2025/08/20 17:09:16 Successfully retrieved 53 weekly revenue entries from database.
+2025/08/20 17:09:16 Attempting to update transportation revenue data.
+2025/08/20 17:09:16 UpdateTransRevData called with 53 data entries.
+2025/08/20 17:09:16 Latest data date: 2025-08-10 00:00:00 +0000 UTC
+2025/08/20 17:09:16 Generated 2 date ranges.
+2025/08/20 17:09:16 Attempting to update date range amounts.
+2025/08/20 17:09:16 Querying original DB for date range 2025-08-10 00:00:00 to 2025-08-16 00:00:00: SELECT SUM(total_charge) from orders where company_id = 'tms' and bol_recv_date between '2025-08-10 00:00:00' and '2025-08-16 00:00:00'
+2025/08/20 17:09:17 Fetched amount 953468.990000 for date range 2025-08-10 00:00:00 to 2025-08-16 00:00:00
+2025/08/20 17:09:17 Querying original DB for date range 2025-08-17 00:00:00 to 2025-08-23 00:00:00: SELECT SUM(total_charge) from orders where company_id = 'tms' and bol_recv_date between '2025-08-17 00:00:00' and '2025-08-23 00:00:00'
+2025/08/20 17:09:17 Fetched amount 953468.990000 for date range 2025-08-10 00:00:00 to 2025-08-16 00:00:00
+2025/08/20 17:09:17 Querying original DB for date range 2025-08-17 00:00:00 to 2025-08-23 00:00:00: SELECT SUM(total_charge) from orders where company_id = 'tms' and bol_recv_date between '2025-08-17 00:00:00' and '2025-08-23 00:00:00'
+2025/08/20 17:09:17 Fetched amount 649320.990000 for date range 2025-08-17 00:00:00 to 2025-08-23 00:00:00
+2025/08/20 17:09:17 Successfully updated date range amounts.
+2025/08/20 17:09:17 Attempting to update weekly revenue in helpers.
+2025/08/20 17:09:17 UpdateWeeklyRevenue called. weeklyRevenues length: 53, dateRanges length: 2
+2025/08/20 17:09:17 Processing dateRange: Week 32, Year 2025, Amount 953468.990000
+2025/08/20 17:09:17 Updated weeklyRevenues[31] for week 32, year 2025 with amount 953468.990000
+2025/08/20 17:09:17 Processing dateRange: Week 33, Year 2025, Amount 649320.990000
+2025/08/20 17:09:17 Updated weeklyRevenues[32] for week 33, year 2025 with amount 649320.990000
+2025/08/20 17:09:17 Handling 53rd week data.
+2025/08/20 17:09:17 Appended 53rd week revenue from 2020 Revenue to 2021 Revenue for week 1.
+2025/08/20 17:09:17 Appended 53rd week revenue from 2021 Revenue to 2022 Revenue for week 1.
+2025/08/20 17:09:17 Appended 53rd week revenue from 2022 Revenue to 2023 Revenue for week 1.
+2025/08/20 17:09:17 Appended 53rd week revenue from 2023 Revenue to 2024 Revenue for week 1.
+2025/08/20 17:09:17 Appended 53rd week revenue from 2024 Revenue to 2025 Revenue for week 1.
+2025/08/20 17:09:17 UpdateWeeklyRevenue finished.
+2025/08/20 17:09:17 Successfully updated weekly revenue in helpers.
+2025/08/20 17:09:17 Finished updating transportation revenue data.
+2025/08/20 17:09:17 Data length is 53, trimming to 52.
+2025/08/20 17:09:17 Setting cache for key: transportationYearByYear
+2025/08/20 17:09:17 Cache set successfully.
+2025/08/20 17:09:17 Fetched amount 649320.990000 for date range 2025-08-17 00:00:00 to 2025-08-23 00:00:00
+2025/08/20 17:09:17 Successfully updated date range amounts.
+2025/08/20 17:09:17 Attempting to update weekly revenue in helpers.
+2025/08/20 17:09:17 UpdateWeeklyRevenue called. weeklyRevenues length: 53, dateRanges length: 2
+2025/08/20 17:09:17 Processing dateRange: Week 32, Year 2025, Amount 953468.990000
+2025/08/20 17:09:17 Updated weeklyRevenues[31] for week 32, year 2025 with amount 953468.990000
+2025/08/20 17:09:17 Processing dateRange: Week 33, Year 2025, Amount 649320.990000
+2025/08/20 17:09:17 Updated weeklyRevenues[32] for week 33, year 2025 with amount 649320.990000
+2025/08/20 17:09:17 Handling 53rd week data.
+2025/08/20 17:09:17 Appended 53rd week revenue from 2020 Revenue to 2021 Revenue for week 1.
+2025/08/20 17:09:17 Appended 53rd week revenue from 2021 Revenue to 2022 Revenue for week 1.
+2025/08/20 17:09:17 Appended 53rd week revenue from 2022 Revenue to 2023 Revenue for week 1.
+2025/08/20 17:09:17 Appended 53rd week revenue from 2023 Revenue to 2024 Revenue for week 1.
+2025/08/20 17:09:17 Appended 53rd week revenue from 2024 Revenue to 2025 Revenue for week 1.
+2025/08/20 17:09:17 UpdateWeeklyRevenue finished.
+2025/08/20 17:09:17 Successfully updated weekly revenue in helpers.
+2025/08/20 17:09:17 Finished updating transportation revenue data.
+2025/08/20 17:09:17 Data length is 53, trimming to 52.
+2025/08/20 17:09:17 Setting cache for key: transportationYearByYear
+2025/08/20 17:09:17 Cache set successfully.
+2025/08/20 17:09:38 Trans_year_by_year handler called.
+2025/08/20 17:09:38 Performing database health check.
+2025/08/20 17:09:38 Performing advanced trans_weekly_rev health check...
+2025/08/20 17:09:38 Health check: Data found for Year=2020, Week=1, Revenue=622473.70
+2025/08/20 17:09:38 Health check: Data found for Year=2020, Week=20, Revenue=605195.20
+2025/08/20 17:09:38 Health check: Data found for Year=2020, Week=30, Revenue=754091.75
+2025/08/20 17:09:38 Health check: Data found for Year=2020, Week=40, Revenue=729002.80
+2025/08/20 17:09:38 Health check: Data found for Year=2020, Week=52, Revenue=667137.75
+2025/08/20 17:09:38 Health check: Data found for Year=2025, Week=1, Revenue=1083137.90
+2025/08/20 17:09:38 Health check: Data found for Year=2025, Week=20, Revenue=1039792.60
+2025/08/20 17:09:38 Health check: Data found for Year=2025, Week=30, Revenue=1029884.00
+2025/08/20 17:09:38 Health check: Data found for Year=2024, Week=1, Revenue=1120555.50
+2025/08/20 17:09:38 Health check: Data found for Year=2024, Week=20, Revenue=985766.70
+2025/08/20 17:09:38 Health check: Data found for Year=2024, Week=30, Revenue=1077741.80
+2025/08/20 17:09:38 Health check: Data found for Year=2024, Week=40, Revenue=1109470.50
+2025/08/20 17:09:38 Health check: Data found for Year=2024, Week=52, Revenue=1052285.60
+2025/08/20 17:09:38 Advanced trans_weekly_rev health check passed.
+2025/08/20 17:09:38 Database health check passed.
+2025/08/20 17:09:38 Attempting to get weekly revenue data from database.
+2025/08/20 17:09:38 Attempting to execute query: SELECT week AS week_number, SUM(CASE WHEN year = 2020 THEN totalrevenue ELSE 0 END) AS "2020_revenue", SUM(CASE WHEN year = 2021 THEN totalrevenue ELSE 0 END) AS "2021_revenue", SUM(CASE WHEN year = 2022 THEN totalrevenue ELSE 0 END) AS "2022_revenue", SUM(CASE WHEN year = 2023 THEN totalrevenue ELSE 0 END) AS "2023_revenue", SUM(CASE WHEN year = 2024 THEN totalrevenue ELSE 0 END) AS "2024_revenue", SUM(CASE WHEN year = 2025 THEN totalrevenue ELSE 0 END) AS "2025_revenue" FROM transportation_weekly_revenue GROUP BY week ORDER BY week;
+2025/08/20 17:09:38 Finished processing 53 rows from query.
+2025/08/20 17:09:38 Successfully retrieved 53 weekly revenue entries from database.
+2025/08/20 17:09:38 Attempting to update transportation revenue data.
+2025/08/20 17:09:38 UpdateTransRevData called with 53 data entries.
+2025/08/20 17:09:38 Latest data date: 2025-08-10 00:00:00 +0000 UTC
+2025/08/20 17:09:38 Generated 2 date ranges.
+2025/08/20 17:09:38 Attempting to update date range amounts.
+2025/08/20 17:09:38 Querying original DB for date range 2025-08-10 00:00:00 to 2025-08-16 00:00:00: SELECT SUM(total_charge) from orders where company_id = 'tms' and bol_recv_date between '2025-08-10 00:00:00' and '2025-08-16 00:00:00'
+2025/08/20 17:09:38 Fetched amount 953468.990000 for date range 2025-08-10 00:00:00 to 2025-08-16 00:00:00
+2025/08/20 17:09:38 Querying original DB for date range 2025-08-17 00:00:00 to 2025-08-23 00:00:00: SELECT SUM(total_charge) from orders where company_id = 'tms' and bol_recv_date between '2025-08-17 00:00:00' and '2025-08-23 00:00:00'
+2025/08/20 17:09:39 Fetched amount 649320.990000 for date range 2025-08-17 00:00:00 to 2025-08-23 00:00:00
+2025/08/20 17:09:39 Successfully updated date range amounts.
+2025/08/20 17:09:39 Attempting to update weekly revenue in helpers.
+2025/08/20 17:09:39 UpdateWeeklyRevenue called. weeklyRevenues length: 53, dateRanges length: 2
+2025/08/20 17:09:39 Processing dateRange: Week 32, Year 2025, Amount 953468.990000
+2025/08/20 17:09:39 Updated weeklyRevenues[31] for week 32, year 2025 with amount 953468.990000
+2025/08/20 17:09:39 Processing dateRange: Week 33, Year 2025, Amount 649320.990000
+2025/08/20 17:09:39 Updated weeklyRevenues[32] for week 33, year 2025 with amount 649320.990000
+2025/08/20 17:09:39 Handling 53rd week data.
+2025/08/20 17:09:39 Appended 53rd week revenue from 2020 Revenue to 2021 Revenue for week 1.
+2025/08/20 17:09:39 Appended 53rd week revenue from 2021 Revenue to 2022 Revenue for week 1.
+2025/08/20 17:09:39 Appended 53rd week revenue from 2022 Revenue to 2023 Revenue for week 1.
+2025/08/20 17:09:39 Appended 53rd week revenue from 2023 Revenue to 2024 Revenue for week 1.
+2025/08/20 17:09:39 Appended 53rd week revenue from 2024 Revenue to 2025 Revenue for week 1.
+2025/08/20 17:09:39 UpdateWeeklyRevenue finished.
+2025/08/20 17:09:39 Successfully updated weekly revenue in helpers.
+2025/08/20 17:09:39 Finished updating transportation revenue data.
+2025/08/20 17:09:39 Data length is 53, trimming to 52.
+2025/08/20 17:09:39 Setting cache for key: transportationYearByYear
+2025/08/20 17:09:39 Cache set successfully.
+2025/08/20 17:09:39 Trans_year_by_year handler called.
+2025/08/20 17:09:39 Performing database health check.
+2025/08/20 17:09:39 Performing advanced trans_weekly_rev health check...
+2025/08/20 17:09:39 Health check: Data found for Year=2020, Week=1, Revenue=622473.70
+2025/08/20 17:09:39 Health check: Data found for Year=2020, Week=20, Revenue=605195.20
+2025/08/20 17:09:39 Health check: Data found for Year=2020, Week=30, Revenue=754091.75
+2025/08/20 17:09:39 Health check: Data found for Year=2020, Week=40, Revenue=729002.80
+2025/08/20 17:09:39 Health check: Data found for Year=2020, Week=52, Revenue=667137.75
+2025/08/20 17:09:39 Health check: Data found for Year=2025, Week=1, Revenue=1083137.90
+2025/08/20 17:09:39 Health check: Data found for Year=2025, Week=20, Revenue=1039792.60
+2025/08/20 17:09:39 Health check: Data found for Year=2025, Week=30, Revenue=1029884.00
+2025/08/20 17:09:39 Health check: Data found for Year=2024, Week=1, Revenue=1120555.50
+2025/08/20 17:09:39 Health check: Data found for Year=2024, Week=20, Revenue=985766.70
+2025/08/20 17:09:39 Health check: Data found for Year=2024, Week=30, Revenue=1077741.80
+2025/08/20 17:09:39 Health check: Data found for Year=2024, Week=40, Revenue=1109470.50
+2025/08/20 17:09:39 Health check: Data found for Year=2024, Week=52, Revenue=1052285.60
+2025/08/20 17:09:39 Advanced trans_weekly_rev health check passed.
+2025/08/20 17:09:39 Database health check passed.
+2025/08/20 17:09:39 Attempting to get weekly revenue data from database.
+2025/08/20 17:09:39 Attempting to execute query: SELECT week AS week_number, SUM(CASE WHEN year = 2020 THEN totalrevenue ELSE 0 END) AS "2020_revenue", SUM(CASE WHEN year = 2021 THEN totalrevenue ELSE 0 END) AS "2021_revenue", SUM(CASE WHEN year = 2022 THEN totalrevenue ELSE 0 END) AS "2022_revenue", SUM(CASE WHEN year = 2023 THEN totalrevenue ELSE 0 END) AS "2023_revenue", SUM(CASE WHEN year = 2024 THEN totalrevenue ELSE 0 END) AS "2024_revenue", SUM(CASE WHEN year = 2025 THEN totalrevenue ELSE 0 END) AS "2025_revenue" FROM transportation_weekly_revenue GROUP BY week ORDER BY week;
+2025/08/20 17:09:39 Finished processing 53 rows from query.
+2025/08/20 17:09:39 Successfully retrieved 53 weekly revenue entries from database.
+2025/08/20 17:09:39 Attempting to update transportation revenue data.
+2025/08/20 17:09:39 UpdateTransRevData called with 53 data entries.
+2025/08/20 17:09:39 Latest data date: 2025-08-10 00:00:00 +0000 UTC
+2025/08/20 17:09:39 Generated 2 date ranges.
+2025/08/20 17:09:39 Attempting to update date range amounts.
+2025/08/20 17:09:39 Querying original DB for date range 2025-08-10 00:00:00 to 2025-08-16 00:00:00: SELECT SUM(total_charge) from orders where company_id = 'tms' and bol_recv_date between '2025-08-10 00:00:00' and '2025-08-16 00:00:00'
+2025/08/20 17:09:39 Fetched amount 953468.990000 for date range 2025-08-10 00:00:00 to 2025-08-16 00:00:00
+2025/08/20 17:09:39 Querying original DB for date range 2025-08-17 00:00:00 to 2025-08-23 00:00:00: SELECT SUM(total_charge) from orders where company_id = 'tms' and bol_recv_date between '2025-08-17 00:00:00' and '2025-08-23 00:00:00'
+2025/08/20 17:09:39 Fetched amount 649320.990000 for date range 2025-08-17 00:00:00 to 2025-08-23 00:00:00
+2025/08/20 17:09:39 Successfully updated date range amounts.
+2025/08/20 17:09:40 Attempting to update weekly revenue in helpers.
+2025/08/20 17:09:40 UpdateWeeklyRevenue called. weeklyRevenues length: 53, dateRanges length: 2
+2025/08/20 17:09:40 Processing dateRange: Week 32, Year 2025, Amount 953468.990000
+2025/08/20 17:09:40 Updated weeklyRevenues[31] for week 32, year 2025 with amount 953468.990000
+2025/08/20 17:09:40 Processing dateRange: Week 33, Year 2025, Amount 649320.990000
+2025/08/20 17:09:40 Updated weeklyRevenues[32] for week 33, year 2025 with amount 649320.990000
+2025/08/20 17:09:40 Handling 53rd week data.
+2025/08/20 17:09:40 Appended 53rd week revenue from 2020 Revenue to 2021 Revenue for week 1.
+2025/08/20 17:09:40 Appended 53rd week revenue from 2021 Revenue to 2022 Revenue for week 1.
+2025/08/20 17:09:40 Appended 53rd week revenue from 2022 Revenue to 2023 Revenue for week 1.
+2025/08/20 17:09:40 Appended 53rd week revenue from 2023 Revenue to 2024 Revenue for week 1.
+2025/08/20 17:09:40 Appended 53rd week revenue from 2024 Revenue to 2025 Revenue for week 1.
+2025/08/20 17:09:40 UpdateWeeklyRevenue finished.
+2025/08/20 17:09:40 Successfully updated weekly revenue in helpers.
+2025/08/20 17:09:40 Finished updating transportation revenue data.
+2025/08/20 17:09:40 Data length is 53, trimming to 52.
+2025/08/20 17:09:40 Setting cache for key: transportationYearByYear
+2025/08/20 17:09:40 Cache set successfully.
