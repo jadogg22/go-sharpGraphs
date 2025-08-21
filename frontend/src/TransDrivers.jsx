@@ -36,13 +36,12 @@ const TransDrivers = () => {
         return response.json();
       })
       .then((data) => {
-        setData(data.Data);
-        setDrivers([...new Set(data.Data.map((item) => item.driver_id))]); // Get unique drivers
-        setFleetManagers([
-          'All',
-          ...new Set(data.Data.map((item) => item.fleet_manager.trim())),
-        ]); // Include "All" option
-        setFilteredData(data.Data); // Initially, show all data
+        const sortedData = data.Data.sort((a, b) => a.driver_id.localeCompare(b.driver_id));
+        setData(sortedData);
+        setDrivers([...new Set(sortedData.map((item) => item.driver_id))]); // Get unique drivers
+        const uniqueFleetManagers = [...new Set(data.Data.map((item) => item.fleet_manager.trim()))];
+        setFleetManagers(['All', ...uniqueFleetManagers.sort()]); // Include "All" option and sort
+        setFilteredData(sortedData); // Initially, show all data
         setLoading(false);
       })
       .catch((err) => {
@@ -61,6 +60,13 @@ const TransDrivers = () => {
       );
     }
 
+    // Update the drivers dropdown based on the selected fleet manager
+    const availableDrivers = selectedFleetManager === 'All'
+      ? [...new Set(data.map((item) => item.driver_id))]
+      : [...new Set(filtered.map((item) => item.driver_id))];
+    setDrivers(availableDrivers.sort());
+
+
     if (selectedDriver) {
       filtered = filtered.filter((item) => item.driver_id === selectedDriver);
     }
@@ -70,29 +76,40 @@ const TransDrivers = () => {
 
   // Linear regression function
   const calculateLinearRegression = (data) => {
-    const n = data.length;
-    const x = data.map((d, i) => i + 1); // X values: Week numbers (1, 2, 3, ...)
-    const y = data.map((d) => d.totalDistance); // Y values: Total distances
+    const firstNonZeroIndex = data.findIndex(item => item.totalDistance > 0);
 
-    const xAvg = x.reduce((sum, xi) => sum + xi, 0) / n;
-    const yAvg = y.reduce((sum, yi) => sum + yi, 0) / n;
-
-    let numerator = 0;
-    let denominator = 0;
-
-    for (let i = 0; i < n; i++) {
-      numerator += (x[i] - xAvg) * (y[i] - yAvg);
-      denominator += (x[i] - xAvg) ** 2;
+    if (firstNonZeroIndex === -1) {
+      return [];
     }
 
-    const slope = numerator / denominator;
-    const intercept = yAvg - slope * xAvg;
+    const regressionPoints = data.slice(firstNonZeroIndex);
+    const n = regressionPoints.length;
 
-    // Calculate the linear regression line
-    const regressionLine = x.map((xi) => ({
-      week: `Week ${xi}`,
-      totalDistance: slope * xi + intercept,
-    }));
+    if (n < 2) {
+      return [];
+    }
+
+    const x = Array.from(Array(n).keys()); // x will be [0, 1, 2, ...]
+    const y = regressionPoints.map((d) => d.totalDistance);
+
+    const sumX = x.reduce((a, b) => a + b, 0);
+    const sumY = y.reduce((a, b) => a + b, 0);
+    const sumXY = x.reduce((sum, xi, i) => sum + xi * y[i], 0);
+    const sumXX = x.reduce((sum, xi) => sum + xi * xi, 0);
+
+    const slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
+    const intercept = (sumY - slope * sumX) / n;
+
+    const regressionLine = data.map((d, i) => {
+      let value = 0;
+      if (i >= firstNonZeroIndex) {
+        value = slope * (i - firstNonZeroIndex) + intercept;
+      }
+      return {
+        week: `Week ${i + 1}`,
+        totalDistance: Math.max(0, value),
+      };
+    });
 
     return regressionLine;
   };
