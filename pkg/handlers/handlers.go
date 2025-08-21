@@ -268,7 +268,7 @@ func LaneProfit(c *gin.Context) {
 	defer os.Remove(pdfFilePath) // Clean up the PDF file
 
 	// 3. Execute the Python script
-	cmd := exec.Command("python3", "statistics/main.py", csvFilePath, pdfFilePath)
+	cmd := exec.Command("python3", "Statistics/main.py", csvFilePath, pdfFilePath)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
