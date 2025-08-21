@@ -25,7 +25,7 @@ WORKDIR /app
 COPY --from=go-builder /app/server .
 
 # Copy Python files and requirements
-COPY statistics /app/statistics
+COPY --from=go-builder /app/statistics /app/statistics
 
 # Install Python dependencies
 RUN pip3 install -r /app/statistics/requirements.txt
