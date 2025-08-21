@@ -10,6 +10,9 @@ RUN go mod download
 # Copy the entire project
 COPY . .
 
+# Explicitly copy Statistics directory
+COPY Statistics Statistics
+
 # Build the Go server
 RUN go build -o /app/server .
 
@@ -25,7 +28,7 @@ WORKDIR /app
 COPY --from=go-builder /app/server .
 
 # Copy Python files and requirements
-COPY --from=go-builder /app/statistics /app/statistics
+COPY --from=go-builder /app/Statistics /app/Statistics
 
 # Install Python dependencies
 RUN pip3 install -r /app/statistics/requirements.txt
