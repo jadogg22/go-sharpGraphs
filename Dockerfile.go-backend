@@ -31,7 +31,7 @@ COPY --from=go-builder /app/server .
 COPY --from=go-builder /app/Statistics /app/Statistics
 
 # Install Python dependencies
-RUN pip3 install --break-system-packages -r /app/statistics/requirements.txt
+RUN pip3 install --break-system-packages -r /app/Statistics/requirements.txt
 
 # Copy .env file if needed
 COPY .env .env
