@@ -21,14 +21,12 @@ const TransDrivers = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const apiURL = import.meta.env.VITE_API_URL; // Set your backend API URL
-
   // Fetch data from the updated API endpoint
   useEffect(() => {
     setLoading(true);
     setError(null);
 
-    fetch(`${apiURL}/Transportation/DriverManager`)
+    fetch(`/api/Transportation/DriverManager`)
       .then((response) => {
         if (!response.ok) {
           throw new Error(`Error: ${response.statusText}`);
@@ -48,7 +46,7 @@ const TransDrivers = () => {
         setError(err.message);
         setLoading(false);
       });
-  }, [apiURL]);
+  }, []);
 
   // Filter logic
   useEffect(() => {

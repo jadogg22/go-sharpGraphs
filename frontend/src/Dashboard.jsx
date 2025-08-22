@@ -43,13 +43,11 @@ const Dashboard = () => {
   const [IsLoading, setIsLoading] = useState(false);
   const [Error, setError] = useState(null);
 
-  const apiURL = import.meta.env.VITE_API_URL;
-
   const fetchData = async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${apiURL}/Transportation/dashboard`);
+      const response = await fetch(`/api/Transportation/dashboard`);
       if (!response.ok) {
         throw new Error(`Error: ${response.statusText}`);
       }

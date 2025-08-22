@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine, Cell, LabelList } from 'recharts';
+import { ClipLoader } from 'react-spinners';
 
 const LaneProfitability = () => {
   const [startDate, setStartDate] = useState('');
@@ -41,9 +41,9 @@ const LaneProfitability = () => {
   };
 
   return (
-    <div className="p-4 pt-64">
+    <div className="flex flex-col items-center">
       <h1 className="text-2xl font-bold mb-4">Lane Profitability Report</h1>
-      <div className="flex items-center space-x-4 mb-4 mt-16">
+      <div className="flex items-center space-x-4 mb-4">
         <div>
           <label htmlFor="startDate" className="block text-sm font-medium text-gray-700">Start Date</label>
           <input
@@ -67,9 +67,16 @@ const LaneProfitability = () => {
         <button
           onClick={downloadReport}
           disabled={loading}
-          className="mt-5 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-400"
+          className="mt-5 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-400 flex items-center"
         >
-          {loading ? 'Downloading...' : 'Download Report'}
+          {loading ? (
+            <>
+              <ClipLoader color={"#fff"} size={20} />
+              <span className="ml-2">Downloading...</span>
+            </>
+          ) : (
+            'Download Report'
+          )}
         </button>
       </div>
 

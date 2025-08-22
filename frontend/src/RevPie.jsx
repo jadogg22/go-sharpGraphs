@@ -7,7 +7,7 @@ const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
 const RevPie = () => {
   const [codeData, setData] = useState(null);
-  const [isLoading, setIsLoading] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
   const CustomTooltip = ({ active, payload, label }) => {
@@ -31,13 +31,12 @@ const RevPie = () => {
       name = name.substring(0, 15) + "...";
     }
     var revenue = codeData[index]["Revenue"];
-    return `${name} $${revenue.toFixed(2)}`;
+    return `${name} ${revenue.toFixed(2)}`;
   };
 
-  const apiURL = import.meta.env.VITE_API_URL;
   const fetchData = async () => {
     setIsLoading(true);
-    fetch(`${apiURL}/Transportation/get_coded_revenue/month`)
+    fetch(`/api/Transportation/get_coded_revenue/month`)
       .then(response => {
         if (!response.ok) {
           throw new Error(`Error: ${response.statusText}`);
@@ -56,14 +55,13 @@ const RevPie = () => {
 
   useEffect(() => {
     fetchData();
-    console.log(codeData);
-    setIsLoading(false);
   }, []);
+
   if (isLoading) {
     return <div className="text-center"><PropagateLoader /></div>;
   }
   if (error) {
-    return <div>Error: {error.message}</div>;
+    return <div>Error: {error}</div>;
   }
   if (!codeData) {
     return <div>No data available. Refresh?</div>;

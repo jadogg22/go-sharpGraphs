@@ -12,13 +12,11 @@ const EmptyMilesWrapper = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const apiURL = import.meta.env.VITE_API_URL;
-
   const fetchData = async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${apiURL}/Transportation/Stacked_miles/${timeFrame}`);
+      const response = await fetch(`/api/Transportation/Stacked_miles/${timeFrame}`);
       if (!response.ok) {
         console.error(`Error: ${response.statusText}`);
         setError(`Error: ${response.statusText}`);

@@ -921,7 +921,12 @@ func StackedToMilesData(timeframe string, data []models.StackedMilesData) []mode
 		}
 
 		totalmiles := v.EmptyMiles + v.LoadedMiles
-		percentEmpty := ((v.LoadedMiles - v.EmptyMiles) / v.LoadedMiles) * 100
+		var percentEmpty float64
+		if totalmiles > 0 {
+			percentEmpty = (v.LoadedMiles / totalmiles) * 100
+		} else {
+			percentEmpty = 0
+		}
 		milesData = append(milesData, models.MilesData{
 			Name:             "time " + timeframestr,
 			NameStr:          section + strconv.Itoa(i+1),

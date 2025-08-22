@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Link, NavLink } from 'react-rou
 import DailyOps from './DailyOps';
 import LogisticsWeekly from './LogisticsWeekly';
 import GraphYearlyRevenue from './GraphYearlyRevenue';
-import LogYearlyRevenue from './LogYearlyRevenue.jsx';
+
 import EmptyMilesWrapper from './EmptyMilesWrapper';
 import LogisticsMTD from './LogisticsMTD';
 import RevPie from './RevPie';
@@ -22,7 +22,7 @@ const App = () => {
               <li>
                 <NavLink
                   to="/Dashboard"
-                  className={({ isActive }) => isActive ? "p-4 bg-gray-700" : "block py-2 px-4 hover:bg-gray-700"}
+                  className={({ isActive }) => isActive ? "block py-2 px-4 bg-gray-700" : "block py-2 px-4 hover:bg-gray-700"}
                 >
                   Dashboard
                 </NavLink>
@@ -31,20 +31,12 @@ const App = () => {
                 <NavLink
                   end
                   to="/"
-                  className={({ isActive }) => isActive ? "p-4 bg-gray-700" : "block py-2 px-4 hover:bg-gray-700"}
+                  className={({ isActive }) => isActive ? "block py-2 px-4 bg-gray-700" : "block py-2 px-4 hover:bg-gray-700"}
                 >
                   Transporation Weekly Revenue
                 </NavLink>
               </li>
-              <li>
-                <NavLink
-                  end
-                  to="/LogisticsYearly"
-                  className={({ isActive }) => isActive ? "p-4 bg-gray-700" : "block py-2 px-4 hover:bg-gray-700"}
-                >
-                  Logistics Weekly Revenue
-                </NavLink>
-              </li>
+              
               <li>
                 <NavLink
                   to="/dailyOps"
@@ -118,7 +110,7 @@ const App = () => {
           <Routes>
             <Route path="/" element={<GraphYearlyRevenue />} />
             <Route path="/Dashboard" element={<Dashboard />} />
-            <Route path="/LogisticsYearly" element={<LogYearlyRevenue />} />
+            
             <Route path="/dailyOps" element={<DailyOps />} />
             <Route path="/RevenuePie" element={<RevPie />} />
             <Route path="/LogisticsMTD" element={<LogisticsMTD />} />

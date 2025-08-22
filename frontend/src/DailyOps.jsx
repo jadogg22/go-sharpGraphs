@@ -8,11 +8,10 @@ const DailyOps = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    const apiURL = import.meta.env.VITE_API_URL;
     const fetchData = async () => {
         setLoading(true);
         setError(null); // Reset error state before fetching
-        fetch(`${apiURL}/Transportation/Daily_Ops`)
+        fetch(`/api/Transportation/Daily_Ops`)
             .then(response => {
                 if (!response.ok) {
                     throw new Error(`Error: ${response.statusText}`);

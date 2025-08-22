@@ -58,7 +58,7 @@ const MilesBarChart = ({ data }) => {
           <p>Total Loaded Miles: {data["Total_Loaded_Miles"].toFixed(2)}</p>
           <p>Total Empty Miles: {data["Total_Empty_Miles"].toFixed(2)}</p>
           <p>Total Miles: {data["Total_Actual_Miles"].toFixed(2)}</p>
-          <p>Percent Empty: {(1 - data["Percent_empty"]).toFixed(2)}</p>
+          <p>Percent Empty: {(100 - data["Percent_empty"]).toFixed(2)}%</p>
         </div>
       );
     }
