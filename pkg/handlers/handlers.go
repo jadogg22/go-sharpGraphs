@@ -187,7 +187,7 @@ func Trans_coded_revenue(c *gin.Context) {
 	}
 
 	c.JSON(200, gin.H{
-		"Data": data,
+		"data": data,
 	})
 	cache.MyCache.Set(cacheKey, data, "[]models.CodedData", time.Hour*2)
 }

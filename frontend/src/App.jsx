@@ -11,6 +11,7 @@ import Dashboard from './Dashboard';
 import OrdersPage from './OrdersPage';
 import TransDrivers from './TransDrivers';
 import LaneProfitability from './LaneProfitability';
+import VacationExport from './VacationExport';
 
 const App = () => {
   return (
@@ -103,6 +104,14 @@ const App = () => {
                   Lane Profitability
                 </NavLink>
               </li>
+              <li>
+                <NavLink
+                  to="/vacation-export"
+                  className={({ isActive }) => isActive ? "bg-gray-700" : "block py-2 px-4 hover:bg-gray-700"}
+                >
+                  Vacation Export
+                </NavLink>
+              </li>
             </ul>
           </nav>
         </div>
@@ -118,6 +127,7 @@ const App = () => {
             <Route path="/DriverManagers" element={<TransDrivers />} />
             <Route path="/Orders" element={<OrdersPage />} />
             <Route path="/lane-profitability" element={<LaneProfitability />} />
+            <Route path="/vacation-export" element={<VacationExport />} />
           </Routes>
         </div>
       </div>

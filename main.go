@@ -11,10 +11,6 @@ import (
 	"time"
 )
 
-// main function to display different endpoints for ease of use.
-//	Handlers.go is where the logic is stored for each endpoint
-//
-
 func main() {
 	// Open a log file
 	logFile, err := os.OpenFile("app.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
@@ -25,14 +21,6 @@ func main() {
 
 	// Set log output to the file
 	log.SetOutput(logFile)
-
-	// TEMPORARY: Flushing trans_weekly_rev table
-	// log.Println("Attempting to flush trans_weekly_rev table...")
-	// if err := database.FlushTransWeeklyRevTable(); err != nil {
-	// 	log.Fatalf("Error flushing trans_weekly_rev table: %v", err)
-	// }
-	// log.Println("Finished flushing trans_weekly_rev table.")
-	// END TEMPORARY
 
 	// Initialize database data on startup
 	getdata.InitializeDatabaseData()
@@ -84,12 +72,14 @@ func main() {
 			TransportationGroup.GET("/DriverManager", handlers.DriverManager)
 			TransportationGroup.GET("/statistics/laneprofitability/report", handlers.LaneProfit)
 		}
+
 		// ---------- Logisitics Handlers ----------
 		LogisticsGroup := apiGroup.Group("/Logistics")
 		{
 			LogisticsGroup.GET("/get_yearly_revenue", handlers.Log_year_by_year)
 			LogisticsGroup.GET("/MTD", handlers.LogisticsMTD)
 		}
+
 		// ---------- Dispatch Handlers ----------------
 		DispatchGroup := apiGroup.Group("/Dispatch")
 		{
