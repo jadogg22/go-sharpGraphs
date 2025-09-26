@@ -449,7 +449,7 @@ func GetLaneData(startDate, endDate time.Time) ([]models.LaneProfit, error) {
 }
 
 func GetVacationFromDB(companyId string) ([]models.VacationHours, error) {
-	if companyId != "tms" && companyId != "tms2" && companyId != "tms3" && companyId != "drivers" {
+	if companyId != "tms" && companyId != "tms2" && companyId != "tms3" && companyId != "tms4" && companyId != "drivers" {
 		return nil, fmt.Errorf("Invalid companyID")
 	}
 
@@ -965,109 +965,109 @@ func InitializeDatabaseData() {
 }
 
 func GetOrderRevenueReportDataAsCSV(startDate, endDate string) (string, error) {
-    query := OrderRevenueReport(startDate, endDate)
-    rows, err := conn.Query(query)
-    if err != nil {
-        return "", fmt.Errorf("error querying database: %w", err)
-    }
-    defer rows.Close()
+	query := OrderRevenueReport(startDate, endDate)
+	rows, err := conn.Query(query)
+	if err != nil {
+		return "", fmt.Errorf("error querying database: %w", err)
+	}
+	defer rows.Close()
 
-    // Create a temporary CSV file
-    csvFile, err := os.CreateTemp("", "report-*.csv")
-    if err != nil {
-        return "", fmt.Errorf("failed to create temp csv file: %w", err)
-    }
-    defer csvFile.Close()
+	// Create a temporary CSV file
+	csvFile, err := os.CreateTemp("", "report-*.csv")
+	if err != nil {
+		return "", fmt.Errorf("failed to create temp csv file: %w", err)
+	}
+	defer csvFile.Close()
 
-    writer := csv.NewWriter(csvFile)
-    defer writer.Flush()
+	writer := csv.NewWriter(csvFile)
+	defer writer.Flush()
 
-    // Write headers
-    cols, err := rows.Columns()
-    if err != nil {
-        return "", fmt.Errorf("failed to get column names: %w", err)
-    }
-    if err := writer.Write(cols); err != nil {
-        return "", fmt.Errorf("failed to write csv headers: %w", err)
-    }
+	// Write headers
+	cols, err := rows.Columns()
+	if err != nil {
+		return "", fmt.Errorf("failed to get column names: %w", err)
+	}
+	if err := writer.Write(cols); err != nil {
+		return "", fmt.Errorf("failed to write csv headers: %w", err)
+	}
 
-    // Prepare value holders
-    colCount := len(cols)
-    values := make([]interface{}, colCount)
-    valuePtrs := make([]interface{}, colCount)
+	// Prepare value holders
+	colCount := len(cols)
+	values := make([]interface{}, colCount)
+	valuePtrs := make([]interface{}, colCount)
 
-    for rows.Next() {
-        for i := range values {
-            valuePtrs[i] = &values[i]
-        }
-        if err := rows.Scan(valuePtrs...); err != nil {
-            return "", fmt.Errorf("row scan failed: %w", err)
-        }
+	for rows.Next() {
+		for i := range values {
+			valuePtrs[i] = &values[i]
+		}
+		if err := rows.Scan(valuePtrs...); err != nil {
+			return "", fmt.Errorf("row scan failed: %w", err)
+		}
 
-        record := make([]string, colCount)
-        for i, val := range values {
-            if val == nil {
-                record[i] = ""
-            } else {
-                switch v := val.(type) {
-                case []byte:
-                    record[i] = string(v)
-                case time.Time:
-                    record[i] = v.Format("2006-01-02 15:04:05")
-                default:
-                    record[i] = fmt.Sprintf("%v", v)
-                }
-            }
-        }
+		record := make([]string, colCount)
+		for i, val := range values {
+			if val == nil {
+				record[i] = ""
+			} else {
+				switch v := val.(type) {
+				case []byte:
+					record[i] = string(v)
+				case time.Time:
+					record[i] = v.Format("2006-01-02 15:04:05")
+				default:
+					record[i] = fmt.Sprintf("%v", v)
+				}
+			}
+		}
 
-        if err := writer.Write(record); err != nil {
-            return "", fmt.Errorf("failed to write csv record: %w", err)
-        }
-    }
+		if err := writer.Write(record); err != nil {
+			return "", fmt.Errorf("failed to write csv record: %w", err)
+		}
+	}
 
-    if err = rows.Err(); err != nil {
-        return "", fmt.Errorf("error iterating rows: %w", err)
-    }
+	if err = rows.Err(); err != nil {
+		return "", fmt.Errorf("error iterating rows: %w", err)
+	}
 
-    return csvFile.Name(), nil
+	return csvFile.Name(), nil
 }
 
 func ExecuteOrderRevenueReportQuery(startDate, endDate string) ([]map[string]interface{}, error) {
-    query := OrderRevenueReport(startDate, endDate)
-    rows, err := conn.Query(query)
-    if err != nil {
-        return nil, fmt.Errorf("error querying database: %w", err)
-    }
-    defer rows.Close()
+	query := OrderRevenueReport(startDate, endDate)
+	rows, err := conn.Query(query)
+	if err != nil {
+		return nil, fmt.Errorf("error querying database: %w", err)
+	}
+	defer rows.Close()
 
-    cols, err := rows.Columns()
-    if err != nil {
-        return nil, fmt.Errorf("failed to get columns: %w", err)
-    }
+	cols, err := rows.Columns()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get columns: %w", err)
+	}
 
-    var results []map[string]interface{}
-    for rows.Next() {
-        columns := make([]interface{}, len(cols))
-        columnPointers := make([]interface{}, len(cols))
-        for i := range columns {
-            columnPointers[i] = &columns[i]
-        }
+	var results []map[string]interface{}
+	for rows.Next() {
+		columns := make([]interface{}, len(cols))
+		columnPointers := make([]interface{}, len(cols))
+		for i := range columns {
+			columnPointers[i] = &columns[i]
+		}
 
-        if err := rows.Scan(columnPointers...); err != nil {
-            return nil, fmt.Errorf("failed to scan row: %w", err)
-        }
+		if err := rows.Scan(columnPointers...); err != nil {
+			return nil, fmt.Errorf("failed to scan row: %w", err)
+		}
 
-        m := make(map[string]interface{})
-        for i, colName := range cols {
-            val := columnPointers[i].(*interface{})
-            m[colName] = *val
-        }
-        results = append(results, m)
-    }
+		m := make(map[string]interface{})
+		for i, colName := range cols {
+			val := columnPointers[i].(*interface{})
+			m[colName] = *val
+		}
+		results = append(results, m)
+	}
 
-    if err = rows.Err(); err != nil {
-        return nil, fmt.Errorf("error during iteration: %w", err)
-    }
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("error during iteration: %w", err)
+	}
 
-    return results, nil
+	return results, nil
 }

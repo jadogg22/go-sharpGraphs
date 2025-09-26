@@ -48,7 +48,6 @@ func Dashboard(c *gin.Context) {
 func Trans_year_by_year(c *gin.Context) {
 	log.Printf("Trans_year_by_year handler called.")
 	cacheKey := "transportationYearByYear"
-	
 
 	log.Printf("Performing database health check.")
 	err := database.CheckTransWeeklyRevHealth()
@@ -407,7 +406,7 @@ func Vacation(c *gin.Context) {
 	fmt.Println("Getting vacation days for ", typeID)
 
 	switch typeID {
-	case "tms", "tms2", "tms3":
+	case "tms", "tms2", "tms3, tms4":
 		// get the vacation days for the drivers
 		data, err := getdata.GetVacationFromDB(typeID)
 		if err != nil {
@@ -425,7 +424,7 @@ func Vacation(c *gin.Context) {
 	case "all":
 		// get the vacation days for all the staff
 		companyData := make(map[string][]models.VacationHours)
-		companys := []string{"tms", "tms2", "tms3", "drivers"}
+		companys := []string{"tms", "tms2", "tms3", "tms4", "drivers"}
 		for _, company := range companys {
 			data, err := getdata.GetVacationFromDB(company)
 			if err != nil {
