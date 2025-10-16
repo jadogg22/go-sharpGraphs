@@ -308,7 +308,7 @@ func GetLogisticsMTDData(startDate, endDate time.Time) []models.LogisticsMTDStat
 	var data []models.LogisticsMTDStats
 	var myDispatcher sql.NullString
 	var dispatcher string
-	var revenue, overridePayAmt, truckHire, miles float64
+	var revenue, overridePayAmt, truckHire, miles sql.NullFloat64
 	var totalStops, totalServiceFailCount, ordersWithServiceFail, totalOrders int
 
 	for rows.Next() {
@@ -332,7 +332,7 @@ func GetLogisticsMTDData(startDate, endDate time.Time) []models.LogisticsMTDStat
 			dispatcher = name
 		}
 
-		myData := models.NewLogisticsMTDStats(dispatcher, truckHire, revenue, miles, totalStops, totalOrders, ordersWithServiceFail, totalServiceFailCount)
+		myData := models.NewLogisticsMTDStats(dispatcher, truckHire.Float64, revenue.Float64, miles.Float64, totalStops, totalOrders, ordersWithServiceFail, totalServiceFailCount)
 
 		data = append(data, *myData)
 	}

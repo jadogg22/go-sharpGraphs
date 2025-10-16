@@ -82,14 +82,14 @@ func getLogisticsMTDQuery(startDate, endDate time.Time) string {
 	query := fmt.Sprintf(`
 SELECT
     move1.dispatcher_user_id,
-    SUM(orders.total_charge) AS revenue,           -- Total charges per dispatcher
-    SUM(move1.override_pay_amt) AS override_pay_amt,  -- Sum of override pay amounts
-    SUM(COALESCE(de_sum.amount, 0) + override_pay_amt) AS truck_hire,  -- Total truck hire (sum of driver_extra_pay amounts + override pay)
+    COALESCE(SUM(orders.total_charge), 0) AS revenue,           -- Total charges per dispatcher
+    COALESCE(SUM(move1.override_pay_amt), 0) AS override_pay_amt,  -- Sum of override pay amounts
+    COALESCE(SUM(COALESCE(de_sum.amount, 0) + COALESCE(move1.override_pay_amt, 0)), 0) AS truck_hire,  -- Total truck hire (sum of driver_extra_pay amounts + override pay)
     SUM(COALESCE(stop_counts.stop_count, 0)) AS total_stops,  -- Total stops per dispatcher
     SUM(COALESCE(servicefail_counts.servicefail_count, 0)) AS total_servicefail_count,  -- Total service failures per dispatcher
     COUNT(DISTINCT CASE WHEN servicefail_counts.servicefail_count > 0 THEN mo1.order_id END) AS orders_with_service_fail,  -- Count of orders with service fails
     COUNT(DISTINCT mo1.order_id) AS total_orders,  -- Count of distinct orders per dispatcher
-	SUM(orders.bill_distance) AS total_bill_distance  -- Sum of bill distances per dispatcher
+	COALESCE(SUM(orders.bill_distance), 0) AS total_bill_distance  -- Sum of bill distances per dispatcher
 
 
 FROM
