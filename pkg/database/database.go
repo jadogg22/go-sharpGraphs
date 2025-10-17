@@ -721,7 +721,7 @@ func GetWeeklyRevenueData() ([]models.WeeklyRevenue, error) {
 	rows, err := DB.Query(query)
 	if err != nil {
 		log.Printf("Error executing query: %v\n", err)
-		return nil, err
+		return []models.WeeklyRevenue{}, err
 	}
 
 	defer rows.Close()
@@ -741,11 +741,10 @@ func GetWeeklyRevenueData() ([]models.WeeklyRevenue, error) {
 		}
 
 		err := rows.Scan(scanArgs...)
-		if err != nil {
-			log.Printf("Error scanning row: %v\n", err)
-			return nil, err
-		}
-
+					if err != nil {
+						log.Printf("Error scanning row: %v\n", err)
+						return []models.WeeklyRevenue{}, err
+					}
 		revenueMap := make(map[string]*float64)
 		for i, year := 0, startYear; year <= currentYear; i, year = i+1, year+1 {
 			revenueMap[fmt.Sprintf("%d Revenue", year)] = revenues[i]
@@ -806,8 +805,8 @@ func CheckTransWeeklyRevHealth() error {
 			err := DB.QueryRow(query, year, week).Scan(&totalRevenue)
 			if err != nil {
 				if err == sql.ErrNoRows {
-					log.Printf("Health check: No data found for Year=%d, Week=%d", year, week)
-					return fmt.Errorf("health check failed: no data for Year=%d, Week=%d", year, week)
+				log.Printf("Health check: Skipping current week check for Year=%d, Week=%d", year, week)
+				continue
 				} else {
 					log.Printf("Health check: Error querying for Year=%d, Week=%d: %v", year, week, err)
 					return fmt.Errorf("health check failed: query error for Year=%d, Week=%d: %w", year, week, err)

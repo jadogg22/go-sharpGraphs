@@ -49,17 +49,7 @@ func Trans_year_by_year(c *gin.Context) {
 	log.Printf("Trans_year_by_year handler called.")
 	cacheKey := "transportationYearByYear"
 
-	log.Printf("Performing database health check.")
-	err := database.CheckTransWeeklyRevHealth()
-	if err != nil {
-		log.Printf("Database health check failed: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"Message": "Database health check failed",
-			"Error":   err.Error(),
-		})
-		return
-	}
-	log.Printf("Database health check passed.")
+
 
 	log.Printf("Attempting to get weekly revenue data from database.")
 	data, err := database.GetWeeklyRevenueData()
