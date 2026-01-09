@@ -454,7 +454,7 @@ func GetVacationFromDB(companyId string) ([]models.VacationHours, error) {
 	}
 
 	// helper function to grab the sql query string
-	query := GetVacationHoursByCompanyQuery(companyId)
+	query := NewGetVactionHoursByCompanyQuery(companyId)
 
 	rows, err := conn.Query(query)
 	if err != nil {

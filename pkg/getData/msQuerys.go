@@ -384,6 +384,64 @@ ORDER BY
     oe.id;`, companyID, companyID, companyID, companyID)
 }
 
+func NewGetVactionHoursByCompanyQuery(companyID string) string {
+	if companyID == "drivers" {
+		return DriversVacationHoursQuery()
+	}
+
+	return fmt.Sprintf(`
+    WITH NewestLeaveTransaction AS (
+    SELECT
+        payee_id,
+        amount,
+        trx_date
+    FROM (
+        SELECT
+            lt.payee_id,
+            lt.amount,
+            lt.trx_date,
+            ROW_NUMBER() OVER (
+                PARTITION BY lt.payee_id
+                ORDER BY lt.trx_date DESC, lt.id DESC
+            ) AS rn
+        FROM leave_transaction lt
+        WHERE lt.company_id = '%s'
+          AND lt.applies_to = 'V'
+          AND lt.effect IN ('B', 'S')
+          AND (lt.is_void IS NULL OR lt.is_void <> 'Y')
+    ) x
+    WHERE rn = 1
+),
+OfficeEmployees AS (
+    SELECT
+        p.id,
+        p.check_name,
+        op.regular_rate,
+        op.vacation_hours_due,
+        op.vacation_pay_rate
+    FROM payee p
+    JOIN off_payee op
+      ON p.id = op.id
+     AND p.company_id = op.company_id
+    JOIN drs_payee dp
+      ON p.id = dp.id
+     AND p.company_id = dp.company_id
+    WHERE p.company_id = '%s'
+      AND p.office_employee = 'Y'
+      AND p.status = 'A'
+)
+SELECT
+    oe.id,
+    oe.check_name,
+    oe.vacation_pay_rate,
+    nlt.amount AS latest_amount,
+    nlt.trx_date
+FROM OfficeEmployees oe
+LEFT JOIN NewestLeaveTransaction nlt
+  ON oe.id = nlt.payee_id
+ORDER BY oe.id;`, companyID, companyID)
+}
+
 func DriversVacationHoursQuery() string {
 	return `
 WITH LatestTransactions AS (
