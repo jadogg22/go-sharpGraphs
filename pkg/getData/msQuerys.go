@@ -434,8 +434,7 @@ SELECT
     oe.id,
     oe.check_name,
     oe.vacation_pay_rate,
-    nlt.amount AS latest_amount,
-    nlt.trx_date
+    nlt.amount AS latest_amount
 FROM OfficeEmployees oe
 LEFT JOIN NewestLeaveTransaction nlt
   ON oe.id = nlt.payee_id
